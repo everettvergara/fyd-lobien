@@ -23,8 +23,12 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
 
+        $middleware->redirectGuestsTo('/admin/login');
+        $middleware->redirectUsersTo('/admin');
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminAuthenticate::class,
+            'permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

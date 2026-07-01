@@ -1,0 +1,49 @@
+@extends('admin.layouts.app')
+@section('title', 'Settings')
+@section('content')
+<div class="mb-4"><h1 class="h3 mb-0">Settings</h1></div>
+<form method="POST" action="{{ route('admin.settings.update') }}">@csrf @method('PUT')
+<ul class="nav nav-tabs mb-4" role="tablist">
+<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#general" type="button">General</button></li>
+<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#email" type="button">Email</button></li>
+<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#social" type="button">Social</button></li>
+<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#contact" type="button">Contact</button></li>
+<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#seo" type="button">SEO Defaults</button></li>
+</ul>
+<div class="tab-content">
+<div class="tab-pane fade show active" id="general">
+<div class="card"><div class="card-body">
+<div class="mb-3"><label class="form-label">Website Name</label><input type="text" class="form-control" name="settings[general][website_name]" value="{{ $settings['general']['website_name'] ?? config('fyd.name') }}"></div>
+<div class="mb-3"><label class="form-label">Tagline</label><input type="text" class="form-control" name="settings[general][tagline]" value="{{ $settings['general']['tagline'] ?? '' }}"></div>
+</div></div></div>
+<div class="tab-pane fade" id="email">
+<div class="card"><div class="card-body">
+<div class="row">
+<div class="col-md-6 mb-3"><label class="form-label">SMTP Host</label><input type="text" class="form-control" name="settings[email][smtp_host]" value="{{ $settings['email']['smtp_host'] ?? '' }}"></div>
+<div class="col-md-6 mb-3"><label class="form-label">SMTP Port</label><input type="text" class="form-control" name="settings[email][smtp_port]" value="{{ $settings['email']['smtp_port'] ?? '587' }}"></div>
+<div class="col-md-6 mb-3"><label class="form-label">SMTP Username</label><input type="text" class="form-control" name="settings[email][smtp_username]" value="{{ $settings['email']['smtp_username'] ?? '' }}"></div>
+<div class="col-md-6 mb-3"><label class="form-label">SMTP Password</label><input type="password" class="form-control" name="settings[email][smtp_password]" value="{{ $settings['email']['smtp_password'] ?? '' }}"></div>
+<div class="col-md-6 mb-3"><label class="form-label">From Address</label><input type="email" class="form-control" name="settings[email][from_address]" value="{{ $settings['email']['from_address'] ?? '' }}"></div>
+<div class="col-md-6 mb-3"><label class="form-label">From Name</label><input type="text" class="form-control" name="settings[email][from_name]" value="{{ $settings['email']['from_name'] ?? '' }}"></div>
+</div></div></div></div>
+<div class="tab-pane fade" id="social">
+<div class="card"><div class="card-body">
+@foreach(['facebook','twitter','instagram','linkedin','youtube'] as $network)
+<div class="mb-3"><label class="form-label text-capitalize">{{ $network }}</label><input type="url" class="form-control" name="settings[social][{{ $network }}]" value="{{ $settings['social'][$network] ?? '' }}"></div>
+@endforeach
+</div></div></div>
+<div class="tab-pane fade" id="contact">
+<div class="card"><div class="card-body">
+<div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="settings[contact][email]" value="{{ $settings['contact']['email'] ?? '' }}"></div>
+<div class="mb-3"><label class="form-label">Phone</label><input type="text" class="form-control" name="settings[contact][phone]" value="{{ $settings['contact']['phone'] ?? '' }}"></div>
+<div class="mb-3"><label class="form-label">Address</label><textarea class="form-control" name="settings[contact][address]" rows="2">{{ $settings['contact']['address'] ?? '' }}</textarea></div>
+</div></div></div>
+<div class="tab-pane fade" id="seo">
+<div class="card"><div class="card-body">
+<div class="mb-3"><label class="form-label">Default SEO Title</label><input type="text" class="form-control" name="settings[seo][default_title]" value="{{ $settings['seo']['default_title'] ?? '' }}"></div>
+<div class="mb-3"><label class="form-label">Default Meta Description</label><textarea class="form-control" name="settings[seo][default_description]" rows="2">{{ $settings['seo']['default_description'] ?? '' }}</textarea></div>
+</div></div></div>
+</div>
+@can('settings.edit')<button type="submit" class="btn btn-primary mt-3">Save Settings</button>@endcan
+</form>
+@endsection

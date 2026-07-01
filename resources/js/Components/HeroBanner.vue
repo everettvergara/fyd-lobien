@@ -1,30 +1,19 @@
 <script setup>
 defineProps({
-    title: {
-        type: String,
-        required: true,
-    },
-    subtitle: {
-        type: String,
-        default: '',
-    },
-    description: {
-        type: String,
-        default: '',
-    },
-    buttonText: {
-        type: String,
-        default: '',
-    },
-    buttonUrl: {
-        type: String,
-        default: '#',
-    },
+    title: { type: String, required: true },
+    subtitle: { type: String, default: '' },
+    description: { type: String, default: '' },
+    buttonText: { type: String, default: '' },
+    buttonUrl: { type: String, default: '#' },
+    desktopImage: { type: Object, default: null },
 });
 </script>
 
 <template>
-    <section class="public-hero">
+    <section
+        class="public-hero"
+        :style="desktopImage ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${desktopImage.url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}"
+    >
         <div class="container">
             <div class="row justify-content-center text-center">
                 <div class="col-lg-8">

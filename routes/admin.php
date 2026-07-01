@@ -1,6 +1,4 @@
 <?php
 
-use App\Http\Controllers\Admin\DashboardController;
-use Illuminate\Support\Facades\Route;
-
-Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+// Core admin routes are registered by modules via ModuleServiceProvider.
+// See app/Modules/*/Routes/admin.php
