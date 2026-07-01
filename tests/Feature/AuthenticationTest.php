@@ -33,8 +33,53 @@ class AuthenticationTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect('/admin');
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $user->email,
+            'success' => true,
+        ]);
+
+        $this->assertDatabaseHas('activity_log', [
+            'module' => 'authentication',
+            'action' => 'login',
+            'user_id' => $user->id,
+        ]);
     }
 
+    public function test_failed_login_is_recorded_in_login_history(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->post('/admin/login', [
+            'email' => $user->email,
+            'password' => 'wrong-password',
+        ]);
+
+        $this->assertGuest();
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $user->email,
+            'success' => false,
+            'failure_reason' => 'invalid_credentials',
+        ]);
+    }
+
+    public function test_logout_is_recorded_in_activity_log(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($user)->post('/admin/logout');
+
+        $this->assertDatabaseHas('activity_log', [
+            'module' => 'authentication',
+            'action' => 'logout',
+            'user_id' => $user->id,
+        ]);
+    }
     public function test_users_cannot_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create([

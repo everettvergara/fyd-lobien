@@ -2,19 +2,22 @@
 
 namespace App\Modules\Posts\Controllers;
 
-use App\Enums\ContentStatus;
 use App\Http\Controllers\Controller;
 use App\Modules\Posts\Models\Post;
 use App\Modules\Posts\Requests\StorePostRequest;
 use App\Modules\Posts\Requests\UpdatePostRequest;
-use App\Services\ActivityLogger;
-use App\Support\SeoFields;
+use App\Modules\Posts\Services\PostService;
+use App\Services\PublishingService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PostController extends Controller
 {
+    public function __construct(
+        protected PostService $posts,
+        protected PublishingService $publishing,
+    ) {}
+
     public function index(): View
     {
         $this->authorize('viewAny', Post::class);
@@ -27,17 +30,12 @@ class PostController extends Controller
     {
         $this->authorize('create', Post::class);
 
-        return view('posts::posts.create', ['statuses' => ContentStatus::cases()]);
+        return view('posts::posts.create', ['statuses' => \App\Enums\ContentStatus::cases()]);
     }
 
     public function store(StorePostRequest $request): RedirectResponse
     {
-        $post = Post::create([
-            ...$request->safe()->except(array_keys(SeoFields::rules())),
-            'author_id' => $request->user()->id,
-        ]);
-        $post->saveSeo(SeoFields::extract($request->validated()));
-        ActivityLogger::log('posts', 'created', $post);
+        $this->posts->create($request->validated(), $request->user()->id);
 
         return redirect()->route('admin.posts.index')->with('success', 'Post created successfully.');
     }
@@ -45,16 +43,14 @@ class PostController extends Controller
     public function edit(Post $post): View
     {
         $this->authorize('update', $post);
-        $post->load('seoMeta');
+        $post->load('seoMeta.ogImage');
 
-        return view('posts::posts.edit', ['post' => $post, 'statuses' => ContentStatus::cases()]);
+        return view('posts::posts.edit', ['post' => $post, 'statuses' => \App\Enums\ContentStatus::cases()]);
     }
 
     public function update(UpdatePostRequest $request, Post $post): RedirectResponse
     {
-        $post->update($request->safe()->except(array_keys(SeoFields::rules())));
-        $post->saveSeo(SeoFields::extract($request->validated()));
-        ActivityLogger::log('posts', 'updated', $post);
+        $this->posts->update($post, $request->validated());
 
         return redirect()->route('admin.posts.index')->with('success', 'Post updated successfully.');
     }
@@ -62,8 +58,7 @@ class PostController extends Controller
     public function destroy(Post $post): RedirectResponse
     {
         $this->authorize('delete', $post);
-        ActivityLogger::log('posts', 'deleted', $post);
-        $post->delete();
+        $this->posts->delete($post);
 
         return redirect()->route('admin.posts.index')->with('success', 'Post deleted successfully.');
     }
@@ -71,8 +66,7 @@ class PostController extends Controller
     public function publish(Post $post): RedirectResponse
     {
         $this->authorize('publish', $post);
-        $post->update(['status' => ContentStatus::Published, 'published_at' => now()]);
-        ActivityLogger::log('posts', 'published', $post);
+        $this->publishing->publish($post, 'posts');
 
         return back()->with('success', 'Post published successfully.');
     }
@@ -80,16 +74,14 @@ class PostController extends Controller
     public function duplicate(Post $post): RedirectResponse
     {
         $this->authorize('create', Post::class);
-        $new = $post->replicate(['slug', 'published_at']);
-        $new->title = $post->title.' (Copy)';
-        $new->slug = $post->slug.'-copy-'.Str::random(4);
-        $new->status = ContentStatus::Draft;
-        $new->author_id = auth()->id();
-        $new->save();
-        if ($post->seoMeta) {
-            $new->saveSeo($post->seoMeta->only(['seo_title', 'meta_description', 'meta_keywords', 'canonical_url', 'og_title', 'og_description', 'og_image_id', 'robots']));
-        }
+        $post->load('seoMeta');
 
-        return redirect()->route('admin.posts.edit', $new)->with('success', 'Post duplicated.');
+        $newPost = $this->publishing->duplicate($post, 'posts', [
+            'title' => $post->title.' (Copy)',
+            'slug' => $this->publishing->generateCopySlug($post->slug),
+            'author_id' => auth()->id(),
+        ]);
+
+        return redirect()->route('admin.posts.edit', $newPost)->with('success', 'Post duplicated.');
     }
 }

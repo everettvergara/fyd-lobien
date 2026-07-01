@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Authentication\Requests\RegisterRequest;
 use App\Notifications\WelcomeNotification;
+use App\Services\AuthConfigService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -15,7 +16,7 @@ class RegisterController extends Controller
 {
     public function create(): View|RedirectResponse
     {
-        if (! config('fyd.registration_enabled', true)) {
+        if (! app(AuthConfigService::class)->registrationEnabled()) {
             return redirect()->route('admin.login')
                 ->with('error', 'Registration is currently disabled.');
         }

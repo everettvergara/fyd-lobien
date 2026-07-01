@@ -1,18 +1,84 @@
 @extends('admin.layouts.app')
+
 @section('title', 'Banners')
+
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Banners</h1>
-    @can('create', App\Modules\Banners\Models\Banner::class)<a href="{{ route('admin.banners.create') }}" class="btn btn-primary btn-sm">Add Banner</a>@endcan
-</div>
-<div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
-<thead class="table-light"><tr><th>Name</th><th>Type</th><th>Placement</th><th>Status</th><th></th></tr></thead>
-<tbody>@forelse($banners as $banner)<tr>
-<td class="fw-medium">{{ $banner->name }}</td>
-<td class="small">{{ $banner->type->label() }}</td>
-<td class="small">{{ $banner->placement->label() }}</td>
-<td><span class="badge bg-primary-subtle text-primary">{{ $banner->status->label() }}</span></td>
-<td class="text-end">@can('update',$banner)<a href="{{ route('admin.banners.edit',$banner) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>@endcan</td>
-</tr>@empty<tr><td colspan="5" class="text-center text-muted py-4">No banners found.</td></tr>@endforelse</tbody>
-</table></div>@if($banners->hasPages())<div class="card-footer bg-white">{{ $banners->links() }}</div>@endif</div>
+    <x-admin.breadcrumbs :items="[
+        ['label' => 'Dashboard', 'url' => route('admin.dashboard')],
+        ['label' => 'Banners'],
+    ]" />
+
+    <x-admin.page-header
+        title="Banners"
+        :create-route="route('admin.banners.create')"
+        create-label="Add Banner"
+        :create-model="App\Modules\Banners\Models\Banner::class"
+    />
+
+    <x-admin.card :padding="false">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Placement</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($banners as $banner)
+                        <tr>
+                            <td class="fw-medium">{{ $banner->name }}</td>
+                            <td class="small">{{ $banner->type->label() }}</td>
+                            <td class="small">{{ $banner->placement->label() }}</td>
+                            <td><x-admin.status-badge :status="$banner->status" /></td>
+                            <td class="text-end">
+                                <x-admin.table-actions>
+                                    @can('update', $banner)
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('admin.banners.edit', $banner) }}">
+                                                <i class="bi bi-pencil me-2"></i>Edit
+                                            </a>
+                                        </li>
+                                    @endcan
+                                    @can('publish', $banner)
+                                        @if ($banner->status !== App\Enums\ContentStatus::Published)
+                                            <li>
+                                                <form method="POST" action="{{ route('admin.banners.publish', $banner) }}">
+                                                    @csrf
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="bi bi-check-circle me-2"></i>Publish
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        @endif
+                                    @endcan
+                                    @can('delete', $banner)
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form method="POST" action="{{ route('admin.banners.destroy', $banner) }}" onsubmit="return confirm('Delete this banner?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="dropdown-item text-danger">
+                                                    <i class="bi bi-trash me-2"></i>Delete
+                                                </button>
+                                            </form>
+                                        </li>
+                                    @endcan
+                                </x-admin.table-actions>
+                            </td>
+                        </tr>
+                    @empty
+                        <x-admin.empty-state :colspan="5" message="No banners found." />
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if ($banners->hasPages())
+            <x-slot:footer>{{ $banners->links() }}</x-slot:footer>
+        @endif
+    </x-admin.card>
 @endsection

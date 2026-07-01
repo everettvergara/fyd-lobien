@@ -10,7 +10,7 @@ class PermissionController extends Controller
 {
     public function index(): View
     {
-        abort_unless(auth()->user()->hasPermission('permissions.view'), 403);
+        $this->authorize('viewAny', Permission::class);
 
         $permissions = Permission::orderBy('module')->orderBy('action')->get()
             ->groupBy('module');

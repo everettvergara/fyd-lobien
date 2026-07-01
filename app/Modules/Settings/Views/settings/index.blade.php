@@ -1,5 +1,6 @@
 @extends('admin.layouts.app')
 @section('title', 'Settings')
+@php $breadcrumbs = [['label' => 'Dashboard', 'url' => route('admin.dashboard')], ['label' => 'Settings']]; @endphp
 @section('content')
 <div class="mb-4"><h1 class="h3 mb-0">Settings</h1></div>
 <form method="POST" action="{{ route('admin.settings.update') }}">@csrf @method('PUT')
@@ -9,6 +10,7 @@
 <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#social" type="button">Social</button></li>
 <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#contact" type="button">Contact</button></li>
 <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#seo" type="button">SEO Defaults</button></li>
+<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#auth" type="button">Authentication</button></li>
 </ul>
 <div class="tab-content">
 <div class="tab-pane fade show active" id="general">
@@ -43,7 +45,35 @@
 <div class="mb-3"><label class="form-label">Default SEO Title</label><input type="text" class="form-control" name="settings[seo][default_title]" value="{{ $settings['seo']['default_title'] ?? '' }}"></div>
 <div class="mb-3"><label class="form-label">Default Meta Description</label><textarea class="form-control" name="settings[seo][default_description]" rows="2">{{ $settings['seo']['default_description'] ?? '' }}</textarea></div>
 </div></div></div>
+<div class="tab-pane fade" id="auth">
+<div class="card"><div class="card-body">
+<div class="mb-3 form-check">
+<input type="hidden" name="settings[auth][registration_enabled]" value="0">
+<input type="checkbox" class="form-check-input" id="registration_enabled" name="settings[auth][registration_enabled]" value="1" @checked(filter_var($settings['auth']['registration_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN))>
+<label class="form-check-label" for="registration_enabled">Allow public registration</label>
 </div>
-@can('settings.edit')<button type="submit" class="btn btn-primary mt-3">Save Settings</button>@endcan
+<div class="row">
+<div class="col-md-4 mb-3"><label class="form-label">Minimum Password Length</label><input type="number" class="form-control" name="settings[auth][password_min_length]" value="{{ $settings['auth']['password_min_length'] ?? 8 }}" min="6" max="128"></div>
+<div class="col-md-4 mb-3"><label class="form-label">Login Max Attempts</label><input type="number" class="form-control" name="settings[auth][login_max_attempts]" value="{{ $settings['auth']['login_max_attempts'] ?? 5 }}" min="1" max="20"></div>
+<div class="col-md-4 mb-3"><label class="form-label">Session Lifetime (minutes)</label><input type="number" class="form-control" name="settings[auth][session_lifetime]" value="{{ $settings['auth']['session_lifetime'] ?? 120 }}" min="5" max="1440"></div>
+</div>
+<div class="mb-2 form-check">
+<input type="hidden" name="settings[auth][password_mixed_case]" value="0">
+<input type="checkbox" class="form-check-input" id="password_mixed_case" name="settings[auth][password_mixed_case]" value="1" @checked(filter_var($settings['auth']['password_mixed_case'] ?? true, FILTER_VALIDATE_BOOLEAN))>
+<label class="form-check-label" for="password_mixed_case">Require mixed case</label>
+</div>
+<div class="mb-2 form-check">
+<input type="hidden" name="settings[auth][password_numbers]" value="0">
+<input type="checkbox" class="form-check-input" id="password_numbers" name="settings[auth][password_numbers]" value="1" @checked(filter_var($settings['auth']['password_numbers'] ?? true, FILTER_VALIDATE_BOOLEAN))>
+<label class="form-check-label" for="password_numbers">Require numbers</label>
+</div>
+<div class="mb-2 form-check">
+<input type="hidden" name="settings[auth][password_symbols]" value="0">
+<input type="checkbox" class="form-check-input" id="password_symbols" name="settings[auth][password_symbols]" value="1" @checked(filter_var($settings['auth']['password_symbols'] ?? false, FILTER_VALIDATE_BOOLEAN))>
+<label class="form-check-label" for="password_symbols">Require symbols</label>
+</div>
+</div></div></div>
+</div>
+@can('update', App\Models\Setting::class)<button type="submit" class="btn btn-primary mt-3">Save Settings</button>@endcan
 </form>
 @endsection

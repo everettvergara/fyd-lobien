@@ -78,7 +78,9 @@ class RoleController extends Controller
             'description' => $request->description,
         ]);
 
-        $role->syncPermissions($request->permissions ?? []);
+        if (! $role->is_system) {
+            $role->syncPermissions($request->permissions ?? []);
+        }
 
         ActivityLogger::log('roles', 'updated', $role, ['name' => $role->display_name]);
 

@@ -42,6 +42,15 @@
     </div>
 </div>
 
+<div class="mb-3">
+    @include('media::partials.media-picker', [
+        'name' => 'featured_image_id',
+        'label' => 'Featured Image',
+        'value' => $page?->featured_image_id,
+        'previewUrl' => $page?->featuredImage?->url(),
+    ])
+</div>
+
 <hr class="my-4">
 <h6 class="fw-semibold mb-3">Page Sections</h6>
 <div id="sections-container">

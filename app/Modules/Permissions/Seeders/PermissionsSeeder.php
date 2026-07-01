@@ -45,6 +45,9 @@ class PermissionsSeeder extends Seeder
             ['module' => 'media', 'action' => 'delete', 'display_name' => 'Delete Media'],
             ['module' => 'settings', 'action' => 'view', 'display_name' => 'View Settings'],
             ['module' => 'settings', 'action' => 'edit', 'display_name' => 'Edit Settings'],
+            ['module' => 'activity_log', 'action' => 'view', 'display_name' => 'View Audit Logs'],
+            ['module' => 'sessions', 'action' => 'view', 'display_name' => 'View Sessions'],
+            ['module' => 'sessions', 'action' => 'delete', 'display_name' => 'Revoke Sessions'],
         ];
 
         foreach ($permissions as $permission) {

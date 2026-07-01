@@ -46,7 +46,7 @@
 
         <button type="submit" class="btn btn-primary w-100 mb-3">Sign In</button>
 
-        @if (config('fyd.registration_enabled', true))
+        @if (app(\App\Services\AuthConfigService::class)->registrationEnabled())
             <p class="text-center text-muted small mb-0">
                 Don't have an account?
                 <a href="{{ route('admin.register') }}" class="text-decoration-none">Register</a>

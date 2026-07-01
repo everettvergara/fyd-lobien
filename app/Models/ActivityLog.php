@@ -59,6 +59,10 @@ class ActivityLog extends Model
             'deactivated' => "{$userName} deactivated a user account",
             'suspended' => "{$userName} suspended a user account",
             'published' => "{$userName} published {$this->module} content",
+            'login' => "{$userName} signed in",
+            'logout' => "{$userName} signed out",
+            'login_failed' => 'Failed sign-in attempt for '.($this->properties['email'] ?? 'unknown'),
+            'revoked' => "{$userName} revoked a session",
             default => "{$userName} performed {$this->action} on {$this->module}",
         };
     }

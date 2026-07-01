@@ -3,12 +3,15 @@
 namespace App\Services;
 
 use App\Enums\MenuLocation;
-use App\Models\Setting;
 use App\Modules\Menus\Models\Menu;
 use App\Modules\Menus\Models\MenuItem;
 
 class NavigationService
 {
+    public function __construct(
+        protected SettingsService $settings,
+    ) {}
+
     public function header(): array
     {
         return $this->forLocation(MenuLocation::Header);
@@ -72,18 +75,18 @@ class NavigationService
     public function siteInfo(): array
     {
         return [
-            'name' => Setting::get('general', 'website_name', config('fyd.name')),
-            'tagline' => Setting::get('general', 'tagline', ''),
+            'name' => $this->settings->get('general', 'website_name', config('fyd.name')),
+            'tagline' => $this->settings->get('general', 'tagline', ''),
             'contact' => [
-                'email' => Setting::get('contact', 'email', ''),
-                'phone' => Setting::get('contact', 'phone', ''),
-                'address' => Setting::get('contact', 'address', ''),
+                'email' => $this->settings->get('contact', 'email', ''),
+                'phone' => $this->settings->get('contact', 'phone', ''),
+                'address' => $this->settings->get('contact', 'address', ''),
             ],
             'social' => [
-                'facebook' => Setting::get('social', 'facebook', ''),
-                'twitter' => Setting::get('social', 'twitter', ''),
-                'instagram' => Setting::get('social', 'instagram', ''),
-                'linkedin' => Setting::get('social', 'linkedin', ''),
+                'facebook' => $this->settings->get('social', 'facebook', ''),
+                'twitter' => $this->settings->get('social', 'twitter', ''),
+                'instagram' => $this->settings->get('social', 'instagram', ''),
+                'linkedin' => $this->settings->get('social', 'linkedin', ''),
             ],
         ];
     }

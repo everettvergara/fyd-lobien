@@ -99,6 +99,40 @@ class AdministrationTest extends TestCase
         $response->assertStatus(403);
     }
 
+    public function test_system_role_permissions_cannot_be_changed(): void
+    {
+        $admin = $this->createAdminUser();
+        $role = Role::where('name', 'super_administrator')->first();
+        $originalCount = $role->permissions()->count();
+
+        $response = $this->actingAs($admin)->put("/admin/roles/{$role->id}", [
+            'display_name' => $role->display_name,
+            'description' => $role->description,
+            'permissions' => [],
+        ]);
+
+        $response->assertRedirect('/admin/roles');
+        $this->assertEquals($originalCount, $role->fresh()->permissions()->count());
+    }
+
+    public function test_non_super_admin_cannot_edit_system_role(): void
+    {
+        $this->seed();
+        $editor = User::factory()->create(['status' => UserStatus::Active]);
+        $editorRole = Role::where('name', 'editor')->first();
+        $editor->syncRoles([$editorRole->id]);
+
+        $systemRole = Role::where('name', 'super_administrator')->first();
+
+        $response = $this->actingAs($editor)->put("/admin/roles/{$systemRole->id}", [
+            'display_name' => 'Changed Name',
+            'description' => 'Changed',
+            'permissions' => [],
+        ]);
+
+        $response->assertStatus(403);
+    }
+
     public function test_user_can_be_activated(): void
     {
         $admin = $this->createAdminUser();

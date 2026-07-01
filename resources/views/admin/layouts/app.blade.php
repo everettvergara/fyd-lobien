@@ -9,7 +9,7 @@
 
     @vite(['resources/admin/scss/app.scss', 'resources/admin/js/app.js'])
 </head>
-<body class="admin-body">
+<body class="admin-body" data-media-picker-url="{{ route('admin.media.picker') }}">
     <div class="admin-wrapper d-flex">
         @include('admin.layouts.partials.sidebar')
 
@@ -39,6 +39,7 @@
     </div>
 
     @include('admin.layouts.partials.toast')
+    @include('media::partials.media-picker-modal')
     @stack('scripts')
 </body>
 </html>

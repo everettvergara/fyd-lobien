@@ -4,16 +4,20 @@ namespace App\Modules\Media\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
-use App\Models\MediaFolder;
+use App\Modules\Media\Requests\StoreMediaRequest;
+use App\Modules\Media\Services\MediaService;
 use App\Services\ActivityLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class MediaController extends Controller
 {
+    public function __construct(
+        protected MediaService $mediaService,
+    ) {}
+
     public function index(Request $request): View
     {
         $this->authorize('viewAny', Media::class);
@@ -28,35 +32,31 @@ class MediaController extends Controller
 
         return view('media::media.index', [
             'media' => $query->paginate(24),
-            'folders' => MediaFolder::orderBy('name')->get(),
+            'folders' => \App\Models\MediaFolder::orderBy('name')->get(),
             'search' => $search,
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function picker(Request $request): JsonResponse
     {
-        $this->authorize('create', Media::class);
-        $request->validate([
-            'file' => ['required', 'file', 'max:10240'],
-            'folder_id' => ['nullable', 'exists:media_folders,id'],
-            'alt_text' => ['nullable', 'string', 'max:255'],
-        ]);
+        $this->authorize('viewAny', Media::class);
 
-        $file = $request->file('file');
-        $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
-        $path = $file->storeAs('media/'.date('Y/m'), $filename, 'public');
-
-        $media = Media::create([
-            'folder_id' => $request->folder_id,
-            'filename' => $filename,
-            'original_filename' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-            'disk' => 'public',
-            'path' => $path,
-            'alt_text' => $request->alt_text,
-            'uploaded_by' => $request->user()->id,
+        return response()->json([
+            'items' => $this->mediaService->imagesForPicker(
+                $request->get('search'),
+                (int) $request->get('limit', 48)
+            ),
         ]);
+    }
+
+    public function store(StoreMediaRequest $request): RedirectResponse
+    {
+        $media = $this->mediaService->upload(
+            $request->file('file'),
+            $request->integer('folder_id') ?: null,
+            $request->input('alt_text'),
+            $request->user()->id,
+        );
 
         ActivityLogger::log('media', 'created', $media);
 
@@ -66,9 +66,9 @@ class MediaController extends Controller
     public function destroy(Media $media): RedirectResponse
     {
         $this->authorize('delete', $media);
-        Storage::disk($media->disk)->delete($media->path);
+
         ActivityLogger::log('media', 'deleted', $media);
-        $media->delete();
+        $this->mediaService->delete($media);
 
         return back()->with('success', 'File deleted successfully.');
     }

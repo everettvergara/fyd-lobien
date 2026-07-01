@@ -20,9 +20,14 @@ class SeoFields
 
     public static function extract(array $data): array
     {
-        return array_intersect_key($data, array_flip([
-            'seo_title', 'meta_description', 'meta_keywords', 'canonical_url',
-            'og_title', 'og_description', 'og_image_id', 'robots',
-        ]));
+        return array_intersect_key($data, array_flip(self::attributeKeys()));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function attributeKeys(): array
+    {
+        return array_keys(self::rules());
     }
 }

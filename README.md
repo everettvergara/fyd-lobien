@@ -102,11 +102,10 @@ app/
 ├── Enums/              # Shared enums (UserStatus, ContentStatus, etc.)
 ├── Http/
 │   ├── Controllers/
-│   │   ├── Admin/      # Core admin controllers
 │   │   └── Public/     # Public Inertia controllers
 │   └── Middleware/
-├── Models/             # Shared models (User, Role, Permission, Media, etc.)
-├── Modules/            # CMS modules (standard layout per module)
+├── Models/             # Framework/kernel models (User, Role, Media, etc.)
+├── Modules/            # CMS modules (see docs/MODULE_STANDARD.md)
 │   ├── Authentication/
 │   ├── Dashboard/
 │   ├── Users/
@@ -119,10 +118,11 @@ app/
 │   ├── Media/
 │   ├── Settings/
 │   └── SEO/
-├── Services/           # Shared services
+├── Services/           # Shared framework services
 ├── Support/            # Helper classes
 └── Traits/             # Shared traits (HasRoles, HasSeo, Publishable)
 
+docs/                   # Authoritative architecture documentation
 resources/
 ├── admin/              # Admin theme SCSS/JS
 ├── js/                 # Public Inertia/Vue app
@@ -139,41 +139,37 @@ routes/
 └── admin.php           # Admin route entry (modules load their own)
 ```
 
+## Documentation
+
+Authoritative documentation lives in [docs/](docs/README.md):
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Long-term architecture and principles |
+| [FRAMEWORK.md](docs/FRAMEWORK.md) | Framework kernel modules and rules |
+| [MODULE_STANDARD.md](docs/MODULE_STANDARD.md) | Required module structure |
+| [SECURITY.md](docs/SECURITY.md) | Security domain specification |
+| [DEVELOPMENT.md](docs/DEVELOPMENT.md) | Day-to-day development guide |
+| [ROADMAP.md](docs/ROADMAP.md) | Phases, milestones, and current work |
+
 ## Module Standard
 
-Every module follows this layout:
-
-```
-Module/
-├── Controllers/
-├── Models/
-├── Requests/
-├── Policies/
-├── Routes/
-│   ├── admin.php
-│   └── web.php
-├── Views/
-├── Migrations/
-├── Seeders/
-├── Services/     # Optional
-└── Tests/        # Optional
-```
-
+Every module follows the layout defined in [docs/MODULE_STANDARD.md](docs/MODULE_STANDARD.md).
 Enable modules in `config/modules.php`.
+
+Model placement rules: [docs/ADR/001-model-placement.md](docs/ADR/001-model-placement.md).
 
 ## Development Phases
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| 0 | Complete | Planning |
-| 1 | Complete | Foundation |
-| 2 | Complete | Authentication |
-| 3 | Complete | Administration |
-| 4 | Complete | CMS |
-| 5 | Complete | Public Website |
-| 6 | Complete | MVP |
+| MVP | Complete | Foundation, auth, administration, CMS, public website |
+| **Framework Stabilization** | **Current** | Framework services, security, standardization, docs, UI |
+| Framework Modules | Planned | Module Registry, Menu Registry, Media Service, Audit Logs |
+| Content Engine | Planned | Enhanced content workflows |
+| Marketing / Commerce | Planned | Post-stabilization business modules |
 
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for detailed development guidelines.
+See [docs/ROADMAP.md](docs/ROADMAP.md) for milestones and [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for development guidelines.
 
 ## License
 

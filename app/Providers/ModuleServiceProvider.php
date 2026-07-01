@@ -2,21 +2,54 @@
 
 namespace App\Providers;
 
+use App\Framework\MenuRegistry;
+use App\Framework\ModuleRegistry;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class ModuleServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->singleton(ModuleRegistry::class);
+        $this->app->singleton(MenuRegistry::class);
     }
 
     public function boot(): void
     {
+        $this->discoverModules();
         $this->loadModuleRoutes();
         $this->loadModuleViews();
         $this->loadModuleMigrations();
+
+        View::composer('admin.layouts.partials.sidebar', function ($view) {
+            $view->with('menuSections', app(MenuRegistry::class)->sectionsFor(auth()->user()));
+        });
+    }
+
+    protected function discoverModules(): void
+    {
+        $registry = app(ModuleRegistry::class);
+        $menuRegistry = app(MenuRegistry::class);
+        $modulesPath = config('modules.path');
+
+        foreach (config('modules.enabled', []) as $module) {
+            $moduleFile = "{$modulesPath}/{$module}/Module.php";
+
+            if (! file_exists($moduleFile)) {
+                continue;
+            }
+
+            $class = "App\\Modules\\{$module}\\Module";
+
+            if (class_exists($class)) {
+                $registry->register(app($class));
+            }
+        }
+
+        $registry->bootPolicies();
+        $registry->bootMenus($menuRegistry);
     }
 
     protected function loadModuleRoutes(): void
@@ -60,10 +93,10 @@ class ModuleServiceProvider extends ServiceProvider
         $modulesPath = config('modules.path');
 
         foreach (config('modules.enabled', []) as $module) {
-            $migrationsPath = "{$modulesPath}/{$module}/Migrations";
-
-            if (is_dir($migrationsPath)) {
-                $this->loadMigrationsFrom($migrationsPath);
+            foreach (["{$modulesPath}/{$module}/Database/Migrations", "{$modulesPath}/{$module}/Migrations"] as $migrationsPath) {
+                if (is_dir($migrationsPath)) {
+                    $this->loadMigrationsFrom($migrationsPath);
+                }
             }
         }
     }

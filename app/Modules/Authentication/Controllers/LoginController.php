@@ -4,8 +4,9 @@ namespace App\Modules\Authentication\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Authentication\Requests\LoginRequest;
+use App\Services\ActivityLogger;
+use App\Services\LoginHistoryService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class LoginController extends Controller
@@ -15,14 +16,21 @@ class LoginController extends Controller
         return view('authentication::auth.login');
     }
 
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, LoginHistoryService $loginHistory): RedirectResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
 
-        $request->user()->update([
+        $user = $request->user();
+        $user->update([
             'last_login_at' => now(),
+        ]);
+
+        $loginHistory->recordSuccess($user, $request);
+
+        ActivityLogger::log('authentication', 'login', $user, [
+            'email' => $user->email,
         ]);
 
         return redirect()->intended(route('admin.dashboard'));

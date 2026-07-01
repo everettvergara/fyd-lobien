@@ -6,23 +6,31 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Modules\Settings\Requests\UpdateSettingsRequest;
 use App\Services\ActivityLogger;
+use App\Services\AuthConfigService;
 use App\Services\MailConfigService;
+use App\Services\PasswordPolicyService;
+use App\Services\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class SettingsController extends Controller
 {
+    public function __construct(
+        protected SettingsService $settings,
+    ) {}
+
     public function index(): View
     {
-        abort_unless(auth()->user()->hasPermission('settings.view'), 403);
+        $this->authorize('viewAny', Setting::class);
 
         $settings = [
-            'general' => $this->group('general'),
-            'email' => $this->group('email'),
-            'social' => $this->group('social'),
-            'analytics' => $this->group('analytics'),
-            'contact' => $this->group('contact'),
-            'seo' => $this->group('seo'),
+            'general' => $this->settings->group('general'),
+            'email' => $this->settings->group('email'),
+            'social' => $this->settings->group('social'),
+            'analytics' => $this->settings->group('analytics'),
+            'contact' => $this->settings->group('contact'),
+            'seo' => $this->settings->group('seo'),
+            'auth' => $this->settings->group('auth'),
         ];
 
         return view('settings::settings.index', compact('settings'));
@@ -32,18 +40,34 @@ class SettingsController extends Controller
     {
         foreach ($request->validated('settings') as $group => $items) {
             foreach ($items as $key => $value) {
-                Setting::set($group, $key, $value);
+                $type = $this->settingType($group, $key);
+                if ($type === 'boolean') {
+                    $stored = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+                } else {
+                    $stored = (string) $value;
+                }
+                $this->settings->set($group, $key, $stored, $type);
             }
         }
 
+        app(PasswordPolicyService::class)->apply();
+        app(AuthConfigService::class)->apply();
         app(MailConfigService::class)->apply();
         ActivityLogger::log('settings', 'updated');
 
         return back()->with('success', 'Settings saved successfully.');
     }
 
-    protected function group(string $group): array
+    protected function settingType(string $group, string $key): string
     {
-        return Setting::where('group', $group)->pluck('value', 'key')->toArray();
+        $booleanKeys = [
+            'auth' => ['registration_enabled', 'password_mixed_case', 'password_numbers', 'password_symbols'],
+        ];
+
+        if (in_array($key, $booleanKeys[$group] ?? [], true)) {
+            return 'boolean';
+        }
+
+        return 'string';
     }
 }

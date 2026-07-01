@@ -11,6 +11,8 @@ return [
         'SEO',
         'Media',
         'Settings',
+        'AuditLogs',
+        'Sessions',
         'Pages',
         'Posts',
         'Banners',

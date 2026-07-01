@@ -8,16 +8,16 @@ use App\Models\Role;
 use App\Models\User;
 use App\Modules\Users\Requests\StoreUserRequest;
 use App\Modules\Users\Requests\UpdateUserRequest;
-use App\Notifications\AccountActivatedNotification;
-use App\Notifications\AccountDeactivatedNotification;
-use App\Services\ActivityLogger;
+use App\Modules\Users\Services\UserManagementService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
+    public function __construct(
+        protected UserManagementService $users,
+    ) {}
+
     public function index(): View
     {
         $this->authorize('viewAny', User::class);
@@ -41,19 +41,15 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request): RedirectResponse
     {
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'status' => $request->enum('status', UserStatus::class),
-            'email_verified_at' => $request->enum('status', UserStatus::class) === UserStatus::Active ? now() : null,
-        ]);
-
-        if ($request->filled('roles')) {
-            $user->syncRoles($request->roles);
-        }
-
-        ActivityLogger::log('users', 'created', $user, ['name' => $user->name]);
+        $this->users->create(
+            [
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => $request->password,
+                'status' => $request->enum('status', UserStatus::class),
+            ],
+            $request->filled('roles') ? $request->roles : null,
+        );
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User created successfully.');
@@ -81,21 +77,16 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        $user->fill([
-            'name' => $request->name,
-            'email' => $request->email,
-            'status' => $request->enum('status', UserStatus::class),
-        ]);
-
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
-        }
-
-        $user->save();
-
-        $user->syncRoles($request->roles ?? []);
-
-        ActivityLogger::log('users', 'updated', $user, ['name' => $user->name]);
+        $this->users->update(
+            $user,
+            [
+                'name' => $request->name,
+                'email' => $request->email,
+                'status' => $request->enum('status', UserStatus::class),
+            ],
+            $request->roles ?? [],
+            $request->filled('password') ? $request->password : null,
+        );
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');
@@ -105,9 +96,7 @@ class UserController extends Controller
     {
         $this->authorize('delete', $user);
 
-        ActivityLogger::log('users', 'deleted', $user, ['name' => $user->name]);
-
-        $user->delete();
+        $this->users->delete($user);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
@@ -117,10 +106,7 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        $user->update(['status' => UserStatus::Active]);
-        $user->notify(new AccountActivatedNotification);
-
-        ActivityLogger::log('users', 'activated', $user);
+        $this->users->activate($user);
 
         return back()->with('success', 'User activated successfully.');
     }
@@ -129,10 +115,7 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        $user->update(['status' => UserStatus::Inactive]);
-        $user->notify(new AccountDeactivatedNotification);
-
-        ActivityLogger::log('users', 'deactivated', $user);
+        $this->users->deactivate($user);
 
         return back()->with('success', 'User deactivated successfully.');
     }
@@ -141,9 +124,7 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        $user->update(['status' => UserStatus::Suspended]);
-
-        ActivityLogger::log('users', 'suspended', $user);
+        $this->users->suspend($user);
 
         return back()->with('success', 'User suspended successfully.');
     }
@@ -152,9 +133,7 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        Password::sendResetLink(['email' => $user->email]);
-
-        ActivityLogger::log('users', 'updated', $user, ['action' => 'password_reset_sent']);
+        $this->users->sendPasswordReset($user);
 
         return back()->with('success', 'Password reset link sent to user.');
     }

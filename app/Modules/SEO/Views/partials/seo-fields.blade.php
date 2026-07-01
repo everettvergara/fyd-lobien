@@ -46,3 +46,10 @@
     <label for="og_description" class="form-label">Open Graph Description</label>
     <textarea class="form-control" id="og_description" name="og_description" rows="2">{{ old('og_description', $seo?->og_description) }}</textarea>
 </div>
+
+@include('media::partials.media-picker', [
+    'name' => 'og_image_id',
+    'label' => 'Open Graph Image',
+    'value' => $seo?->og_image_id,
+    'previewUrl' => $seo?->ogImage?->url() ?? null,
+])

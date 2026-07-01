@@ -3,6 +3,8 @@
 namespace App\Modules\Authentication\Requests;
 
 use App\Enums\UserStatus;
+use App\Services\AuthConfigService;
+use App\Services\LoginHistoryService;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -41,6 +43,7 @@ class LoginRequest extends FormRequest
 
         if (! $user->hasVerifiedEmail()) {
             Auth::logout();
+            $this->recordAuthFailure('email_not_verified');
 
             throw ValidationException::withMessages([
                 'email' => 'Please verify your email address before signing in.',
@@ -49,6 +52,16 @@ class LoginRequest extends FormRequest
 
         if (! $user->status->canLogin()) {
             Auth::logout();
+
+            $reason = match ($user->status) {
+                UserStatus::PendingVerification => 'pending_verification',
+                UserStatus::Inactive => 'inactive',
+                UserStatus::Suspended => 'suspended',
+                UserStatus::Locked => 'locked',
+                default => 'not_authorized',
+            };
+
+            $this->recordAuthFailure($reason);
 
             $message = match ($user->status) {
                 UserStatus::PendingVerification => 'Your account is pending email verification.',
@@ -68,7 +81,9 @@ class LoginRequest extends FormRequest
 
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        $maxAttempts = app(AuthConfigService::class)->loginMaxAttempts();
+
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), $maxAttempts)) {
             return;
         }
 
@@ -87,5 +102,14 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+    }
+
+    protected function recordAuthFailure(string $reason): void
+    {
+        app(LoginHistoryService::class)->recordFailure(
+            $this->string('email'),
+            $this,
+            $reason
+        );
     }
 }

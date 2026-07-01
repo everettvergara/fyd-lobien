@@ -2,20 +2,25 @@
 
 namespace App\Modules\Pages\Controllers;
 
-use App\Enums\ContentStatus;
 use App\Http\Controllers\Controller;
 use App\Modules\Pages\Models\Page;
-use App\Modules\Pages\Models\PageSection;
 use App\Modules\Pages\Requests\StorePageRequest;
 use App\Modules\Pages\Requests\UpdatePageRequest;
+use App\Modules\Pages\Services\PageSectionService;
+use App\Modules\SEO\Services\SeoService;
 use App\Services\ActivityLogger;
-use App\Support\SeoFields;
+use App\Services\PublishingService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PageController extends Controller
 {
+    public function __construct(
+        protected PageSectionService $pageSections,
+        protected PublishingService $publishing,
+        protected SeoService $seo,
+    ) {}
+
     public function index(): View
     {
         $this->authorize('viewAny', Page::class);
@@ -28,8 +33,8 @@ class PageController extends Controller
     {
         $this->authorize('create', Page::class);
         $pages = Page::orderBy('title')->get();
-        $statuses = ContentStatus::cases();
-        $components = ['hero_banner', 'feature_grid', 'cta', 'statistics', 'contact', 'faq'];
+        $statuses = \App\Enums\ContentStatus::cases();
+        $components = $this->pageSections->componentTypes();
 
         return view('pages::pages.create', compact('pages', 'statuses', 'components'));
     }
@@ -37,12 +42,12 @@ class PageController extends Controller
     public function store(StorePageRequest $request): RedirectResponse
     {
         $page = Page::create([
-            ...$request->safe()->except(['sections', 'seo_title', 'meta_description', 'meta_keywords', 'canonical_url', 'og_title', 'og_description', 'og_image_id', 'robots']),
+            ...$request->safe()->except(array_merge(['sections'], $this->seo->fieldKeys())),
             'author_id' => $request->user()->id,
         ]);
 
-        $this->syncSections($page, $request->sections ?? []);
-        $page->saveSeo(SeoFields::extract($request->validated()));
+        $this->pageSections->sync($page, $request->sections ?? []);
+        $page->saveSeo($this->seo->extract($request->validated()));
         ActivityLogger::log('pages', 'created', $page, ['title' => $page->title]);
 
         return redirect()->route('admin.pages.index')->with('success', 'Page created successfully.');
@@ -59,19 +64,19 @@ class PageController extends Controller
     public function edit(Page $page): View
     {
         $this->authorize('update', $page);
-        $page->load(['sections', 'seoMeta']);
+        $page->load(['sections', 'seoMeta.ogImage', 'featuredImage']);
         $pages = Page::where('id', '!=', $page->id)->orderBy('title')->get();
-        $statuses = ContentStatus::cases();
-        $components = ['hero_banner', 'feature_grid', 'cta', 'statistics', 'contact', 'faq'];
+        $statuses = \App\Enums\ContentStatus::cases();
+        $components = $this->pageSections->componentTypes();
 
         return view('pages::pages.edit', compact('page', 'pages', 'statuses', 'components'));
     }
 
     public function update(UpdatePageRequest $request, Page $page): RedirectResponse
     {
-        $page->update($request->safe()->except(['sections', 'seo_title', 'meta_description', 'meta_keywords', 'canonical_url', 'og_title', 'og_description', 'og_image_id', 'robots']));
-        $this->syncSections($page, $request->sections ?? []);
-        $page->saveSeo(SeoFields::extract($request->validated()));
+        $page->update($request->safe()->except(array_merge(['sections'], $this->seo->fieldKeys())));
+        $this->pageSections->sync($page, $request->sections ?? []);
+        $page->saveSeo($this->seo->extract($request->validated()));
         ActivityLogger::log('pages', 'updated', $page, ['title' => $page->title]);
 
         return redirect()->route('admin.pages.index')->with('success', 'Page updated successfully.');
@@ -89,8 +94,7 @@ class PageController extends Controller
     public function publish(Page $page): RedirectResponse
     {
         $this->authorize('publish', $page);
-        $page->update(['status' => ContentStatus::Published, 'published_at' => now()]);
-        ActivityLogger::log('pages', 'published', $page);
+        $this->publishing->publish($page, 'pages');
 
         return back()->with('success', 'Page published successfully.');
     }
@@ -98,8 +102,7 @@ class PageController extends Controller
     public function archive(Page $page): RedirectResponse
     {
         $this->authorize('update', $page);
-        $page->update(['status' => ContentStatus::Archived]);
-        ActivityLogger::log('pages', 'updated', $page, ['action' => 'archived']);
+        $this->publishing->archive($page, 'pages');
 
         return back()->with('success', 'Page archived successfully.');
     }
@@ -108,26 +111,21 @@ class PageController extends Controller
     {
         $this->authorize('create', Page::class);
         $page->load('sections', 'seoMeta');
-        $newPage = $page->replicate(['slug', 'published_at']);
-        $newPage->title = $page->title.' (Copy)';
-        $newPage->slug = $page->slug.'-copy-'.Str::random(4);
-        $newPage->status = ContentStatus::Draft;
-        $newPage->published_at = null;
-        $newPage->author_id = auth()->id();
-        $newPage->save();
 
-        foreach ($page->sections as $section) {
-            $newPage->sections()->create($section->only(['component_type', 'sort_order', 'settings']));
-        }
-
-        if ($page->seoMeta) {
-            $newPage->saveSeo($page->seoMeta->only([
-                'seo_title', 'meta_description', 'meta_keywords', 'canonical_url',
-                'og_title', 'og_description', 'og_image_id', 'robots',
-            ]));
-        }
-
-        ActivityLogger::log('pages', 'created', $newPage, ['duplicated_from' => $page->id]);
+        $newPage = $this->publishing->duplicate(
+            $page,
+            'pages',
+            [
+                'title' => $page->title.' (Copy)',
+                'slug' => $this->publishing->generateCopySlug($page->slug),
+                'author_id' => auth()->id(),
+            ],
+            function (Page $source, Page $duplicate) {
+                foreach ($source->sections as $section) {
+                    $duplicate->sections()->create($section->only(['component_type', 'sort_order', 'settings']));
+                }
+            }
+        );
 
         return redirect()->route('admin.pages.edit', $newPage)->with('success', 'Page duplicated successfully.');
     }
@@ -138,17 +136,5 @@ class PageController extends Controller
         $page->load(['sections', 'featuredImage']);
 
         return view('pages::pages.preview', compact('page'));
-    }
-
-    protected function syncSections(Page $page, array $sections): void
-    {
-        $page->sections()->delete();
-        foreach ($sections as $index => $section) {
-            $page->sections()->create([
-                'component_type' => $section['component_type'],
-                'sort_order' => $index,
-                'settings' => $section['settings'] ?? [],
-            ]);
-        }
     }
 }

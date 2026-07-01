@@ -24,7 +24,15 @@ class RolePolicy
 
     public function update(User $user, Role $role): bool
     {
-        return $user->hasPermission('roles.edit');
+        if (! $user->hasPermission('roles.edit')) {
+            return false;
+        }
+
+        if ($role->is_system) {
+            return $user->isSuperAdministrator();
+        }
+
+        return true;
     }
 
     public function delete(User $user, Role $role): bool

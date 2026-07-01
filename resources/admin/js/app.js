@@ -1,4 +1,5 @@
 import 'bootstrap';
+import './media-picker.js';
 
 window.showToast = function (message, type = 'success') {
     const container = document.getElementById('toastContainer');

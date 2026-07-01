@@ -2,6 +2,7 @@
 
 namespace App\Modules\Authentication\Requests;
 
+use App\Services\AuthConfigService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
@@ -9,7 +10,7 @@ class RegisterRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return config('fyd.registration_enabled', true);
+        return app(AuthConfigService::class)->registrationEnabled();
     }
 
     public function rules(): array
