@@ -58,8 +58,21 @@ $sidebar-width: 260px;
 .admin-sidebar {
     width: $sidebar-width;
     min-height: 100vh;
-    background-color: $sidebar-bg;
     flex-shrink: 0;
+    background-color: $sidebar-bg;
+    color: #fff;
+
+    // Bootstrap offcanvas classes are added via JS for mobile; keep sidebar dark.
+    --bs-offcanvas-bg: #{$sidebar-bg};
+    --bs-offcanvas-color: #fff;
+    --bs-nav-link-color: rgba(255, 255, 255, 0.7);
+    --bs-nav-link-hover-color: #fff;
+    --bs-nav-link-active-color: #fff;
+
+    &.offcanvas,
+    &.offcanvas-lg {
+        background-color: $sidebar-bg !important;
+    }
 
     @media (max-width: 991.98px) {
         position: fixed;
