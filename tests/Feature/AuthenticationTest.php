@@ -120,4 +120,15 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Dashboard');
     }
+
+    public function test_unverified_authenticated_users_are_redirected_to_verification_notice(): void
+    {
+        $user = User::factory()->unverified()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $response = $this->actingAs($user)->get('/admin');
+
+        $response->assertRedirect(route('admin.verification.notice'));
+    }
 }

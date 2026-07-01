@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminAuthenticate::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::redirectTo('admin.verification.notice'),
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
