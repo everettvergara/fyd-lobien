@@ -1,0 +1,164 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/utilities";
+
+$primary: #2563eb;
+$sidebar-bg: #1e293b;
+$sidebar-width: 260px;
+
+@import "bootstrap/scss/root";
+@import "bootstrap/scss/reboot";
+@import "bootstrap/scss/type";
+@import "bootstrap/scss/images";
+@import "bootstrap/scss/containers";
+@import "bootstrap/scss/grid";
+@import "bootstrap/scss/tables";
+@import "bootstrap/scss/forms";
+@import "bootstrap/scss/buttons";
+@import "bootstrap/scss/transitions";
+@import "bootstrap/scss/dropdown";
+@import "bootstrap/scss/button-group";
+@import "bootstrap/scss/nav";
+@import "bootstrap/scss/navbar";
+@import "bootstrap/scss/card";
+@import "bootstrap/scss/accordion";
+@import "bootstrap/scss/breadcrumb";
+@import "bootstrap/scss/pagination";
+@import "bootstrap/scss/badge";
+@import "bootstrap/scss/alert";
+@import "bootstrap/scss/progress";
+@import "bootstrap/scss/list-group";
+@import "bootstrap/scss/close";
+@import "bootstrap/scss/toasts";
+@import "bootstrap/scss/modal";
+@import "bootstrap/scss/tooltip";
+@import "bootstrap/scss/popover";
+@import "bootstrap/scss/carousel";
+@import "bootstrap/scss/spinners";
+@import "bootstrap/scss/offcanvas";
+@import "bootstrap/scss/placeholders";
+@import "bootstrap/scss/helpers";
+@import "bootstrap/scss/utilities/api";
+
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+// Admin Theme
+.admin-body {
+    background-color: #f1f5f9;
+    min-height: 100vh;
+}
+
+.admin-wrapper {
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    width: $sidebar-width;
+    min-height: 100vh;
+    background-color: $sidebar-bg;
+    flex-shrink: 0;
+
+    @media (max-width: 991.98px) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1045;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+
+        &.show {
+            transform: translateX(0);
+        }
+    }
+}
+
+.admin-sidebar-brand {
+    font-size: 1.1rem;
+}
+
+.admin-sidebar-nav {
+    padding: 0.5rem 0;
+
+    .nav-section-title {
+        padding: 1rem 1.25rem 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .nav-link {
+        color: rgba(255, 255, 255, 0.7);
+        padding: 0.6rem 1.25rem;
+        font-size: 0.9rem;
+        border-left: 3px solid transparent;
+
+        &:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        &.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: $primary;
+        }
+
+        &.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+    }
+}
+
+.admin-content-wrapper {
+    min-width: 0;
+}
+
+.admin-navbar {
+    min-height: 60px;
+}
+
+.admin-main {
+    background-color: #f1f5f9;
+}
+
+.admin-stat-card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.admin-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+// Auth layout
+.admin-auth-body {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+.admin-auth-card {
+    width: 100%;
+    max-width: 420px;
+    border: none;
+    border-radius: 0.75rem;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    border-bottom: 1px solid #e2e8f0;
+}
