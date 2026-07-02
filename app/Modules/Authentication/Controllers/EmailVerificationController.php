@@ -24,7 +24,7 @@ class EmailVerificationController extends Controller
 
     public function verify(Request $request, int $id, string $hash): RedirectResponse
     {
-        if (! $request->hasValidSignature()) {
+        if (! $request->hasValidSignature(absolute: false)) {
             abort(403, 'Invalid or expired verification link.');
         }
 

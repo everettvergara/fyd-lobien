@@ -39,6 +39,7 @@ class SmokeTestFixesTest extends TestCase
             'admin.verification.verify',
             now()->addHour(),
             ['id' => $user->id, 'hash' => sha1($user->email)],
+            absolute: false,
         );
 
         $this->get($url)

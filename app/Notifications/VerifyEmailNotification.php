@@ -18,7 +18,8 @@ class VerifyEmailNotification extends VerifyEmail
             [
                 'id' => $notifiable->getKey(),
                 'hash' => sha1($notifiable->getEmailForVerification()),
-            ]
+            ],
+            absolute: false,
         );
     }
 
