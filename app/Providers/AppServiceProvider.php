@@ -9,8 +9,11 @@ use App\Services\PasswordPolicyService;
 use App\Services\SettingsService;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -26,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(Failed::class, [LogAuthenticationEvents::class, 'handleFailed']);
         Event::listen(Logout::class, [LogAuthenticationEvents::class, 'handleLogout']);
+        Event::listen(Registered::class, SendEmailVerificationNotification::class);
+
+        if ($rootUrl = config('app.url')) {
+            URL::forceRootUrl($rootUrl);
+        }
 
         app(PasswordPolicyService::class)->apply();
         app(AuthConfigService::class)->apply();

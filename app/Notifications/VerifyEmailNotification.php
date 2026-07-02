@@ -32,6 +32,8 @@ class VerifyEmailNotification extends VerifyEmail
             ->greeting('Hello '.$notifiable->name.'!')
             ->line('Please click the button below to verify your email address and activate your account.')
             ->action('Verify Email Address', $verificationUrl)
+            ->line('If the button does not work, copy and paste this URL into your browser:')
+            ->line($verificationUrl)
             ->line('If you did not create an account, no further action is required.');
     }
 }
