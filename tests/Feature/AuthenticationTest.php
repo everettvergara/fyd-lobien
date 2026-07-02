@@ -148,6 +148,18 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect('/admin/login');
     }
 
+    public function test_authenticated_users_can_logout_via_get(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $response = $this->actingAs($user)->get('/admin/logout');
+
+        $this->assertGuest();
+        $response->assertRedirect('/admin/login');
+    }
+
     public function test_dashboard_requires_authentication(): void
     {
         $response = $this->get('/admin');

@@ -31,7 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::post('email/verification-notification', [EmailVerificationController::class, 'send'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
-    Route::post('logout', [LogoutController::class, 'destroy'])->name('logout');
+    Route::match(['get', 'post'], 'logout', [LogoutController::class, 'destroy'])->name('logout');
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
