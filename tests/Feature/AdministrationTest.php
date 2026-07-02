@@ -34,6 +34,8 @@ class AdministrationTest extends TestCase
     {
         $this->seed();
         $user = User::factory()->create(['status' => UserStatus::Active]);
+        $authorRole = Role::where('name', 'author')->first();
+        $user->syncRoles([$authorRole->id]);
 
         $response = $this->actingAs($user)->get('/admin/users');
 

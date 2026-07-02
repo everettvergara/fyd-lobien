@@ -22,9 +22,10 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_with_valid_credentials(): void
     {
-        $user = User::factory()->create([
-            'status' => UserStatus::Active,
-        ]);
+        $this->seed();
+        $user = User::factory()->create(['status' => UserStatus::Active]);
+        $viewerRole = Role::where('name', 'viewer')->first();
+        $user->syncRoles([$viewerRole->id]);
 
         $response = $this->post('/admin/login', [
             'email' => $user->email,
@@ -146,6 +147,21 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
         $response->assertRedirect('/admin/login');
+    }
+
+    public function test_authenticated_users_without_role_are_sent_to_access_pending(): void
+    {
+        $this->seed();
+
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $response = $this->actingAs($user)->get('/admin');
+
+        $response->assertRedirect(route('admin.access.pending'));
+        $response = $this->actingAs($user)->get('/admin/access-pending');
+        $response->assertOk()->assertSee('Access Pending')->assertSee('Sign Out');
     }
 
     public function test_authenticated_users_can_logout_via_get(): void

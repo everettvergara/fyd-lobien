@@ -60,7 +60,7 @@ class ModuleServiceProvider extends ServiceProvider
             $adminRoutes = "{$modulesPath}/{$module}/Routes/admin.php";
 
             if (file_exists($adminRoutes)) {
-                Route::middleware(config('fyd.admin.middleware'))
+                Route::middleware(array_merge(config('fyd.admin.middleware'), ['admin.access']))
                     ->prefix(config('fyd.admin.prefix'))
                     ->name('admin.')
                     ->group($adminRoutes);
