@@ -22,11 +22,15 @@ class AuthConfigService
 
     public function registrationEnabled(): bool
     {
-        if (! Schema::hasTable('settings')) {
-            return (bool) config('fyd.registration_enabled', true);
+        if (! config('fyd.registration_enabled', true)) {
+            return false;
         }
 
-        $value = $this->settings->get('auth', 'registration_enabled', config('fyd.registration_enabled', true));
+        if (! Schema::hasTable('settings')) {
+            return true;
+        }
+
+        $value = $this->settings->get('auth', 'registration_enabled', true);
 
         return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }

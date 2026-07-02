@@ -55,6 +55,16 @@
                                             </li>
                                         @endif
                                     @endcan
+                                    @can('create', App\Modules\Banners\Models\Banner::class)
+                                        <li>
+                                            <form method="POST" action="{{ route('admin.banners.duplicate', $banner) }}">
+                                                @csrf
+                                                <button type="submit" class="dropdown-item">
+                                                    <i class="bi bi-copy me-2"></i>Duplicate
+                                                </button>
+                                            </form>
+                                        </li>
+                                    @endcan
                                     @can('delete', $banner)
                                         <li><hr class="dropdown-divider"></li>
                                         <li>

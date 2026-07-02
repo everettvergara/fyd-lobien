@@ -28,6 +28,14 @@ class MediaService
         ]);
     }
 
+    public function uploadMany(array $files, ?int $folderId, ?string $altText, int $userId): array
+    {
+        return array_map(
+            fn ($file) => $this->upload($file, $folderId, $altText, $userId),
+            $files,
+        );
+    }
+
     public function delete(Media $media): void
     {
         Storage::disk($media->disk)->delete($media->path);

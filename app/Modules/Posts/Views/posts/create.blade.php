@@ -15,6 +15,6 @@
     />
 
     <x-admin.card>
-        @include('posts::posts._form', ['statuses' => $statuses])
+        @include('posts::posts._form', ['post' => null, 'statuses' => $statuses])
     </x-admin.card>
 @endsection

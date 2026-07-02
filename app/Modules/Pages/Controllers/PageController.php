@@ -10,6 +10,7 @@ use App\Modules\Pages\Services\PageSectionService;
 use App\Modules\SEO\Services\SeoService;
 use App\Services\ActivityLogger;
 use App\Services\PublishingService;
+use App\Support\OwnContentAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -24,7 +25,14 @@ class PageController extends Controller
     public function index(): View
     {
         $this->authorize('viewAny', Page::class);
-        $pages = Page::with('author')->latest()->paginate(15);
+
+        $query = Page::with('author')->latest();
+
+        if (OwnContentAccess::managesOwnContentOnly(auth()->user())) {
+            $query->where('author_id', auth()->id());
+        }
+
+        $pages = $query->paginate(15);
 
         return view('pages::pages.index', compact('pages'));
     }

@@ -1,4 +1,7 @@
-import 'bootstrap';
+import * as bootstrap from 'bootstrap';
+
+window.bootstrap = bootstrap;
+
 import './media-picker.js';
 
 window.showToast = function (message, type = 'success') {

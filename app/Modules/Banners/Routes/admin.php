@@ -11,4 +11,5 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::put('banners/{banner}', [BannerController::class, 'update'])->name('banners.update');
     Route::delete('banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
     Route::post('banners/{banner}/publish', [BannerController::class, 'publish'])->name('banners.publish');
+    Route::post('banners/{banner}/duplicate', [BannerController::class, 'duplicate'])->name('banners.duplicate');
 });

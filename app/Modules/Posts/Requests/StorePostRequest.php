@@ -4,6 +4,7 @@ namespace App\Modules\Posts\Requests;
 
 use App\Enums\ContentStatus;
 use App\Support\SeoFields;
+use App\Support\SlugValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +16,7 @@ class StorePostRequest extends FormRequest
     {
         return array_merge([
             'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'unique:posts,slug'],
+            'slug' => SlugValidation::rules('unique:posts,slug'),
             'summary' => ['nullable', 'string'],
             'excerpt' => ['nullable', 'string'],
             'content' => ['nullable', 'string'],

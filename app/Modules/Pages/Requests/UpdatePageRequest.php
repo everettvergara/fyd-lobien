@@ -4,6 +4,7 @@ namespace App\Modules\Pages\Requests;
 
 use App\Enums\ContentStatus;
 use App\Support\SeoFields;
+use App\Support\SlugValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +19,7 @@ class UpdatePageRequest extends FormRequest
     {
         return array_merge([
             'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', Rule::unique('pages', 'slug')->ignore($this->route('page')->id)],
+            'slug' => SlugValidation::rules(Rule::unique('pages', 'slug')->ignore($this->route('page')->id)),
             'summary' => ['nullable', 'string'],
             'content' => ['nullable', 'string'],
             'featured_image_id' => ['nullable', 'exists:media,id'],

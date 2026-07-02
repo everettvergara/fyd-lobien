@@ -51,16 +51,24 @@ class MediaController extends Controller
 
     public function store(StoreMediaRequest $request): RedirectResponse
     {
-        $media = $this->mediaService->upload(
-            $request->file('file'),
+        $files = $request->hasFile('files')
+            ? $request->file('files')
+            : [$request->file('file')];
+
+        $uploaded = $this->mediaService->uploadMany(
+            $files,
             $request->integer('folder_id') ?: null,
             $request->input('alt_text'),
             $request->user()->id,
         );
 
-        ActivityLogger::log('media', 'created', $media);
+        foreach ($uploaded as $media) {
+            ActivityLogger::log('media', 'created', $media);
+        }
 
-        return back()->with('success', 'File uploaded successfully.');
+        $count = count($uploaded);
+
+        return back()->with('success', $count === 1 ? 'File uploaded successfully.' : "{$count} files uploaded successfully.");
     }
 
     public function destroy(Media $media): RedirectResponse

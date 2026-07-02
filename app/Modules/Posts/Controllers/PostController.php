@@ -8,6 +8,7 @@ use App\Modules\Posts\Requests\StorePostRequest;
 use App\Modules\Posts\Requests\UpdatePostRequest;
 use App\Modules\Posts\Services\PostService;
 use App\Services\PublishingService;
+use App\Support\OwnContentAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -21,7 +22,14 @@ class PostController extends Controller
     public function index(): View
     {
         $this->authorize('viewAny', Post::class);
-        $posts = Post::with('author')->latest()->paginate(15);
+
+        $query = Post::with('author')->latest();
+
+        if (OwnContentAccess::managesOwnContentOnly(auth()->user())) {
+            $query->where('author_id', auth()->id());
+        }
+
+        $posts = $query->paginate(15);
 
         return view('posts::posts.index', compact('posts'));
     }

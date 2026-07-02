@@ -81,4 +81,15 @@ class BannerController extends Controller
 
         return back()->with('success', 'Banner published successfully.');
     }
+
+    public function duplicate(Banner $banner): RedirectResponse
+    {
+        $this->authorize('create', Banner::class);
+
+        $duplicate = $this->publishing->duplicate($banner, 'banners', [
+            'name' => $banner->name.' (Copy)',
+        ]);
+
+        return redirect()->route('admin.banners.edit', $duplicate)->with('success', 'Banner duplicated.');
+    }
 }

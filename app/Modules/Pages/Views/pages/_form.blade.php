@@ -6,8 +6,9 @@
     @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
 </div>
 <div class="mb-3">
-    <label for="slug" class="form-label">Slug</label>
-    <input type="text" class="form-control @error('slug') is-invalid @enderror" id="slug" name="slug" value="{{ old('slug', $page?->slug) }}" required>
+    <label for="slug" class="form-label">URL Slug (URI path)</label>
+    <input type="text" class="form-control @error('slug') is-invalid @enderror" id="slug" name="slug" value="{{ old('slug', $page?->slug) }}" required placeholder="about-us">
+    <div class="form-text">Public URL will be <code>/your-slug</code>. Use lowercase letters, numbers, and hyphens only.</div>
     @error('slug')<div class="invalid-feedback">{{ $message }}</div>@enderror
 </div>
 <div class="mb-3">
@@ -53,6 +54,7 @@
 
 <hr class="my-4">
 <h6 class="fw-semibold mb-3">Page Sections</h6>
+<p class="text-muted small">Use <strong>Add Section</strong> below to build the page with reusable components (hero, feature grid, CTA, etc.).</p>
 <div id="sections-container">
     @php $sections = old('sections', $page?->sections?->toArray() ?? []); @endphp
     @forelse ($sections as $i => $section)

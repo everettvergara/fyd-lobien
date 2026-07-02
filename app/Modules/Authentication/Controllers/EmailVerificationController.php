@@ -4,9 +4,9 @@ namespace App\Modules\Authentication\Controllers;
 
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Notifications\AccountActivatedNotification;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,15 +22,24 @@ class EmailVerificationController extends Controller
         return view('authentication::auth.verify-email');
     }
 
-    public function verify(EmailVerificationRequest $request): RedirectResponse
+    public function verify(Request $request, int $id, string $hash): RedirectResponse
     {
-        if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('admin.dashboard');
+        if (! $request->hasValidSignature()) {
+            abort(403, 'Invalid or expired verification link.');
         }
 
-        if ($request->user()->markEmailAsVerified()) {
-            $user = $request->user();
+        $user = User::findOrFail($id);
 
+        if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+            abort(403, 'Invalid verification link.');
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('admin.login')
+                ->with('success', 'Email already verified. You may sign in.');
+        }
+
+        if ($user->markEmailAsVerified()) {
             if ($user->status === UserStatus::PendingVerification) {
                 $user->update(['status' => UserStatus::Active]);
                 $user->notify(new AccountActivatedNotification);
@@ -39,8 +48,8 @@ class EmailVerificationController extends Controller
             event(new Verified($user));
         }
 
-        return redirect()->route('admin.dashboard')
-            ->with('success', 'Your email has been verified. Welcome!');
+        return redirect()->route('admin.login')
+            ->with('success', 'Your email has been verified. You may now sign in.');
     }
 
     public function send(Request $request): RedirectResponse
