@@ -19,6 +19,18 @@ class Module extends \App\Framework\Module
         ];
     }
 
+    public function permissions(): array
+    {
+        return [
+            $this->permissionEntry('banners', 'view', 'View Banners'),
+            $this->permissionEntry('banners', 'create', 'Create Banners'),
+            $this->permissionEntry('banners', 'edit', 'Edit Banners'),
+            $this->permissionEntry('banners', 'delete', 'Delete Banners'),
+            $this->permissionEntry('banners', 'publish', 'Publish Banners'),
+            $this->permissionEntry('banners', 'archive', 'Archive Banners'),
+        ];
+    }
+
     public function menuItems(): array
     {
         return [

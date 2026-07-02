@@ -22,10 +22,6 @@ class AuthConfigService
 
     public function registrationEnabled(): bool
     {
-        if (! config('fyd.registration_enabled', true)) {
-            return false;
-        }
-
         if (! Schema::hasTable('settings')) {
             return true;
         }

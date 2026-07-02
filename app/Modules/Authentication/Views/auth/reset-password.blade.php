@@ -3,7 +3,7 @@
 @section('title', 'Reset Password')
 
 @section('content')
-    <h2 class="h5 fw-semibold text-center mb-4">Reset Password</h2>
+    <h2 class="h5 text-center mb-4">Reset Password</h2>
 
     <form method="POST" action="{{ route('admin.password.update') }}">
         @csrf
@@ -25,28 +25,9 @@
             @enderror
         </div>
 
-        <div class="mb-3">
-            <label for="password" class="form-label">New Password</label>
-            <input type="password"
-                   class="form-control @error('password') is-invalid @enderror"
-                   id="password"
-                   name="password"
-                   required
-                   autocomplete="new-password">
-            @error('password')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
-        </div>
+        <x-admin.form.password label="New Password" name="password" required autocomplete="new-password" />
 
-        <div class="mb-4">
-            <label for="password_confirmation" class="form-label">Confirm New Password</label>
-            <input type="password"
-                   class="form-control"
-                   id="password_confirmation"
-                   name="password_confirmation"
-                   required
-                   autocomplete="new-password">
-        </div>
+        <x-admin.form.password label="Confirm New Password" name="password_confirmation" class="mb-4" required autocomplete="new-password" />
 
         <button type="submit" class="btn btn-primary w-100 mb-3">Reset Password</button>
 

@@ -121,8 +121,6 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_register(): void
     {
-        config(['fyd.registration_enabled' => true]);
-
         $response = $this->post('/admin/register', [
             'name' => 'Test User',
             'email' => 'newuser@example.com',

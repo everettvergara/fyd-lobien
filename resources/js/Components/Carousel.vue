@@ -1,8 +1,8 @@
 <script setup>
-import HeroBanner from '@/Components/HeroBanner.vue';
+import BannerRenderer from '@/Components/BannerRenderer.vue';
 
 defineProps({
-    banners: { type: Array, required: true },
+    banner: { type: Object, required: true },
 });
 </script>
 
@@ -10,25 +10,18 @@ defineProps({
     <div id="homeCarousel" class="carousel slide" data-bs-ride="carousel">
         <div class="carousel-inner">
             <div
-                v-for="(banner, index) in banners"
-                :key="index"
+                v-for="(slide, index) in banner.slides"
+                :key="slide.id || index"
                 class="carousel-item"
                 :class="{ active: index === 0 }"
             >
-                <HeroBanner
-                    :title="banner.title"
-                    :subtitle="banner.subtitle"
-                    :description="banner.description"
-                    :button-text="banner.buttonText"
-                    :button-url="banner.buttonUrl"
-                    :desktop-image="banner.desktopImage"
-                />
+                <BannerRenderer :banner="banner" :slide="slide" />
             </div>
         </div>
-        <button v-if="banners.length > 1" class="carousel-control-prev" type="button" data-bs-target="#homeCarousel" data-bs-slide="prev">
+        <button v-if="banner.slides.length > 1" class="carousel-control-prev" type="button" data-bs-target="#homeCarousel" data-bs-slide="prev">
             <span class="carousel-control-prev-icon"></span>
         </button>
-        <button v-if="banners.length > 1" class="carousel-control-next" type="button" data-bs-target="#homeCarousel" data-bs-slide="next">
+        <button v-if="banner.slides.length > 1" class="carousel-control-next" type="button" data-bs-target="#homeCarousel" data-bs-slide="next">
             <span class="carousel-control-next-icon"></span>
         </button>
     </div>

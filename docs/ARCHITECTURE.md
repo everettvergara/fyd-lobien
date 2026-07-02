@@ -29,13 +29,23 @@ the authoritative architectural reference.
 -   Module Registry
 -   Menu Registry
 -   Media Library
--   Theme Manager
+-   Theme Manager *(planned / deferred — manual themes documented in [THEME.md](THEME.md))*
 -   Notifications
 -   Audit Logs
 -   Localization
 
 Business modules must consume these services rather than implementing
 their own.
+
+### Media Library
+
+The Media Library is the central Digital Asset Management framework for
+all uploads and asset references. Modules must not implement their own
+upload, picker, storage, thumbnail, download, folder, or usage tracking
+logic when the Media Library provides the capability.
+
+See [MEDIA_LIBRARY.md](MEDIA_LIBRARY.md) for the media framework service,
+database, storage, permission, and UI contracts.
 
 ## Dependency Rules
 

@@ -8,9 +8,17 @@ development standards.
 1. [ARCHITECTURE.md](ARCHITECTURE.md) — Long-term architecture and principles
 2. [FRAMEWORK.md](FRAMEWORK.md) — Framework kernel modules and rules
 3. [MODULE_STANDARD.md](MODULE_STANDARD.md) — Required module structure
-4. [SECURITY.md](SECURITY.md) — Security domain specification
-5. [DEVELOPMENT.md](DEVELOPMENT.md) — Day-to-day development guide
-6. [ROADMAP.md](ROADMAP.md) — Phases, milestones, and current work
+4. [MODULE_CONTRIBUTION.md](MODULE_CONTRIBUTION.md) — Authoring installable business modules in `contrib/`
+5. [MODULE_LIFECYCLE.md](MODULE_LIFECYCLE.md) — Install, disable, uninstall via admin Modules page
+6. [SECURITY.md](SECURITY.md) — Security domain specification
+7. [MEDIA_LIBRARY.md](MEDIA_LIBRARY.md) — Digital Asset Management framework
+8. [CONTENT_MODULE.md](CONTENT_MODULE.md) — Unified content module and content types
+9. [BANNER_MODULE.md](BANNER_MODULE.md) — Reusable banner presentation engine
+10. [SEEDING.md](SEEDING.md) — Database seeders, sample content, and new-install data
+11. [DEVELOPMENT.md](DEVELOPMENT.md) — Day-to-day development guide
+12. [THEME.md](THEME.md) — Design tokens and styling (**read before color/font/theme tasks**)
+13. [ROADMAP.md](ROADMAP.md) — Phases, milestones, and current work
+14. [VERSION.md](VERSION.md) — CMS template version and changelog
 
 ## Document Hierarchy
 
@@ -19,9 +27,24 @@ development standards.
 | ARCHITECTURE.md | Layers, framework services, dependency rules | Architects, lead developers |
 | FRAMEWORK.md | Kernel modules, framework rules | Framework contributors |
 | MODULE_STANDARD.md | Module folder layout and requirements | Module authors |
+| MODULE_CONTRIBUTION.md | Business modules in `contrib/`, manifest, features | Business module authors |
+| MODULE_LIFECYCLE.md | Copy, install, disable, uninstall, Modules admin page | Site owners, integrators |
 | SECURITY.md | Auth, RBAC, audit, sessions | Security-sensitive work |
+| MEDIA_LIBRARY.md | Media services, storage, usage, UI integration | Framework and module authors |
+| CONTENT_MODULE.md | Content module, content-types registry, admin/public integration | Content module authors |
+| BANNER_MODULE.md | Banner templates, keys, rendering, extension points | Content and marketing module authors |
+| SEEDING.md | Seeders, essential vs sample data, new-install inventory | All developers, project setup |
 | DEVELOPMENT.md | Portals, modules, conventions, testing | All developers |
+| THEME.md | Design tokens, manual styling, agent rules for colors/fonts | All developers, **Cursor agents** |
 | ROADMAP.md | Phase status and priorities | Planning, prioritization |
+| VERSION.md | CMS template semver, bump rules, changelog | All developers |
+
+## Business modules (`contrib/`)
+
+Installable business modules are **authored** under [`../contrib/`](../contrib/)
+and **installed** by copying to `app/Modules/` and using **Administration →
+Modules**. See [MODULE_CONTRIBUTION.md](MODULE_CONTRIBUTION.md) and
+[MODULE_LIFECYCLE.md](MODULE_LIFECYCLE.md).
 
 ## Architectural Decision Records
 
@@ -33,8 +56,11 @@ development standards.
 
 **Framework Stabilization** — See [ROADMAP.md](ROADMAP.md).
 
-Do not add new business modules until framework services are stable.
+Core modules must remain stable before new installable business modules ship in
+`contrib/`. Module lifecycle documentation is in place ahead of the Module
+Manager implementation.
 
 ## Related
 
 - Project overview and quick start: [../README.md](../README.md)
+- Business module source tree: [../contrib/README.md](../contrib/README.md)

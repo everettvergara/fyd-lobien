@@ -10,7 +10,7 @@ trait Publishable
     public function scopePublished(Builder $query): Builder
     {
         return $query
-            ->where('status', ContentStatus::Published)
+            ->whereIn('status', [ContentStatus::Published, ContentStatus::Scheduled])
             ->where(function (Builder $q) {
                 $q->whereNull('published_at')->orWhere('published_at', '<=', now());
             });

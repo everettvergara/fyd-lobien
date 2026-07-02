@@ -2,6 +2,9 @@
 
 namespace App\Support;
 
+use App\Enums\SitemapChangeFrequency;
+use Illuminate\Validation\Rule;
+
 class SeoFields
 {
     public static function rules(): array
@@ -15,6 +18,9 @@ class SeoFields
             'og_description' => ['nullable', 'string', 'max:500'],
             'og_image_id' => ['nullable', 'exists:media,id'],
             'robots' => ['nullable', 'string', 'max:100'],
+            'sitemap_include' => ['nullable', 'boolean'],
+            'sitemap_changefreq' => ['nullable', Rule::enum(SitemapChangeFrequency::class)],
+            'sitemap_priority' => ['nullable', 'numeric', 'min:0', 'max:1'],
         ];
     }
 

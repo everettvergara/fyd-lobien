@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'recaptcha' => [
+        'site_key' => config('recaptcha.site_key'),
+        'secret_key' => config('recaptcha.secret_key'),
+    ],
+
 ];

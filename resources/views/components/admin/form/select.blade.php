@@ -6,7 +6,7 @@
     'required' => false,
 ])
 
-<div class="mb-3">
+<div class="mb-2">
     <label for="{{ $name }}" class="form-label">{{ $label }}</label>
     <select
         id="{{ $name }}"

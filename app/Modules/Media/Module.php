@@ -19,6 +19,21 @@ class Module extends \App\Framework\Module
         ];
     }
 
+    public function permissions(): array
+    {
+        return [
+            $this->permissionEntry('media', 'view', 'View Media'),
+            $this->permissionEntry('media', 'create', 'Create Media'),
+            $this->permissionEntry('media', 'edit', 'Edit Media'),
+            $this->permissionEntry('media', 'delete', 'Delete Media'),
+            $this->permissionEntry('media', 'download', 'Download Media'),
+            $this->permissionEntry('media', 'replace', 'Replace Media'),
+            $this->permissionEntry('media', 'bulk_delete', 'Bulk Delete Media'),
+            $this->permissionEntry('media', 'bulk_download', 'Bulk Download Media'),
+            $this->permissionEntry('media', 'folders', 'Manage Media Folders'),
+        ];
+    }
+
     public function menuItems(): array
     {
         return [

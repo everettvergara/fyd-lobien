@@ -19,6 +19,16 @@ class Module extends \App\Framework\Module
         ];
     }
 
+    public function permissions(): array
+    {
+        return [
+            $this->permissionEntry('roles', 'view', 'View Roles'),
+            $this->permissionEntry('roles', 'create', 'Create Roles'),
+            $this->permissionEntry('roles', 'edit', 'Edit Roles'),
+            $this->permissionEntry('roles', 'delete', 'Delete Roles'),
+        ];
+    }
+
     public function menuItems(): array
     {
         return [

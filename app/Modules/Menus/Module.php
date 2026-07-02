@@ -19,6 +19,16 @@ class Module extends \App\Framework\Module
         ];
     }
 
+    public function permissions(): array
+    {
+        return [
+            $this->permissionEntry('menus', 'view', 'View Menus'),
+            $this->permissionEntry('menus', 'create', 'Create Menus'),
+            $this->permissionEntry('menus', 'edit', 'Edit Menus'),
+            $this->permissionEntry('menus', 'delete', 'Delete Menus'),
+        ];
+    }
+
     public function menuItems(): array
     {
         return [

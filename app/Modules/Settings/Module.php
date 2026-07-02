@@ -19,6 +19,14 @@ class Module extends \App\Framework\Module
         ];
     }
 
+    public function permissions(): array
+    {
+        return [
+            $this->permissionEntry('settings', 'view', 'View Settings'),
+            $this->permissionEntry('settings', 'edit', 'Edit Settings'),
+        ];
+    }
+
     public function menuItems(): array
     {
         return [

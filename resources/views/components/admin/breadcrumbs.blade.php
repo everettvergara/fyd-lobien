@@ -1,7 +1,7 @@
 @props(['items' => []])
 
 @if (!empty($items))
-    <nav aria-label="breadcrumb" class="mb-3">
+    <nav aria-label="breadcrumb" class="mb-2">
         <ol class="breadcrumb mb-0">
             @foreach ($items as $breadcrumb)
                 @if ($loop->last)

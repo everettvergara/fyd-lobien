@@ -14,7 +14,7 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">Edit Role</h1>
-        <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-secondary">Cancel</a>
     </div>
 
     <div class="row">

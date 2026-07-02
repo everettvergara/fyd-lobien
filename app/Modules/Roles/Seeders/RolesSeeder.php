@@ -6,6 +6,11 @@ use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
 
+/**
+ * Seeds system roles and assigns permissions for new installs.
+ *
+ * @see docs/SEEDING.md
+ */
 class RolesSeeder extends Seeder
 {
     public function run(): void
@@ -29,7 +34,7 @@ class RolesSeeder extends Seeder
                 'display_name' => 'Editor',
                 'description' => 'Can manage and publish content.',
                 'is_system' => true,
-                'permissions' => $allPermissions->keys()->filter(fn ($name) => in_array(explode('.', $name)[0], ['dashboard', 'pages', 'posts', 'banners', 'menus', 'media']) || $name === 'dashboard.view')->all(),
+                'permissions' => $allPermissions->keys()->filter(fn ($name) => in_array(explode('.', $name)[0], ['dashboard', 'content', 'content_types', 'banners', 'menus', 'media', 'provinces', 'cities', 'seo']) || $name === 'dashboard.view')->all(),
             ],
             'author' => [
                 'display_name' => 'Author',
@@ -38,15 +43,16 @@ class RolesSeeder extends Seeder
                 'permissions' => $allPermissions->keys()->filter(function ($name) {
                     $parts = explode('.', $name);
 
-                    return in_array($parts[0], ['dashboard', 'pages', 'posts', 'banners', 'media'])
-                        && in_array($parts[1] ?? '', ['view', 'create', 'edit']);
+                    return (in_array($parts[0], ['dashboard', 'content', 'content_types', 'banners', 'media', 'provinces', 'cities'])
+                        && in_array($parts[1] ?? '', ['view', 'create', 'edit']))
+                        || ($parts[0] === 'seo' && ($parts[1] ?? '') === 'view');
                 })->all(),
             ],
             'viewer' => [
                 'display_name' => 'Viewer',
                 'description' => 'Read-only access to content and dashboard.',
                 'is_system' => true,
-                'permissions' => $allPermissions->keys()->filter(fn ($name) => str_ends_with($name, '.view'))->all(),
+                'permissions' => $allPermissions->keys()->filter(fn ($name) => str_ends_with($name, '.view') && ! str_starts_with($name, 'seo.') && ! str_starts_with($name, 'site_reports.'))->all(),
             ],
         ];
 

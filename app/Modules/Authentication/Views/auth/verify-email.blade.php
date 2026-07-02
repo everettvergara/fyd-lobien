@@ -4,10 +4,10 @@
 
 @section('content')
     <div class="text-center mb-4">
-        <i class="bi bi-envelope-check text-primary" style="font-size: 3rem;"></i>
+        <i class="{{ admin_icon('bi-envelope-check') }} text-primary" style="font-size: 3rem;"></i>
     </div>
 
-    <h2 class="h5 fw-semibold text-center mb-2">Verify Your Email</h2>
+    <h2 class="h5 text-center mb-2">Verify Your Email</h2>
     <p class="text-muted text-center small mb-4">
         Thanks for signing up! Before getting started, please verify your email address by clicking the link we sent you.
     </p>

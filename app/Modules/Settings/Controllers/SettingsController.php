@@ -3,11 +3,14 @@
 namespace App\Modules\Settings\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\MediaUsage;
 use App\Models\Setting;
+use App\Modules\Cache\Services\PublicCacheService;
 use App\Modules\Settings\Requests\UpdateSettingsRequest;
 use App\Services\ActivityLogger;
 use App\Services\AuthConfigService;
 use App\Services\MailConfigService;
+use App\Services\Media\MediaUsageService;
 use App\Services\PasswordPolicyService;
 use App\Services\SettingsService;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +20,7 @@ class SettingsController extends Controller
 {
     public function __construct(
         protected SettingsService $settings,
+        protected MediaUsageService $usage,
     ) {}
 
     public function index(): View
@@ -29,7 +33,6 @@ class SettingsController extends Controller
             'social' => $this->settings->group('social'),
             'analytics' => $this->settings->group('analytics'),
             'contact' => $this->settings->group('contact'),
-            'seo' => $this->settings->group('seo'),
             'auth' => $this->settings->group('auth'),
         ];
 
@@ -53,6 +56,8 @@ class SettingsController extends Controller
         app(PasswordPolicyService::class)->apply();
         app(AuthConfigService::class)->apply();
         app(MailConfigService::class)->apply();
+        app(PublicCacheService::class)->clearAll();
+        $this->syncGeneralMediaUsage();
         ActivityLogger::log('settings', 'updated');
 
         return back()->with('success', 'Settings saved successfully.');
@@ -61,6 +66,7 @@ class SettingsController extends Controller
     protected function settingType(string $group, string $key): string
     {
         $booleanKeys = [
+            'general' => ['maintenance_mode'],
             'auth' => ['registration_enabled', 'password_mixed_case', 'password_numbers', 'password_symbols'],
         ];
 
@@ -69,5 +75,31 @@ class SettingsController extends Controller
         }
 
         return 'string';
+    }
+
+    protected function syncGeneralMediaUsage(): void
+    {
+        $fields = [
+            'site_logo_id' => 'Site Logo',
+            'favicon_id' => 'Favicon',
+        ];
+
+        foreach ($fields as $key => $label) {
+            $setting = Setting::where('group', 'general')->where('key', $key)->first();
+
+            if (! $setting) {
+                continue;
+            }
+
+            if ($setting->value) {
+                $this->usage->register((int) $setting->value, $setting, 'settings', $key, $label);
+            } else {
+                MediaUsage::where([
+                    'usable_type' => Setting::class,
+                    'usable_id' => $setting->id,
+                    'field' => $key,
+                ])->delete();
+            }
+        }
     }
 }

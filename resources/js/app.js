@@ -6,6 +6,15 @@ import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 
+function getPrimaryColor() {
+    if (typeof document === 'undefined') {
+        return '#2563eb';
+    }
+
+    return getComputedStyle(document.documentElement).getPropertyValue('--fyd-color-primary').trim()
+        || '#2563eb';
+}
+
 createInertiaApp({
     title: (title) => (title ? `${title} — FYD CMS` : 'FYD CMS'),
     resolve: (name) =>
@@ -16,6 +25,6 @@ createInertiaApp({
             .mount(el);
     },
     progress: {
-        color: '#2563eb',
+        color: getPrimaryColor(),
     },
 });

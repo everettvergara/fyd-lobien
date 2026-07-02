@@ -18,47 +18,48 @@ class CmsTest extends TestCase
         return User::where('email', 'admin@fyd.local')->first();
     }
 
-    public function test_admin_can_view_pages_list(): void
+    public function test_admin_can_view_content_list(): void
     {
-        $response = $this->actingAs($this->admin())->get('/admin/pages');
-        $response->assertStatus(200)->assertSee('Pages');
+        $response = $this->actingAs($this->admin())->get('/admin/content');
+        $response->assertStatus(200)->assertSee('Content');
     }
 
-    public function test_admin_can_create_page(): void
+    public function test_admin_can_create_page_content(): void
     {
-        $response = $this->actingAs($this->admin())->post('/admin/pages', [
+        $response = $this->actingAs($this->admin())->post('/admin/content', [
+            'content_type' => 'page',
             'title' => 'About Us',
             'slug' => 'about-us',
             'summary' => 'About our company',
-            'content' => 'Page content here',
+            'body' => '<p>Page content here</p>',
             'status' => ContentStatus::Draft->value,
-            'template' => 'default',
         ]);
 
-        $response->assertRedirect('/admin/pages');
-        $this->assertDatabaseHas('pages', ['slug' => 'about-us']);
+        $response->assertRedirect('/admin/content');
+        $this->assertDatabaseHas('contents', ['slug' => 'about-us', 'content_type' => 'page']);
     }
 
-    public function test_admin_can_create_post(): void
+    public function test_admin_can_create_article_content(): void
     {
-        $response = $this->actingAs($this->admin())->post('/admin/posts', [
-            'title' => 'First Blog Post',
-            'slug' => 'first-blog-post',
-            'content' => 'Blog content',
+        $response = $this->actingAs($this->admin())->post('/admin/content', [
+            'content_type' => 'article',
+            'title' => 'First Article',
+            'slug' => 'first-article',
+            'body' => '<p>Article content</p>',
             'status' => ContentStatus::Draft->value,
         ]);
 
-        $response->assertRedirect('/admin/posts');
-        $this->assertDatabaseHas('posts', ['slug' => 'first-blog-post']);
+        $response->assertRedirect('/admin/content');
+        $this->assertDatabaseHas('contents', ['slug' => 'first-article', 'content_type' => 'article']);
     }
 
     public function test_admin_can_create_banner(): void
     {
         $response = $this->actingAs($this->admin())->post('/admin/banners', [
             'name' => 'Homepage Hero',
+            'key' => 'cms-test-hero',
             'title' => 'Welcome',
             'type' => 'hero',
-            'placement' => 'homepage_hero',
             'status' => ContentStatus::Draft->value,
         ]);
 
@@ -69,17 +70,17 @@ class CmsTest extends TestCase
     public function test_admin_can_view_settings(): void
     {
         $response = $this->actingAs($this->admin())->get('/admin/settings');
-        $response->assertStatus(200)->assertSee('Settings');
+        $response->assertStatus(200)
+            ->assertSee('Settings')
+            ->assertSee('Site Logo')
+            ->assertSee('Favicon');
     }
 
-    public function test_dashboard_shows_content_counts(): void
+    public function test_dashboard_loads_for_admin(): void
     {
         $admin = $this->admin();
-        $this->actingAs($admin)->post('/admin/pages', [
-            'title' => 'Test', 'slug' => 'test', 'status' => ContentStatus::Draft->value,
-        ]);
 
         $response = $this->actingAs($admin)->get('/admin');
-        $response->assertStatus(200)->assertSee('Pages');
+        $response->assertStatus(200)->assertSee('Dashboard');
     }
 }

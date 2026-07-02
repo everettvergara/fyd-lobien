@@ -19,6 +19,13 @@ class Module extends \App\Framework\Module
         ];
     }
 
+    public function permissions(): array
+    {
+        return [
+            $this->permissionEntry('dashboard', 'view', 'View Dashboard'),
+        ];
+    }
+
     public function menuItems(): array
     {
         return [

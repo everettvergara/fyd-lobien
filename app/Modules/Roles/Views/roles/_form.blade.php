@@ -31,13 +31,20 @@
 
 <div class="mb-4">
     <label class="form-label">Permissions</label>
-    @php $selected = old('permissions', $role?->permissions?->pluck('id')->toArray() ?? []); @endphp
+    @php
+        $selected = old('permissions', $role?->permissions?->pluck('id')->toArray() ?? []);
+        $moduleLabels = [
+            'activity_log' => 'Audit Logs',
+            'content_types' => 'Content Types',
+            'seo' => 'SEO',
+        ];
+    @endphp
     <div class="row">
         @foreach ($permissions as $module => $modulePermissions)
             <div class="col-md-4 mb-3">
                 <div class="card">
                     <div class="card-header bg-light py-2">
-                        <strong class="small text-uppercase">{{ ucfirst($module) }}</strong>
+                        <strong class="small text-uppercase">{{ $moduleLabels[$module] ?? ucfirst(str_replace('_', ' ', $module)) }}</strong>
                     </div>
                     <div class="card-body py-2">
                         @foreach ($modulePermissions as $permission)

@@ -4,6 +4,7 @@ namespace App\Modules\Sessions\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\DatabaseSession;
+use App\Modules\Sessions\Services\SessionAdminListService;
 use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,21 +12,16 @@ use Illuminate\View\View;
 
 class SessionController extends Controller
 {
+    public function __construct(
+        protected SessionAdminListService $sessionList,
+    ) {}
+
     public function index(Request $request): View
     {
         $this->authorize('viewAny', DatabaseSession::class);
 
-        $query = DatabaseSession::with('user')->orderByDesc('last_activity');
-
-        if ($userId = $request->get('user_id')) {
-            $query->where('user_id', $userId);
-        }
-
-        $sessions = $query->paginate(25)->withQueryString();
-
         return view('sessions::sessions.index', [
-            'sessions' => $sessions,
-            'filters' => $request->only(['user_id']),
+            'list' => $this->sessionList->result($request),
         ]);
     }
 

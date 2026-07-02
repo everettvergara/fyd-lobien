@@ -2,16 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Enums\BannerPlacement;
-use App\Enums\BannerType;
 use App\Enums\ContentStatus;
 use App\Enums\MenuLocation;
 use App\Models\User;
-use App\Modules\Banners\Models\Banner;
+use App\Modules\Content\Models\Content;
 use App\Modules\Menus\Models\Menu;
 use App\Modules\Menus\Models\MenuItem;
-use App\Modules\Pages\Models\Page;
-use App\Modules\Posts\Models\Post;
+use App\Services\Recaptcha\RecaptchaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -34,13 +31,14 @@ class PublicWebsiteTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_published_page_is_accessible(): void
+    public function test_published_content_is_accessible(): void
     {
-        Page::create([
+        Content::create([
+            'content_type' => 'page',
             'title' => 'About Us',
             'slug' => 'about-us',
             'summary' => 'About our company',
-            'content' => 'We are a great company.',
+            'body' => '<p>We are a great company.</p>',
             'status' => ContentStatus::Published,
             'published_at' => now(),
             'author_id' => $this->author->id,
@@ -50,61 +48,129 @@ class PublicWebsiteTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_draft_page_returns_404(): void
+    public function test_draft_content_returns_404(): void
     {
-        Page::create([
-            'title' => 'Draft Page',
-            'slug' => 'draft-page',
+        Content::create([
+            'content_type' => 'page',
+            'title' => 'Draft Content',
+            'slug' => 'draft-content',
             'status' => ContentStatus::Draft,
             'author_id' => $this->author->id,
         ]);
 
-        $response = $this->get('/draft-page');
+        $response = $this->get('/draft-content');
         $response->assertStatus(404);
     }
 
-    public function test_blog_index_renders(): void
+    public function test_published_article_is_accessible_at_slug_url(): void
     {
-        $response = $this->get('/blog');
-        $response->assertStatus(200);
-    }
-
-    public function test_published_post_is_accessible(): void
-    {
-        Post::create([
+        Content::create([
+            'content_type' => 'article',
             'title' => 'Hello World',
             'slug' => 'hello-world',
-            'content' => 'First post content',
+            'body' => '<p>First article content</p>',
             'status' => ContentStatus::Published,
             'published_at' => now(),
             'author_id' => $this->author->id,
         ]);
 
-        $response = $this->get('/blog/hello-world');
+        $response = $this->get('/hello-world');
         $response->assertStatus(200);
+    }
+
+    public function test_blog_route_returns_404(): void
+    {
+        $response = $this->get('/blog');
+        $response->assertStatus(404);
     }
 
     public function test_search_finds_content(): void
     {
-        $this->assertDatabaseHas('pages', ['slug' => 'services']);
+        $this->assertDatabaseHas('contents', ['slug' => 'services']);
 
         $response = $this->get('/search?q=services');
         $response->assertStatus(200);
     }
 
+    public function test_search_submission_redirects_to_results(): void
+    {
+        $response = $this->post('/search', [
+            'q' => 'services',
+        ]);
+
+        $response->assertRedirect('/search?q=services');
+    }
+
+    public function test_search_submission_requires_recaptcha_when_enabled(): void
+    {
+        config([
+            'recaptcha.site_key' => 'test-site-key',
+            'recaptcha.secret_key' => 'test-secret-key',
+            'recaptcha.enabled' => true,
+        ]);
+
+        $response = $this->post('/search', [
+            'q' => 'services',
+        ]);
+
+        $response->assertSessionHasErrors('recaptcha_token');
+    }
+
+    public function test_search_submission_accepts_valid_recaptcha_token(): void
+    {
+        config([
+            'recaptcha.site_key' => 'test-site-key',
+            'recaptcha.secret_key' => 'test-secret-key',
+            'recaptcha.enabled' => true,
+        ]);
+
+        $this->mock(RecaptchaService::class, function ($mock): void {
+            $mock->shouldReceive('enabled')->andReturn(true);
+            $mock->shouldReceive('verify')
+                ->once()
+                ->with('valid-token', 'search', \Mockery::any())
+                ->andReturn(true);
+        });
+
+        $response = $this->post('/search', [
+            'q' => 'services',
+            'recaptcha_token' => 'valid-token',
+        ]);
+
+        $response->assertRedirect('/search?q=services');
+    }
+
+    public function test_recaptcha_config_is_shared_with_public_pages(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertInertia(fn ($page) => $page
+            ->has('recaptcha')
+            ->where('recaptcha.enabled', false)
+        );
+    }
+
     public function test_homepage_includes_published_banner(): void
     {
-        Banner::create([
-            'name' => 'Hero',
-            'title' => 'Welcome Banner',
-            'type' => BannerType::Hero,
-            'placement' => BannerPlacement::HomepageHero,
-            'status' => ContentStatus::Published,
-            'published_at' => now(),
+        $this->assertDatabaseHas('banners', [
+            'key' => 'homepage-hero',
+            'status' => ContentStatus::Published->value,
         ]);
 
         $response = $this->get('/');
         $response->assertStatus(200);
+    }
+
+    public function test_content_page_includes_inner_page_banner(): void
+    {
+        $response = $this->get('/about');
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('Content/Show')
+            ->has('banner')
+            ->where('banner.template.key', 'inner_page')
+            ->where('banner.title', 'About Us')
+        );
     }
 
     public function test_navigation_menu_is_shared(): void

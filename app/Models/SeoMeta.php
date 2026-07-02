@@ -21,7 +21,18 @@ class SeoMeta extends Model
         'og_description',
         'og_image_id',
         'robots',
+        'sitemap_include',
+        'sitemap_changefreq',
+        'sitemap_priority',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'sitemap_include' => 'boolean',
+            'sitemap_priority' => 'float',
+        ];
+    }
 
     public function seoable(): MorphTo
     {

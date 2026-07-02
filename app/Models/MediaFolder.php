@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MediaFolder extends Model
 {
-    protected $fillable = ['name', 'parent_id'];
+    use SoftDeletes;
+
+    protected $fillable = ['name', 'slug', 'parent_id', 'sort_order', 'created_by'];
 
     public function parent(): BelongsTo
     {
@@ -23,5 +26,10 @@ class MediaFolder extends Model
     public function media(): HasMany
     {
         return $this->hasMany(Media::class, 'folder_id');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

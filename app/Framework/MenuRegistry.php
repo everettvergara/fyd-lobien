@@ -42,11 +42,13 @@ class MenuRegistry
                 $order[] = $key;
             }
 
+            $url = Route::has($item->routeName) ? route($item->routeName, $item->query) : '#';
+
             $sections[$key]['items'][] = [
                 'label' => $item->label,
-                'url' => Route::has($item->routeName) ? route($item->routeName) : '#',
+                'url' => $url,
                 'icon' => $item->icon,
-                'active' => request()->routeIs($item->routePattern()),
+                'active' => $item->isActive(),
             ];
         }
 

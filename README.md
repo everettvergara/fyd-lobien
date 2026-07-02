@@ -56,41 +56,50 @@ Run tests:
 php artisan test
 ```
 
-Fresh install with demo data:
+Fresh install with sample content:
 
 ```bash
 php artisan migrate:fresh --seed
 ```
 
-## Default Accounts
+## Default Account
 
-All demo accounts use password: `password`
+Password: `password`
 
 | Role | Email |
 |------|-------|
 | Super Administrator | admin@fyd.local |
-| Editor | editor@fyd.local |
-| Author | author@fyd.local |
-| Viewer | viewer@fyd.local |
 
-## Demo Content
+## Seeded Data
 
-After seeding, the public website includes:
+`php artisan migrate --seed` runs framework essentials first, then sample content.
+
+### Framework essentials
+
+| Data | Items |
+|------|-------|
+| Permissions & roles | RBAC for all modules (5 system roles) |
+| Settings | Generic defaults (`Your Website` branding, auth, email, media, SEO, cache) |
+| Banner templates | 12 system layout templates |
+| Address data | Philippine provinces and cities |
+| Admin user | `admin@fyd.local` |
+| Maintenance page | `/site-maintenance` |
+| Content types | `page`, `article` (via migration) |
+
+### Sample content
 
 | Content | Items |
 |---------|-------|
-| Pages | About, Services, Contact, Privacy Policy, Terms |
-| Blog Posts | 4 published articles |
-| Banners | Homepage hero + 2 carousel slides |
+| Pages | About, Services, Contact, Privacy Policy, Terms of Service |
+| Articles | 4 published sample articles |
+| Banners | 1 sample banner per template (12 total) |
 | Menus | Header and footer navigation |
-| Settings | Contact info, social links, SEO defaults |
 
-## URLs
+Full seeder inventory: [docs/SEEDING.md](docs/SEEDING.md)
 
 | Area | URL |
 |------|-----|
 | Homepage | `/` |
-| Blog | `/blog` |
 | Search | `/search` |
 | Admin Dashboard | `/admin` |
 | Admin Login | `/admin/login` |
@@ -105,23 +114,15 @@ app/
 │   │   └── Public/     # Public Inertia controllers
 │   └── Middleware/
 ├── Models/             # Framework/kernel models (User, Role, Media, etc.)
-├── Modules/            # CMS modules (see docs/MODULE_STANDARD.md)
+├── Modules/            # Core CMS modules + installed business modules
 │   ├── Authentication/
-│   ├── Dashboard/
-│   ├── Users/
-│   ├── Roles/
-│   ├── Permissions/
-│   ├── Pages/
-│   ├── Posts/
-│   ├── Banners/
-│   ├── Menus/
-│   ├── Media/
-│   ├── Settings/
-│   └── SEO/
+│   ├── Content/
+│   └── ...
 ├── Services/           # Shared framework services
 ├── Support/            # Helper classes
 └── Traits/             # Shared traits (HasRoles, HasSeo, Publishable)
 
+contrib/                # Installable business module source (copy → app/Modules/)
 docs/                   # Authoritative architecture documentation
 resources/
 ├── admin/              # Admin theme SCSS/JS
@@ -148,14 +149,24 @@ Authoritative documentation lives in [docs/](docs/README.md):
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Long-term architecture and principles |
 | [FRAMEWORK.md](docs/FRAMEWORK.md) | Framework kernel modules and rules |
 | [MODULE_STANDARD.md](docs/MODULE_STANDARD.md) | Required module structure |
+| [MODULE_CONTRIBUTION.md](docs/MODULE_CONTRIBUTION.md) | Authoring business modules in `contrib/` |
+| [MODULE_LIFECYCLE.md](docs/MODULE_LIFECYCLE.md) | Install, disable, uninstall |
+| [contrib/README.md](contrib/README.md) | In-repo business module hub |
 | [SECURITY.md](docs/SECURITY.md) | Security domain specification |
+| [CONTENT_MODULE.md](docs/CONTENT_MODULE.md) | Unified content module and content types |
 | [DEVELOPMENT.md](docs/DEVELOPMENT.md) | Day-to-day development guide |
+| [SEEDING.md](docs/SEEDING.md) | Database seeders and new-install data |
+| [VERSION.md](docs/VERSION.md) | CMS template version and changelog |
 | [ROADMAP.md](docs/ROADMAP.md) | Phases, milestones, and current work |
 
 ## Module Standard
 
 Every module follows the layout defined in [docs/MODULE_STANDARD.md](docs/MODULE_STANDARD.md).
-Enable modules in `config/modules.php`.
+
+- **Core modules** — listed in `config/modules.php`; always enabled
+- **Business modules** — built in [`contrib/`](contrib/README.md), copied to
+  `app/Modules/`, installed via **Administration → Modules**
+  ([docs/MODULE_LIFECYCLE.md](docs/MODULE_LIFECYCLE.md))
 
 Model placement rules: [docs/ADR/001-model-placement.md](docs/ADR/001-model-placement.md).
 

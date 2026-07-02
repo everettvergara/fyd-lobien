@@ -3,7 +3,7 @@
 @section('title', 'Sign In')
 
 @section('content')
-    <h2 class="h5 fw-semibold text-center mb-4">Sign In</h2>
+    <h2 class="h5 text-center mb-4">Sign In</h2>
 
     <form method="POST" action="{{ route('admin.login') }}">
         @csrf
@@ -23,18 +23,7 @@
             @enderror
         </div>
 
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input type="password"
-                   class="form-control @error('password') is-invalid @enderror"
-                   id="password"
-                   name="password"
-                   required
-                   autocomplete="current-password">
-            @error('password')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
-        </div>
+        <x-admin.form.password label="Password" name="password" required autocomplete="current-password" />
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="form-check">

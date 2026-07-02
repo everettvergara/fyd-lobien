@@ -2,8 +2,9 @@
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import SeoHead from '@/Components/SeoHead.vue';
 import Breadcrumb from '@/Components/Breadcrumb.vue';
-import { Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { useRecaptcha } from '@/composables/useRecaptcha';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     query: { type: String, default: '' },
@@ -11,10 +12,36 @@ const props = defineProps({
     seo: { type: Object, default: () => ({}) },
 });
 
-const searchQuery = ref(props.query);
+const page = usePage();
+const { execute } = useRecaptcha();
 
-function submitSearch() {
-    router.get('/search', { q: searchQuery.value }, { preserveState: true });
+const searchQuery = ref(props.query);
+const submitting = ref(false);
+
+const recaptchaError = computed(() => page.props.errors?.recaptcha_token);
+
+async function submitSearch() {
+    if (submitting.value) {
+        return;
+    }
+
+    submitting.value = true;
+
+    try {
+        const recaptchaToken = await execute('search');
+
+        router.post('/search', {
+            q: searchQuery.value,
+            recaptcha_token: recaptchaToken,
+        }, {
+            preserveState: true,
+            onFinish: () => {
+                submitting.value = false;
+            },
+        });
+    } catch {
+        submitting.value = false;
+    }
 }
 </script>
 
@@ -28,8 +55,13 @@ function submitSearch() {
 
             <form class="mb-5" @submit.prevent="submitSearch">
                 <div class="input-group input-group-lg">
-                    <input v-model="searchQuery" type="text" class="form-control" placeholder="Search pages and posts..." />
-                    <button class="btn btn-primary" type="submit">Search</button>
+                    <input v-model="searchQuery" type="text" class="form-control" placeholder="Search content..." />
+                    <button class="btn btn-primary" type="submit" :disabled="submitting">
+                        {{ submitting ? 'Searching...' : 'Search' }}
+                    </button>
+                </div>
+                <div v-if="recaptchaError" class="text-danger small mt-2">
+                    {{ recaptchaError }}
                 </div>
             </form>
 
@@ -39,17 +71,17 @@ function submitSearch() {
                     <Link
                         v-for="(result, i) in results"
                         :key="i"
-                        :href="result.type === 'post' ? `/blog/${result.slug}` : `/${result.slug}`"
+                        :href="`/${result.slug}`"
                         class="list-group-item list-group-item-action"
                     >
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="mb-1">{{ result.title }}</h6>
-                                <p v-if="result.excerpt || result.summary" class="mb-0 small text-muted">
-                                    {{ result.excerpt || result.summary }}
+                                <p v-if="result.summary" class="mb-0 small text-muted">
+                                    {{ result.summary }}
                                 </p>
                             </div>
-                            <span class="badge bg-secondary-subtle text-secondary">{{ result.type }}</span>
+                            <span class="badge bg-secondary-subtle text-secondary">{{ result.typeLabel }}</span>
                         </div>
                     </Link>
                 </div>

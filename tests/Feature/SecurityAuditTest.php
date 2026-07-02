@@ -29,7 +29,7 @@ class SecurityAuditTest extends TestCase
 
         ActivityLog::create([
             'user_id' => $admin->id,
-            'module' => 'pages',
+            'module' => 'content',
             'action' => 'created',
             'created_at' => now(),
         ]);
@@ -38,7 +38,7 @@ class SecurityAuditTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Audit Logs');
-        $response->assertSee('pages');
+        $response->assertSee('content');
     }
 
     public function test_audit_logs_require_permission(): void

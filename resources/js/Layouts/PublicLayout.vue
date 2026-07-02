@@ -11,8 +11,14 @@ const navigation = page.props.navigation ?? {};
     <div class="d-flex flex-column min-vh-100">
         <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
             <div class="container">
-                <Link href="/" class="navbar-brand fw-bold text-primary">
-                    {{ app.name || 'FYD CMS' }}
+                <Link href="/" class="navbar-brand site-brand text-decoration-none d-flex align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <img v-if="app.logo" :src="app.logo" :alt="app.name" class="site-logo" style="max-height: 40px">
+                        <div class="site-brand-text">
+                            <div class="site-brand-title">{{ app.name || 'FYD CMS' }}</div>
+                            <div v-if="app.tagline" class="site-brand-tagline">{{ app.tagline }}</div>
+                        </div>
+                    </div>
                 </Link>
 
                 <button

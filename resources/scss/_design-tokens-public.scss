@@ -1,0 +1,37 @@
+// =============================================================================
+// Edit values here to retheme the public site.
+// Admin uses brand colors from this file only; typography tokens are public-only.
+// =============================================================================
+
+// --- Brand colors (shared with admin) ----------------------------------------
+
+$fyd-color-primary: #2563eb;
+$fyd-color-primary-dark: #1d4ed8;
+$fyd-color-dark: #1e293b;
+$fyd-color-dark-mid: #334155;
+$fyd-color-dark-light: #475569;
+$fyd-color-text: #0f172a;
+$fyd-color-text-muted: #64748b;
+$fyd-color-bg: #ffffff;
+$fyd-color-bg-alt: #f8fafc;
+$fyd-color-border: #e2e8f0;
+
+// --- Typography (public portal only) -----------------------------------------
+
+$fyd-font-heading: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$fyd-font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$fyd-font-size-body: 1rem;
+$fyd-font-size-lead: 1.25rem;
+$fyd-font-size-h1: 2.5rem;
+$fyd-font-size-h2: 2rem;
+$fyd-font-size-h3: 1.75rem;
+$fyd-font-size-h4: 1.5rem;
+$fyd-font-size-h5: 1.25rem;
+$fyd-font-size-h6: 1rem;
+$fyd-line-height-body: 1.6;
+$fyd-line-height-heading: 1.2;
+
+// --- Layout (public portal only) ---------------------------------------------
+
+$fyd-section-padding-y: 4rem;
+$fyd-hero-padding-y: 6rem;

@@ -16,7 +16,7 @@ Current split (MVP):
 | Location | Examples |
 |----------|----------|
 | `app/Models/` | User, Role, Permission, Setting, Media, MediaFolder, SeoMeta, ActivityLog |
-| `app/Modules/*/Models/` | Page, PageSection, Post, Banner, Menu, MenuItem |
+| `app/Modules/*/Models/` | Content, Banner, Menu, MenuItem |
 
 ## Decision
 
@@ -35,8 +35,7 @@ These are shared kernel concerns, not owned by a single business module.
 
 Models that belong to one business domain stay colocated with their module:
 
-- Pages: Page, PageSection
-- Posts: Post
+- Content: Content
 - Banners: Banner
 - Menus: Menu, MenuItem
 
@@ -69,7 +68,7 @@ happens only when a module is otherwise being refactored.
 ### Negative
 
 - Two valid locations until legacy modules are optionally refactored
-- Import paths differ (`App\Models\User` vs `App\Modules\Pages\Models\Page`)
+- Import paths differ (`App\Models\User` vs `App\Modules\Content\Models\Content`)
 
 ## Compliance
 

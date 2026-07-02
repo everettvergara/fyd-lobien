@@ -1,9 +1,9 @@
-@props(['padding' => true])
+@props(['padding' => true, 'title' => null])
 
 <div {{ $attributes->class(['card']) }}>
-    @isset($header)
-        <div class="card-header">{{ $header }}</div>
-    @endisset
+    @if (isset($header) || $title)
+        <div class="card-header">{{ $header ?? $title }}</div>
+    @endif
 
     @if ($padding)
         <div class="card-body">{{ $slot }}</div>
@@ -12,6 +12,6 @@
     @endif
 
     @isset($footer)
-        <div class="card-footer bg-white">{{ $footer }}</div>
+        <div class="card-footer">{{ $footer }}</div>
     @endisset
 </div>

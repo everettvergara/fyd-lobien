@@ -19,8 +19,8 @@
     <div class="row g-4">
         @foreach ($permissions as $module => $modulePermissions)
             <div class="col-md-4">
-                <div class="card h-100">
-                    <div class="card-header bg-white">
+                <div class="card permissions-module-card h-100">
+                    <div class="card-header admin-card-header-accordion">
                         <h5 class="card-title mb-0 text-capitalize">{{ $module }}</h5>
                     </div>
                     <div class="card-body">

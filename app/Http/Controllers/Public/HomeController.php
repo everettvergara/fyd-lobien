@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Pages\Models\Page;
-use App\Modules\Posts\Models\Post;
+use App\Modules\Content\Models\Content;
 use App\Support\PublicContent;
 use App\Support\PublicSeo;
 use Inertia\Inertia;
@@ -14,22 +13,24 @@ class HomeController extends Controller
 {
     public function index(): Response
     {
-        $hero = PublicContent::heroBanner();
-        $slider = PublicContent::sliderBanners();
+        $hero = PublicContent::bannerByKey('homepage-hero');
+        $sliderBanner = PublicContent::bannerByKey('homepage-slider');
 
-        $latestPosts = Post::published()
+        $latestArticles = Content::published()
+            ->where('content_type', 'article')
             ->with('featuredImage')
             ->latest('published_at')
             ->limit(3)
             ->get()
-            ->map(fn ($p) => PublicContent::postCard($p));
+            ->map(fn ($content) => PublicContent::contentCard($content));
 
-        $featuredPages = Page::published()
+        $featuredContent = Content::published()
+            ->where('content_type', 'page')
             ->with('featuredImage')
             ->latest('published_at')
             ->limit(3)
             ->get()
-            ->map(fn ($p) => PublicContent::pageCard($p));
+            ->map(fn ($content) => PublicContent::contentCard($content));
 
         return Inertia::render('Home', [
             'hero' => $hero ?? [
@@ -41,9 +42,9 @@ class HomeController extends Controller
                 'desktopImage' => null,
                 'mobileImage' => null,
             ],
-            'slider' => $slider,
-            'latestPosts' => $latestPosts,
-            'featuredPages' => $featuredPages,
+            'sliderBanner' => $sliderBanner,
+            'latestArticles' => $latestArticles,
+            'featuredContent' => $featuredContent,
             'seo' => PublicSeo::defaults(),
         ]);
     }

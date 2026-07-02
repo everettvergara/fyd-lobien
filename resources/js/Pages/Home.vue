@@ -1,17 +1,16 @@
 <script setup>
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import SeoHead from '@/Components/SeoHead.vue';
-import HeroBanner from '@/Components/HeroBanner.vue';
+import BannerRenderer from '@/Components/BannerRenderer.vue';
 import Carousel from '@/Components/Carousel.vue';
-import PostCard from '@/Components/PostCard.vue';
-import PageCard from '@/Components/PageCard.vue';
+import ContentCard from '@/Components/ContentCard.vue';
 import ContactBlock from '@/Components/ContactBlock.vue';
 
 defineProps({
     hero: { type: Object, required: true },
-    slider: { type: Array, default: () => [] },
-    latestPosts: { type: Array, default: () => [] },
-    featuredPages: { type: Array, default: () => [] },
+    sliderBanner: { type: Object, default: null },
+    latestArticles: { type: Array, default: () => [] },
+    featuredContent: { type: Array, default: () => [] },
     seo: { type: Object, default: () => ({}) },
 });
 </script>
@@ -20,37 +19,36 @@ defineProps({
     <PublicLayout>
         <SeoHead :seo="seo" />
 
-        <Carousel v-if="slider.length" :banners="slider" />
-        <HeroBanner
+        <Carousel
+            v-if="sliderBanner?.slides?.length > 1"
+            :banner="sliderBanner"
+        />
+        <BannerRenderer
+            v-else-if="sliderBanner"
+            :banner="sliderBanner"
+        />
+        <BannerRenderer
             v-else
-            :title="hero.title"
-            :subtitle="hero.subtitle"
-            :description="hero.description"
-            :button-text="hero.buttonText"
-            :button-url="hero.buttonUrl"
-            :desktop-image="hero.desktopImage"
+            :banner="hero"
         />
 
-        <section v-if="featuredPages.length" class="public-section">
+        <section v-if="featuredContent.length" class="public-section">
             <div class="container">
-                <h2 class="fw-bold text-center mb-5">Featured Pages</h2>
+                <h2 class="fw-bold text-center mb-5">Featured Content</h2>
                 <div class="row g-4">
-                    <div v-for="(page, i) in featuredPages" :key="i" class="col-md-4">
-                        <PageCard :page="page" />
+                    <div v-for="(item, i) in featuredContent" :key="i" class="col-md-4">
+                        <ContentCard :content="item" />
                     </div>
                 </div>
             </div>
         </section>
 
-        <section v-if="latestPosts.length" class="public-section public-section-alt">
+        <section v-if="latestArticles.length" class="public-section public-section-alt">
             <div class="container">
-                <div class="d-flex justify-content-between align-items-center mb-5">
-                    <h2 class="fw-bold mb-0">Latest News</h2>
-                    <a href="/blog" class="btn btn-outline-primary btn-sm">View All</a>
-                </div>
+                <h2 class="fw-bold text-center mb-5">Latest Articles</h2>
                 <div class="row g-4">
-                    <div v-for="(post, i) in latestPosts" :key="i" class="col-md-4">
-                        <PostCard :post="post" />
+                    <div v-for="(article, i) in latestArticles" :key="i" class="col-md-4">
+                        <ContentCard :content="article" />
                     </div>
                 </div>
             </div>

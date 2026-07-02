@@ -1,0 +1,70 @@
+// =============================================================================
+// Admin panel design tokens (admin bundle only).
+// =============================================================================
+
+$fyd-admin-font: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+$fyd-admin-font-size-label: 0.75rem;
+$fyd-admin-font-size-input: 0.6875rem;
+$fyd-admin-font-weight: 300;
+$fyd-admin-btn-bg: $fyd-color-dark;
+$fyd-admin-btn-hover: $fyd-color-dark-mid;
+$fyd-admin-btn-active: $fyd-color-dark-light;
+$fyd-admin-link-color: $fyd-color-dark;
+$fyd-admin-link-hover-color: $fyd-color-dark-mid;
+$fyd-admin-font-size-base: 0.75rem;
+$fyd-admin-section-label-font-size: 0.65rem;
+$fyd-admin-section-label-letter-spacing: 0.05em;
+$fyd-admin-table-stripe-bg: $fyd-color-bg-alt;
+$fyd-admin-table-hover-bg: #eef2ff;
+$fyd-admin-table-header-bg: #f1f5f9;
+$fyd-admin-accordion-bg: $fyd-color-bg-alt;
+$fyd-admin-pagination-padding-y: 0.1rem;
+$fyd-admin-pagination-padding-x: 0.32rem;
+$fyd-admin-pagination-font-size: $fyd-admin-font-size-input;
+
+$fyd-admin-select-min-width: 6rem;
+$fyd-admin-select-max-width: 22rem;
+$fyd-admin-list-filter-search-width: 14rem;
+$fyd-admin-list-filter-select-width: 10rem;
+$fyd-admin-list-filter-per-page-width: 5.5rem;
+$fyd-admin-list-bulk-select-max-width: 14rem;
+$fyd-admin-media-folder-name-width: 11rem;
+$fyd-admin-media-folder-parent-width: 9rem;
+
+$fyd-admin-menu-name-width: 14rem;
+$fyd-admin-menu-location-width: 10rem;
+$fyd-admin-menu-item-title-width: 8rem;
+$fyd-admin-menu-item-url-width: 11rem;
+$fyd-admin-menu-item-select-width: 6.5rem;
+
+$fyd-admin-media-grid-border: #cbd5e1;
+$fyd-admin-media-grid-border-hover: #94a3b8;
+
+$fyd-banner-column-1-bg: #eff6ff;
+$fyd-banner-column-1-border: #bfdbfe;
+$fyd-banner-column-2-bg: #f0fdf4;
+$fyd-banner-column-2-border: #bbf7d0;
+$fyd-banner-column-3-bg: #fefce8;
+$fyd-banner-column-3-border: #fde68a;
+$fyd-banner-main-bg: #f5f3ff;
+$fyd-banner-main-border: #ddd6fe;
+$fyd-banner-media-bg: #fff7ed;
+$fyd-banner-media-border: #fed7aa;
+$fyd-banner-cta-bg: #f0fdfa;
+$fyd-banner-cta-border: #99f6e4;
+$fyd-banner-part-media-bg: #fffbeb;
+$fyd-banner-part-media-border: #fcd34d;
+$fyd-banner-part-cta-bg: #ecfeff;
+$fyd-banner-part-cta-border: #67e8f9;
+$fyd-banner-slide-border: #cbd5e1;
+$fyd-admin-card-padding-x: 1.25rem;
+$fyd-admin-card-padding-y: 1rem;
+$fyd-admin-field-min-width: 27rem;
+$fyd-admin-field-max-width: 66rem;
+$fyd-admin-field-max-width-select: 54rem;
+$fyd-admin-field-max-width-number: 21rem;
+$fyd-admin-field-max-width-textarea: $fyd-admin-field-max-width;
+$fyd-admin-field-max-width-rich-text: $fyd-admin-field-max-width;
+$fyd-admin-field-max-width-file: 72rem;
+$fyd-admin-form-main-max-width: 40rem;
+$fyd-admin-form-sidebar-max-width: 18rem;

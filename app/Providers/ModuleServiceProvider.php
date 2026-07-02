@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Framework\MenuRegistry;
 use App\Framework\ModuleRegistry;
+use App\Services\NavigationService;
+use App\Support\CmsVersion;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +27,18 @@ class ModuleServiceProvider extends ServiceProvider
 
         View::composer('admin.layouts.partials.sidebar', function ($view) {
             $view->with('menuSections', app(MenuRegistry::class)->sectionsFor(auth()->user()));
+        });
+
+        View::share('cmsVersion', CmsVersion::info());
+
+        View::composer([
+            'admin.layouts.app',
+            'admin.layouts.auth',
+            'admin.layouts.partials.sidebar',
+            'admin.layouts.partials.version-footer',
+            'app',
+        ], function ($view) {
+            $view->with('app', app(NavigationService::class)->siteInfo());
         });
     }
 

@@ -5,17 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Sign In') — {{ config('fyd.name') }}</title>
+    <title>@yield('title', 'Sign In') — Admin Portal</title>
+
+    @include('partials.site-favicon')
 
     @vite(['resources/admin/scss/app.scss', 'resources/admin/js/app.js'])
 </head>
 <body class="admin-auth-body">
     <div class="admin-auth-wrapper d-flex align-items-center justify-content-center min-vh-100">
         <div class="admin-auth-card card shadow">
-            <div class="card-body p-4 p-md-5">
-                <div class="text-center mb-4">
-                    <h1 class="h4 fw-bold text-primary">{{ config('fyd.name') }}</h1>
-                    <p class="text-muted small mb-0">Admin Portal</p>
+            <div class="card-body">
+                <div class="text-center">
+                    <h1 class="admin-auth-title mb-0">Admin Portal</h1>
                 </div>
 
                 @if (session('success'))
@@ -35,6 +36,11 @@
                 @yield('content')
             </div>
         </div>
+    </div>
+
+    <div class="admin-auth-version">
+        <div class="admin-auth-version-label">v{{ $cmsVersion['version'] }}</div>
+        <div class="admin-auth-version-meta">{{ $cmsVersion['template_name'] }}</div>
     </div>
 </body>
 </html>

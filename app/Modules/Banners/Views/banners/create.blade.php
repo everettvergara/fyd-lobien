@@ -15,7 +15,6 @@
         <form method="POST" action="{{ route('admin.banners.store') }}">
             @csrf
             @include('banners::banners._form', ['banner' => null])
-            <button type="submit" class="btn btn-primary">Create</button>
         </form>
     </x-admin.card>
 @endsection

@@ -3,6 +3,7 @@
 namespace App\Modules\Users\Requests;
 
 use App\Enums\UserStatus;
+use App\Modules\Authentication\Support\ProfileFieldRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -16,7 +17,7 @@ class UpdateUserRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        return array_merge([
             'name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
@@ -29,6 +30,16 @@ class UpdateUserRequest extends FormRequest
             'status' => ['required', Rule::enum(UserStatus::class)],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['exists:roles,id'],
-        ];
+        ], ProfileFieldRules::rules());
+    }
+
+    protected function prepareForValidation(): void
+    {
+        ProfileFieldRules::prepare();
+    }
+
+    public function profileAttributes(): array
+    {
+        return $this->safe()->only(ProfileFieldRules::attributes());
     }
 }

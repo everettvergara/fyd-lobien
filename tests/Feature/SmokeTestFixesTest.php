@@ -5,23 +5,23 @@ namespace Tests\Feature;
 use App\Enums\ContentStatus;
 use App\Enums\UserStatus;
 use App\Models\User;
-use App\Modules\Pages\Models\Page;
-use App\Modules\Posts\Models\Post;
+use App\Modules\Content\Models\Content;
+use App\Services\SettingsService;
 use App\Support\EmailVerificationUrl;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class SmokeTestFixesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_hidden_and_blocked_when_env_disabled(): void
+    public function test_registration_hidden_and_blocked_when_settings_disabled(): void
     {
-        config(['fyd.registration_enabled' => false]);
         $this->seed();
+
+        app(SettingsService::class)->set('auth', 'registration_enabled', 'false', 'boolean');
 
         $this->get('/admin/login')->assertOk()->assertDontSee('Register');
         $this->get('/admin/register')->assertRedirect('/admin/login');
@@ -67,13 +67,13 @@ class SmokeTestFixesTest extends TestCase
         $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
-    public function test_post_create_form_renders_without_undefined_variable_error(): void
+    public function test_content_create_form_renders_without_undefined_variable_error(): void
     {
         $this->seed();
 
         $admin = User::where('email', 'admin@fyd.local')->first();
 
-        $this->actingAs($admin)->get('/admin/posts/create')->assertOk()->assertSee('Create Post');
+        $this->actingAs($admin)->get('/admin/content/create')->assertOk()->assertSee('Create Content');
     }
 
     public function test_banner_create_form_renders_without_undefined_variable_error(): void
@@ -85,14 +85,15 @@ class SmokeTestFixesTest extends TestCase
         $this->actingAs($admin)->get('/admin/banners/create')->assertOk()->assertSee('Create Banner');
     }
 
-    public function test_invalid_page_slug_is_rejected(): void
+    public function test_invalid_content_slug_is_rejected(): void
     {
         $this->seed();
 
         $admin = User::where('email', 'admin@fyd.local')->first();
 
-        $response = $this->actingAs($admin)->post('/admin/pages', [
-            'title' => 'Bad Slug Page',
+        $response = $this->actingAs($admin)->post('/admin/content', [
+            'content_type' => 'page',
+            'title' => 'Bad Slug Content',
             'slug' => 'Invalid Slug!',
             'status' => ContentStatus::Draft->value,
         ]);
@@ -100,72 +101,78 @@ class SmokeTestFixesTest extends TestCase
         $response->assertSessionHasErrors('slug');
     }
 
-    public function test_author_can_only_update_own_post(): void
+    public function test_author_can_only_update_own_content(): void
     {
         $this->seed();
 
         $author = User::where('email', 'author@fyd.local')->first();
         $admin = User::where('email', 'admin@fyd.local')->first();
 
-        $ownPost = Post::create([
-            'title' => 'Author Post',
-            'slug' => 'author-post',
+        $ownContent = Content::create([
+            'content_type' => 'article',
+            'title' => 'Author Content',
+            'slug' => 'author-content',
             'status' => ContentStatus::Draft,
             'author_id' => $author->id,
         ]);
 
-        $otherPost = Post::create([
-            'title' => 'Admin Post',
-            'slug' => 'admin-post',
+        $otherContent = Content::create([
+            'content_type' => 'article',
+            'title' => 'Admin Content',
+            'slug' => 'admin-content',
             'status' => ContentStatus::Draft,
             'author_id' => $admin->id,
         ]);
 
-        $this->actingAs($author)->put("/admin/posts/{$ownPost->id}", [
-            'title' => 'Updated Author Post',
-            'slug' => 'author-post',
+        $this->actingAs($author)->put("/admin/content/{$ownContent->id}", [
+            'content_type' => 'article',
+            'title' => 'Updated Author Content',
+            'slug' => 'author-content',
             'status' => ContentStatus::Draft->value,
-        ])->assertRedirect('/admin/posts');
+        ])->assertRedirect('/admin/content');
 
-        $this->actingAs($author)->put("/admin/posts/{$otherPost->id}", [
+        $this->actingAs($author)->put("/admin/content/{$otherContent->id}", [
+            'content_type' => 'article',
             'title' => 'Hacked',
-            'slug' => 'admin-post',
+            'slug' => 'admin-content',
             'status' => ContentStatus::Draft->value,
         ])->assertForbidden();
     }
 
-    public function test_author_index_only_shows_own_posts(): void
+    public function test_author_index_only_shows_own_content(): void
     {
         $this->seed();
 
         $author = User::where('email', 'author@fyd.local')->first();
         $admin = User::where('email', 'admin@fyd.local')->first();
 
-        Post::create([
-            'title' => 'Author Post',
-            'slug' => 'author-post',
+        Content::create([
+            'content_type' => 'article',
+            'title' => 'Author Content',
+            'slug' => 'author-content',
             'status' => ContentStatus::Draft,
             'author_id' => $author->id,
         ]);
 
-        Post::create([
-            'title' => 'Admin Post',
-            'slug' => 'admin-post',
+        Content::create([
+            'content_type' => 'article',
+            'title' => 'Admin Content',
+            'slug' => 'admin-content',
             'status' => ContentStatus::Draft,
             'author_id' => $admin->id,
         ]);
 
-        $response = $this->actingAs($author)->get('/admin/posts');
+        $response = $this->actingAs($author)->get('/admin/content');
 
-        $response->assertOk()->assertSee('Author Post')->assertDontSee('Admin Post');
+        $response->assertOk()->assertSee('Author Content')->assertDontSee('Admin Content');
     }
 
-    public function test_pages_index_shows_actions_dropdown(): void
+    public function test_content_index_shows_inline_action_icons(): void
     {
         $this->seed();
 
         $admin = User::where('email', 'admin@fyd.local')->first();
 
-        $this->actingAs($admin)->get('/admin/pages')->assertOk()->assertSee('Actions');
+        $this->actingAs($admin)->get('/admin/content')->assertOk()->assertSee('aria-label="View"', false);
     }
 }

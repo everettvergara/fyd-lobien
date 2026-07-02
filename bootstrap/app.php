@@ -4,7 +4,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Console\Scheduling\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,9 +20,19 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/admin.php'));
         },
     )
+    ->withCommands([
+        \App\Modules\SiteReports\Console\PruneSiteVisitsCommand::class,
+    ])
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('site-reports:prune')->daily();
+    })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\RejectBlockedIp::class,
+            \App\Http\Middleware\TrackSiteVisit::class,
+            \App\Http\Middleware\CachePublicResponse::class,
+            \App\Http\Middleware\EnsurePublicSiteAvailable::class,
         ]);
 
         $middleware->redirectGuestsTo('/admin/login');
@@ -40,4 +52,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        $exceptions->render(function (PostTooLargeException $exception, Request $request) {
+            $limit = ini_get('post_max_size') ?: 'the configured server limit';
+            $message = "The upload is too large. The server accepts requests up to {$limit}. Upload fewer files or reduce the file size.";
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 413);
+            }
+
+            return back()->with('error', $message);
+        });
     })->create();

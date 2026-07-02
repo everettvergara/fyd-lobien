@@ -10,8 +10,7 @@ class OwnContentAccess
     public static function managesOwnContentOnly(User $user): bool
     {
         return $user->hasRole('author')
-            && ! $user->hasPermission('posts.publish')
-            && ! $user->hasPermission('pages.publish');
+            && ! $user->hasPermission('content.publish');
     }
 
     public static function canManage(User $user, Model $model, string $editPermission): bool

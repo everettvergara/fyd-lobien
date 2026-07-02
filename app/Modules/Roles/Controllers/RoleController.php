@@ -7,21 +7,25 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Modules\Roles\Requests\StoreRoleRequest;
 use App\Modules\Roles\Requests\UpdateRoleRequest;
+use App\Modules\Roles\Services\RoleAdminListService;
 use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class RoleController extends Controller
 {
-    public function index(): View
+    public function __construct(
+        protected RoleAdminListService $roleList,
+    ) {}
+
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', Role::class);
 
-        $roles = Role::withCount(['users', 'permissions'])
-            ->orderBy('display_name')
-            ->paginate(15);
-
-        return view('roles::roles.index', compact('roles'));
+        return view('roles::roles.index', [
+            'list' => $this->roleList->result($request),
+        ]);
     }
 
     public function create(): View

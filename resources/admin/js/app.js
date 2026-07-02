@@ -3,6 +3,11 @@ import * as bootstrap from 'bootstrap';
 window.bootstrap = bootstrap;
 
 import './media-picker.js';
+import './media-library.js';
+import './admin-list.js';
+import './rich-text-editor.js';
+import './password-toggle.js';
+import { initAdminSidebarPanelToggle, initAdminSidebarSections } from './admin-sidebar.js';
 
 window.showToast = function (message, type = 'success') {
     const container = document.getElementById('toastContainer');
@@ -49,5 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 sidebar.classList.toggle('show');
             });
         });
+
+        initAdminSidebarSections();
+        initAdminSidebarPanelToggle();
     }
 });

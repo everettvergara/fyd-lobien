@@ -19,6 +19,13 @@ class Module extends \App\Framework\Module
         ];
     }
 
+    public function permissions(): array
+    {
+        return [
+            $this->permissionEntry('activity_log', 'view', 'View Audit Logs'),
+        ];
+    }
+
     public function menuItems(): array
     {
         return [

@@ -19,6 +19,14 @@ class Module extends \App\Framework\Module
         ];
     }
 
+    public function permissions(): array
+    {
+        return [
+            $this->permissionEntry('sessions', 'view', 'View Sessions'),
+            $this->permissionEntry('sessions', 'delete', 'Revoke Sessions'),
+        ];
+    }
+
     public function menuItems(): array
     {
         return [

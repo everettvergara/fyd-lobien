@@ -13,4 +13,5 @@ class BannerPolicy
     public function update(User $user, Banner $banner): bool { return $user->hasPermission('banners.edit'); }
     public function delete(User $user, Banner $banner): bool { return $user->hasPermission('banners.delete'); }
     public function publish(User $user, Banner $banner): bool { return $user->hasPermission('banners.publish'); }
+    public function archive(User $user, Banner $banner): bool { return $user->hasPermission('banners.archive') || $user->hasPermission('banners.publish'); }
 }

@@ -33,6 +33,8 @@ class LoginController extends Controller
             'email' => $user->email,
         ]);
 
+        $request->session()->flash('admin_sidebar_collapsed', true);
+
         $destination = $user->hasPermission('dashboard.view')
             ? route('admin.dashboard')
             : route('admin.access.pending');

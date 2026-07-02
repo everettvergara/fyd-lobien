@@ -18,16 +18,16 @@ class ModuleStandardizationTest extends TestCase
         $this->assertTrue(Schema::hasTable('settings'));
     }
 
-    public function test_posts_index_renders_admin_components(): void
+    public function test_content_index_renders_admin_components(): void
     {
         $this->seed();
 
         $admin = User::where('email', 'admin@fyd.local')->first();
 
-        $response = $this->actingAs($admin)->get('/admin/posts');
+        $response = $this->actingAs($admin)->get('/admin/content');
 
         $response->assertOk();
-        $response->assertSee('Posts');
-        $response->assertSee('Add Post');
+        $response->assertSee('Content');
+        $response->assertSee('Add Content');
     }
 }

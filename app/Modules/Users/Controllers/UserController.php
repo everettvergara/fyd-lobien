@@ -3,30 +3,45 @@
 namespace App\Modules\Users\Controllers;
 
 use App\Enums\UserStatus;
+use App\Framework\Admin\List\AdminBulkActionService;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Modules\Address\Models\City;
+use App\Modules\Address\Models\Province;
+use App\Modules\Authentication\Services\ProfileAvatarService;
 use App\Modules\Users\Requests\StoreUserRequest;
 use App\Modules\Users\Requests\UpdateUserRequest;
+use App\Modules\Users\Services\UserAdminListService;
 use App\Modules\Users\Services\UserManagementService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
     public function __construct(
+        protected UserAdminListService $userList,
         protected UserManagementService $users,
+        protected ProfileAvatarService $avatars,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', User::class);
 
-        $users = User::with('roles')
-            ->latest()
-            ->paginate(15);
+        return view('users::users.index', [
+            'list' => $this->userList->result($request),
+        ]);
+    }
 
-        return view('users::users.index', compact('users'));
+    public function bulk(Request $request, AdminBulkActionService $bulkActions): RedirectResponse
+    {
+        $this->authorize('viewAny', User::class);
+
+        $count = $bulkActions->execute($this->userList->definition(), $request);
+
+        return back()->with('success', "{$count} user(s) updated successfully.");
     }
 
     public function create(): View
@@ -59,7 +74,7 @@ class UserController extends Controller
     {
         $this->authorize('view', $user);
 
-        $user->load('roles');
+        $user->load(['roles', 'avatar', 'province', 'city']);
 
         return view('users::users.show', compact('user'));
     }
@@ -68,25 +83,38 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        $user->load('roles');
+        $user->load(['roles', 'avatar', 'province', 'city']);
         $roles = Role::orderBy('display_name')->get();
         $statuses = UserStatus::cases();
+        $provinces = Province::query()->active()->orderBy('name')->get();
+        $cities = $user->province_id
+            ? City::query()->active()->where('province_id', $user->province_id)->orderBy('name')->get()
+            : collect();
 
-        return view('users::users.edit', compact('user', 'roles', 'statuses'));
+        return view('users::users.edit', compact('user', 'roles', 'statuses', 'provinces', 'cities'));
     }
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
+        $this->avatars->sync(
+            $user,
+            $request->input('avatar_media_id') ? (int) $request->input('avatar_media_id') : null,
+            $request->boolean('remove_avatar'),
+            $request->file('avatar'),
+        );
+
         $this->users->update(
             $user,
-            [
+            array_merge([
                 'name' => $request->name,
                 'email' => $request->email,
                 'status' => $request->enum('status', UserStatus::class),
-            ],
+            ], $request->profileAttributes()),
             $request->roles ?? [],
             $request->filled('password') ? $request->password : null,
         );
+
+        $this->avatars->registerUsage($user->fresh());
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');

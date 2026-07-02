@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\MenuLocation;
+use App\Models\Media;
 use App\Modules\Menus\Models\Menu;
 use App\Modules\Menus\Models\MenuItem;
 
@@ -61,13 +62,12 @@ class NavigationService
         if ($location === MenuLocation::Footer) {
             return [
                 ['title' => 'Home', 'url' => '/', 'target' => '_self', 'children' => []],
-                ['title' => 'Blog', 'url' => '/blog', 'target' => '_self', 'children' => []],
+                ['title' => 'Contact', 'url' => '/contact', 'target' => '_self', 'children' => []],
             ];
         }
 
         return [
             ['title' => 'Home', 'url' => '/', 'target' => '_self', 'children' => []],
-            ['title' => 'Blog', 'url' => '/blog', 'target' => '_self', 'children' => []],
             ['title' => 'Contact', 'url' => '/contact', 'target' => '_self', 'children' => []],
         ];
     }
@@ -77,6 +77,8 @@ class NavigationService
         return [
             'name' => $this->settings->get('general', 'website_name', config('fyd.name')),
             'tagline' => $this->settings->get('general', 'tagline', ''),
+            'logo' => $this->mediaUrl('general', 'site_logo_id'),
+            'favicon' => $this->mediaUrl('general', 'favicon_id'),
             'contact' => [
                 'email' => $this->settings->get('contact', 'email', ''),
                 'phone' => $this->settings->get('contact', 'phone', ''),
@@ -89,5 +91,16 @@ class NavigationService
                 'linkedin' => $this->settings->get('social', 'linkedin', ''),
             ],
         ];
+    }
+
+    protected function mediaUrl(string $group, string $key): ?string
+    {
+        $id = $this->settings->get($group, $key, '');
+
+        if (! $id) {
+            return null;
+        }
+
+        return Media::find((int) $id)?->url();
     }
 }

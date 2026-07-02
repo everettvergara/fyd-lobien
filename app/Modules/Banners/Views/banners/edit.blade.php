@@ -16,7 +16,6 @@
             @csrf
             @method('PUT')
             @include('banners::banners._form')
-            <button type="submit" class="btn btn-primary">Save</button>
         </form>
     </x-admin.card>
 @endsection

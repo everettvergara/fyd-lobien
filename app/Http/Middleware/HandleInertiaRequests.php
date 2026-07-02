@@ -26,6 +26,10 @@ class HandleInertiaRequests extends Middleware
                 'header' => $nav->header(),
                 'footer' => $nav->footer(),
             ],
+            'recaptcha' => [
+                'enabled' => config('recaptcha.enabled'),
+                'siteKey' => config('recaptcha.site_key'),
+            ],
         ];
     }
 }

@@ -2,14 +2,18 @@
 
 namespace App\Services;
 
-use App\Modules\Pages\Models\Page;
-use App\Modules\Posts\Models\Post;
+use App\Modules\Content\Models\Content;
+use App\Support\ContentTypeRegistry;
 use App\Support\PublicContent;
 use Illuminate\Support\Collection;
 
 class ContentSearchService
 {
-    public function search(string $query, int $limitPerType = 10): Collection
+    public function __construct(
+        protected ContentTypeRegistry $contentTypes,
+    ) {}
+
+    public function search(string $query, int $limit = 20): Collection
     {
         $query = trim($query);
 
@@ -17,26 +21,20 @@ class ContentSearchService
             return collect();
         }
 
-        $pages = Page::published()
+        return Content::published()
             ->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
                     ->orWhere('summary', 'like', "%{$query}%")
-                    ->orWhere('content', 'like', "%{$query}%");
+                    ->orWhere('body', 'like', "%{$query}%");
             })
-            ->limit($limitPerType)
+            ->limit($limit)
             ->get()
-            ->map(fn (Page $page) => array_merge(PublicContent::pageCard($page), ['type' => 'page']));
-
-        $posts = Post::published()
-            ->where(function ($q) use ($query) {
-                $q->where('title', 'like', "%{$query}%")
-                    ->orWhere('excerpt', 'like', "%{$query}%")
-                    ->orWhere('content', 'like', "%{$query}%");
+            ->map(function (Content $content) {
+                return array_merge(PublicContent::contentCard($content), [
+                    'type' => 'content',
+                    'typeLabel' => $this->contentTypes->label($content->content_type),
+                ]);
             })
-            ->limit($limitPerType)
-            ->get()
-            ->map(fn (Post $post) => array_merge(PublicContent::postCard($post), ['type' => 'post']));
-
-        return $pages->concat($posts)->values();
+            ->values();
     }
 }

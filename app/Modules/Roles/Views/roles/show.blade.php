@@ -15,11 +15,11 @@
         <h1 class="h3 mb-0">{{ $role->display_name }}</h1>
         <div class="d-flex gap-2">
             @can('update', $role)
-                <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-primary btn-sm">
-                    <i class="bi bi-pencil me-1"></i> Edit
+                <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-primary">
+                    <i class="{{ admin_icon('bi-pencil') }} me-1"></i> Edit
                 </a>
             @endcan
-            <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-secondary btn-sm">Back</a>
+            <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-secondary">Back</a>
         </div>
     </div>
 
