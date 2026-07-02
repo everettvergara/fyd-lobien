@@ -6,6 +6,7 @@ use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\AccountActivatedNotification;
+use App\Support\EmailVerificationUrl;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,9 @@ class EmailVerificationController extends Controller
 
     public function verify(Request $request, int $id, string $hash): RedirectResponse
     {
-        if (! $request->hasValidSignature(absolute: false)) {
+        $params = EmailVerificationUrl::queryParamsFromRequestUri($request->getRequestUri());
+
+        if (! EmailVerificationUrl::isValid($id, $hash, $params)) {
             abort(403, 'Invalid or expired verification link.');
         }
 

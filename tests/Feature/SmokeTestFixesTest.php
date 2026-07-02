@@ -7,6 +7,7 @@ use App\Enums\UserStatus;
 use App\Models\User;
 use App\Modules\Pages\Models\Page;
 use App\Modules\Posts\Models\Post;
+use App\Support\EmailVerificationUrl;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -35,20 +36,35 @@ class SmokeTestFixesTest extends TestCase
             'email_verified_at' => null,
         ]);
 
-        $url = URL::temporarySignedRoute(
-            'admin.verification.verify',
-            now()->addHour(),
-            ['id' => $user->id, 'hash' => sha1($user->email)],
-            absolute: false,
-        );
+        $url = EmailVerificationUrl::forUser($user);
 
-        $this->get($url)
+        $this->get(parse_url($url, PHP_URL_PATH).'?'.parse_url($url, PHP_URL_QUERY))
             ->assertRedirect('/admin/login')
             ->assertSessionHas('success');
 
         $user->refresh();
         $this->assertNotNull($user->email_verified_at);
         $this->assertEquals(UserStatus::Active, $user->status);
+    }
+
+    public function test_email_verification_accepts_html_encoded_query_string(): void
+    {
+        Event::fake([Verified::class]);
+
+        $user = User::factory()->create([
+            'status' => UserStatus::PendingVerification,
+            'email_verified_at' => null,
+        ]);
+
+        $url = EmailVerificationUrl::forUser($user);
+        $encodedQuery = str_replace('&', '&amp;', parse_url($url, PHP_URL_QUERY));
+        $path = parse_url($url, PHP_URL_PATH);
+
+        $this->get($path.'?'.$encodedQuery)
+            ->assertRedirect('/admin/login')
+            ->assertSessionHas('success');
+
+        $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
     public function test_post_create_form_renders_without_undefined_variable_error(): void

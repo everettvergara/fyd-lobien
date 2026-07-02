@@ -24,7 +24,6 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-    ->middleware('signed:relative')
     ->name('verification.verify');
 
 Route::middleware('auth')->group(function () {
