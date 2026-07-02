@@ -24,10 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->redirectGuestsTo('/admin/login');
-        $middleware->redirectUsersTo('/admin');
+        $middleware->redirectUsersTo(fn () => auth()->user()?->hasPermission('dashboard.view')
+            ? '/admin'
+            : '/admin/access-pending');
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminAuthenticate::class,
+            'admin.access' => \App\Http\Middleware\EnsureAdminPanelAccess::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'registration.enabled' => \App\Http\Middleware\EnsureRegistrationEnabled::class,
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::redirectTo('admin.verification.notice'),

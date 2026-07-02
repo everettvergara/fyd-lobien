@@ -22,8 +22,7 @@ class WelcomeNotification extends Notification implements ShouldQueue
             ->subject('Welcome to '.config('fyd.name'))
             ->greeting('Welcome, '.$notifiable->name.'!')
             ->line('Thank you for registering with '.config('fyd.name').'.')
-            ->line('Please verify your email address to activate your account and get started.')
-            ->action('Verify Email', route('admin.verification.notice'))
+            ->line('Please check your inbox for a separate email with a verification link to activate your account.')
             ->line('We are glad to have you on board!');
     }
 }

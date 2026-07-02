@@ -33,6 +33,10 @@ class LoginController extends Controller
             'email' => $user->email,
         ]);
 
-        return redirect()->intended(route('admin.dashboard'));
+        $destination = $user->hasPermission('dashboard.view')
+            ? route('admin.dashboard')
+            : route('admin.access.pending');
+
+        return redirect()->intended($destination);
     }
 }

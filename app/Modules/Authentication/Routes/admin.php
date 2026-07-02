@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Authentication\Controllers\AccessPendingController;
 use App\Modules\Authentication\Controllers\ChangePasswordController;
 use App\Modules\Authentication\Controllers\EmailVerificationController;
 use App\Modules\Authentication\Controllers\ForgotPasswordController;
@@ -24,7 +25,6 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-    ->middleware('signed')
     ->name('verification.verify');
 
 Route::middleware('auth')->group(function () {
@@ -32,7 +32,10 @@ Route::middleware('auth')->group(function () {
     Route::post('email/verification-notification', [EmailVerificationController::class, 'send'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
-    Route::post('logout', [LogoutController::class, 'destroy'])->name('logout');
+    Route::get('access-pending', [AccessPendingController::class, 'show'])
+        ->middleware('verified')
+        ->name('access.pending');
+    Route::match(['get', 'post'], 'logout', [LogoutController::class, 'destroy'])->name('logout');
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
