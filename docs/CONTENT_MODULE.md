@@ -54,13 +54,14 @@ Table: `contents`
 | `featured_image_id` | Media Library FK |
 | `status`, `published_at`, `author_id` | Publishing |
 
-SEO metadata uses the shared `HasSeo` trait (polymorphic `seo_meta`).
+SEO and public URLs are owned by the **Page Manager** module — not Content. Use Page Manager to place content on the public site via blocks (e.g. featured content, latest articles).
 
 ### Removed (do not reintroduce)
 
 - `posts` table and Posts module
 - `page_sections` table and section builder
 - `template` and `parent_id` columns (replaced by `content_type`)
+- SEO fields on Content admin forms (`HasSeo` trait removed from Content model)
 
 ## Admin
 
@@ -106,9 +107,8 @@ Two-column layout on desktop (`col-lg-8` / `col-lg-4`):
 
 1. **Publishing** — content type, status
 2. **Featured Image** — single-select media picker
-3. **SEO Settings** — fields only (no nested accordion)
 
-Sections auto-expand when their fields have validation errors.
+Sections auto-expand when their fields have validation errors. A deprecation notice directs editors to Page Manager for public URLs and SEO.
 
 Body HTML is sanitized on save via `App\Support\HtmlSanitizer`.
 
@@ -122,23 +122,9 @@ Body HTML is sanitized on save via `App\Support\HtmlSanitizer`.
 
 ## Public Site
 
-| Item | Value |
-|------|-------|
-| Route | `GET /{slug}` → `content.show` |
-| Controller | `App\Http\Controllers\Public\ContentController` |
-| Inertia page | `resources/js/Pages/Content/Show.vue` |
-| DTO | `PublicContent::entry()`, `PublicContent::contentCard()` |
+Content entries are **not** routed directly on the public site. Page Manager owns all public paths, body copy, and SEO. Content remains the backing store for articles and for blocks that pull from the content registry (featured content, latest articles).
 
-All content types render at `/{slug}`. The public DTO includes
-`contentType: { key, label }` for future per-type layouts.
-
-Homepage:
-
-- `featuredContent` — published entries with `content_type = page`
-- `latestArticles` — published entries with `content_type = article`
-
-Search uses `ContentSearchService` against the unified `contents` table and
-returns a type label from the registry.
+See [PAGE_MANAGER.md](PAGE_MANAGER.md) for public routing and block composition.
 
 ## Migrations
 

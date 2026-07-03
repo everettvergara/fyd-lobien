@@ -6,6 +6,8 @@ use App\Enums\ContentStatus;
 use App\Enums\MenuLocation;
 use App\Models\User;
 use App\Modules\Content\Models\Content;
+use App\Modules\PageManager\Models\Page;
+use App\Modules\PageManager\Models\PageBlock;
 use App\Modules\Menus\Models\Menu;
 use App\Modules\Menus\Models\MenuItem;
 use App\Services\Recaptcha\RecaptchaService;
@@ -31,12 +33,12 @@ class PublicWebsiteTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_published_content_is_accessible(): void
+    public function test_published_page_is_accessible(): void
     {
-        Content::create([
-            'content_type' => 'page',
-            'title' => 'About Us',
+        $page = Page::create([
+            'path' => '/about-us',
             'slug' => 'about-us',
+            'title' => 'About Us',
             'summary' => 'About our company',
             'body' => '<p>We are a great company.</p>',
             'status' => ContentStatus::Published,
@@ -44,25 +46,31 @@ class PublicWebsiteTest extends TestCase
             'author_id' => $this->author->id,
         ]);
 
-        $response = $this->get('/about-us');
-        $response->assertStatus(200);
+        PageBlock::create([
+            'page_id' => $page->id,
+            'region_key' => 'main',
+            'block_type' => 'page-body',
+            'sort_order' => 0,
+            'config' => [],
+        ]);
+
+        $this->get('/about-us')->assertStatus(200);
     }
 
-    public function test_draft_content_returns_404(): void
+    public function test_draft_page_returns_404(): void
     {
-        Content::create([
-            'content_type' => 'page',
-            'title' => 'Draft Content',
+        Page::create([
+            'path' => '/draft-content',
             'slug' => 'draft-content',
+            'title' => 'Draft Page',
             'status' => ContentStatus::Draft,
             'author_id' => $this->author->id,
         ]);
 
-        $response = $this->get('/draft-content');
-        $response->assertStatus(404);
+        $this->get('/draft-content')->assertStatus(404);
     }
 
-    public function test_published_article_is_accessible_at_slug_url(): void
+    public function test_unpublished_article_slug_returns_404_without_page(): void
     {
         Content::create([
             'content_type' => 'article',
@@ -74,8 +82,7 @@ class PublicWebsiteTest extends TestCase
             'author_id' => $this->author->id,
         ]);
 
-        $response = $this->get('/hello-world');
-        $response->assertStatus(200);
+        $this->get('/hello-world')->assertStatus(404);
     }
 
     public function test_blog_route_returns_404(): void
@@ -150,27 +157,24 @@ class PublicWebsiteTest extends TestCase
         );
     }
 
-    public function test_homepage_includes_published_banner(): void
+    public function test_homepage_renders_page_manager_layout(): void
     {
-        $this->assertDatabaseHas('banners', [
-            'key' => 'homepage-hero',
-            'status' => ContentStatus::Published->value,
-        ]);
-
-        $response = $this->get('/');
-        $response->assertStatus(200);
+        $this->get('/')
+            ->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->component('Page/Show')
+                ->has('page')
+            );
     }
 
-    public function test_content_page_includes_inner_page_banner(): void
+    public function test_seeded_about_page_renders(): void
     {
-        $response = $this->get('/about');
-        $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page
-            ->component('Content/Show')
-            ->has('banner')
-            ->where('banner.template.key', 'inner_page')
-            ->where('banner.title', 'About Us')
-        );
+        $this->get('/about')
+            ->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->component('Page/Show')
+                ->where('page.path', '/about')
+            );
     }
 
     public function test_navigation_menu_is_shared(): void

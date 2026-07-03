@@ -34,7 +34,6 @@ class SampleContentSeederTest extends TestCase
         $this->get('/about')->assertStatus(200);
         $this->get('/services')->assertStatus(200);
         $this->get('/contact')->assertStatus(200);
-        $this->get('/welcome-to-your-website')->assertStatus(200);
     }
 
     public function test_admin_can_login(): void

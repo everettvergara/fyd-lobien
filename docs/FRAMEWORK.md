@@ -8,7 +8,7 @@ The following modules form the reusable kernel of the CMS.
 -   Settings
 -   Module Registry
 -   Menu Registry
--   Theme Manager *(planned / deferred — manual themes documented in [THEME.md](THEME.md))*
+-   Theme Manager — public theme registry, install, and activation ([THEME.md](THEME.md))
 -   Media Library
 -   Localization
 -   Notifications

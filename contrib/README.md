@@ -23,9 +23,10 @@ in `contrib/`.
 ```text
 contrib/
 ├── README.md           ← this file
-├── DemoNotes/          ← sample lifecycle demo (when present)
+├── HelloWorld/         ← minimal hello world starter
+├── DemoNotes/          ← sample lifecycle demo with CRUD
 ├── Commerce/           ← future
-└── Careers/            ← future
+└── Careers/            ← job listings and applications
 ```
 
 Each subfolder is one **business module** (one installable package). See
@@ -65,10 +66,15 @@ Remove the symlink before packaging for production if you prefer a clean copy.
 
 | Module | Group (sidebar) | Status |
 |--------|-----------------|--------|
-| DemoNotes | Demo Module | Sample / reference (planned) |
+| HelloWorld | Hello World | Minimal starter / try lifecycle |
+| DemoNotes | Demo Module | Sample / reference with CRUD |
+| WebForms | Forms | Dynamic web forms |
+| Newsletter | Newsletter | Subscription lists and batch email |
 
 ## Related documentation
 
 - [MODULE_CONTRIBUTION.md](../docs/MODULE_CONTRIBUTION.md) — authoring modules in `contrib/`
 - [MODULE_LIFECYCLE.md](../docs/MODULE_LIFECYCLE.md) — install, disable, uninstall
 - [MODULE_STANDARD.md](../docs/MODULE_STANDARD.md) — folder layout and requirements
+
+Modules with Page Manager blocks must register every block key in `publicBlocks()` so uninstall removes placements from all page regions (see [MODULE_CONTRIBUTION.md](../docs/MODULE_CONTRIBUTION.md#uninstall-cleanup)).

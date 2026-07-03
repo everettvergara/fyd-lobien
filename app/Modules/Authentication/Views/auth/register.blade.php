@@ -5,7 +5,7 @@
 @section('content')
     <h2 class="h5 text-center mb-4">Create Account</h2>
 
-    <form method="POST" action="{{ route('admin.register') }}">
+    <form method="POST" action="{{ route('admin.register', absolute: false) }}">
         @csrf
 
         <div class="mb-3">

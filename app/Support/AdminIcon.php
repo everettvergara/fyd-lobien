@@ -32,7 +32,10 @@ class AdminIcon
         'bi-person-circle' => 'bi-person-fill',
         'bi-table' => 'bi-bar-chart-fill',
         'bi-shield-check' => 'bi-shield-fill-check',
+        'bi-shield-x' => 'bi-shield-fill-x',
         'bi-link-45deg' => 'bi-signpost-split-fill',
+        'bi-layout-text-window-reverse' => 'bi-file-earmark-richtext-fill',
+        'bi-sliders' => 'bi-sliders',
     ];
 
     public static function solid(?string $icon): string

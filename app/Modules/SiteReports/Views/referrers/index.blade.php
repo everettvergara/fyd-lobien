@@ -37,6 +37,13 @@
         </div>
     </div>
 
+    @if ($summary['total_hits'] > 0 && $summary['referred_hits'] === 0)
+        <div class="alert alert-info small mb-3" role="status">
+            Direct visits and same-site navigation are counted in the summary cards above but are not listed in the table below.
+            Only external referring sites appear here.
+        </div>
+    @endif
+
     <x-admin.list.index
         :result="$list"
         :reset-route="route('admin.site-reports.referrers.index')"

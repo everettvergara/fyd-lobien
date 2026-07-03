@@ -2,16 +2,15 @@
 
 namespace App\Modules\SEO\Services;
 
+use App\Enums\ContentStatus;
 use App\Enums\SitemapChangeFrequency;
-use App\Modules\Content\Models\Content;
+use App\Modules\PageManager\Models\Page;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Cache;
 
 class SitemapService
 {
     public const CACHE_KEY = 'seo.sitemap.xml';
-
-    protected const RESERVED_SLUGS = ['blog', 'search', 'admin', 'api'];
 
     public function __construct(
         protected SettingsService $settings,
@@ -40,16 +39,13 @@ class SitemapService
     {
         $urls = [];
 
-        if ($this->settings->get('seo', 'homepage_include', true)) {
-            $urls[] = $this->homepageEntry();
-        }
-
-        Content::published()
+        Page::query()
             ->with('seoMeta')
+            ->where('status', ContentStatus::Published)
             ->orderBy('updated_at', 'desc')
             ->get()
-            ->each(function (Content $content) use (&$urls) {
-                if ($entry = $this->contentEntry($content)) {
+            ->each(function (Page $page) use (&$urls) {
+                if ($entry = $this->pageEntry($page)) {
                     $urls[] = $entry;
                 }
             });
@@ -74,13 +70,9 @@ class SitemapService
     /**
      * @return array{loc: string, lastmod: string, changefreq: string, priority: string}|null
      */
-    protected function contentEntry(Content $content): ?array
+    protected function pageEntry(Page $page): ?array
     {
-        if (in_array($content->slug, self::RESERVED_SLUGS, true)) {
-            return null;
-        }
-
-        $seo = $content->seoMeta;
+        $seo = $page->seoMeta;
 
         if ($seo && $seo->sitemap_include === false) {
             return null;
@@ -91,43 +83,22 @@ class SitemapService
             return null;
         }
 
-        $loc = $seo?->canonical_url ?: url($content->slug);
+        $loc = $seo?->canonical_url ?: url($page->path === '/' ? '/' : ltrim($page->path, '/'));
+
+        $priority = $page->path === '/'
+            ? $this->settings->get('seo', 'homepage_priority', '1.0')
+            : ($seo?->sitemap_priority ?? $this->settings->get('seo', 'default_priority', '0.5'));
+
+        $changefreq = $page->path === '/'
+            ? (string) $this->settings->get('seo', 'homepage_changefreq', 'weekly')
+            : ($seo?->sitemap_changefreq ?? (string) $this->settings->get('seo', 'default_changefreq_page', 'monthly'));
 
         return [
             'loc' => $loc,
-            'lastmod' => $content->updated_at->toAtomString(),
-            'changefreq' => $this->changefreqForContent($content),
-            'priority' => $this->formatPriority(
-                $seo?->sitemap_priority ?? $this->settings->get('seo', 'default_priority', '0.5')
-            ),
+            'lastmod' => $page->updated_at->toAtomString(),
+            'changefreq' => $changefreq,
+            'priority' => $this->formatPriority($priority),
         ];
-    }
-
-    /**
-     * @return array{loc: string, lastmod: string, changefreq: string, priority: string}
-     */
-    protected function homepageEntry(): array
-    {
-        return [
-            'loc' => url('/'),
-            'lastmod' => now()->toAtomString(),
-            'changefreq' => (string) $this->settings->get('seo', 'homepage_changefreq', 'weekly'),
-            'priority' => $this->formatPriority($this->settings->get('seo', 'homepage_priority', '1.0')),
-        ];
-    }
-
-    protected function changefreqForContent(Content $content): string
-    {
-        $override = $content->seoMeta?->sitemap_changefreq;
-        if ($override) {
-            return $override;
-        }
-
-        $key = $content->content_type === 'article'
-            ? 'default_changefreq_article'
-            : 'default_changefreq_page';
-
-        return (string) $this->settings->get('seo', $key, 'monthly');
     }
 
     protected function formatPriority(mixed $priority): string

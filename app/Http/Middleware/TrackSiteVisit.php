@@ -19,7 +19,7 @@ class TrackSiteVisit
     {
         $response = $next($request);
 
-        if (! $response->isSuccessful() || ! $this->visits->shouldTrack($request)) {
+        if (! $this->visits->shouldTrackResponse($response) || ! $this->visits->shouldTrack($request)) {
             return $response;
         }
 

@@ -29,7 +29,8 @@ the authoritative architectural reference.
 -   Module Registry
 -   Menu Registry
 -   Media Library
--   Theme Manager *(planned / deferred — manual themes documented in [THEME.md](THEME.md))*
+-   Theme Manager — public theme registry, install, and activation ([THEME.md](THEME.md))
+-   Page Manager — public site pages, SEO, and block composition ([PAGE_MANAGER.md](PAGE_MANAGER.md))
 -   Notifications
 -   Audit Logs
 -   Localization

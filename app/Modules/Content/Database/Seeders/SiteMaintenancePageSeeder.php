@@ -35,9 +35,5 @@ class SiteMaintenancePageSeeder extends Seeder
             ]
         );
 
-        $content->saveSeo([
-            'seo_title' => 'Site Maintenance',
-            'meta_description' => 'This site is temporarily unavailable for scheduled maintenance.',
-        ]);
     }
 }

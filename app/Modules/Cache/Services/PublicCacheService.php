@@ -12,7 +12,7 @@ class PublicCacheService
 {
     public const KEY_PREFIX = 'public.response.';
 
-    protected const ALLOWED_ROUTES = ['home', 'content.show'];
+    protected const ALLOWED_ROUTES = ['page.show'];
 
     public function __construct(
         protected SettingsService $settings,

@@ -15,12 +15,6 @@
         <dt class="col-sm-3 text-muted">Slug</dt><dd class="col-sm-9">{{ $content->slug }}</dd>
         <dt class="col-sm-3 text-muted">Status</dt><dd class="col-sm-9"><span class="badge bg-primary-subtle text-primary">{{ $content->status->label() }}</span></dd>
         <dt class="col-sm-3 text-muted">Author</dt><dd class="col-sm-9">{{ $content->author->name }}</dd>
-        @if ($content->seoMeta)
-            <dt class="col-sm-3 text-muted">SEO Title</dt><dd class="col-sm-9">{{ $content->seoMeta->seo_title ?? '—' }}</dd>
-            <dt class="col-sm-3 text-muted">Sitemap</dt><dd class="col-sm-9">{{ ($content->seoMeta->sitemap_include ?? true) ? 'Included' : 'Excluded' }}</dd>
-            <dt class="col-sm-3 text-muted">Change Frequency</dt><dd class="col-sm-9">{{ $content->seoMeta->sitemap_changefreq ?? 'Default' }}</dd>
-            <dt class="col-sm-3 text-muted">Priority</dt><dd class="col-sm-9">{{ $content->seoMeta->sitemap_priority ?? 'Default' }}</dd>
-        @endif
     </dl>
 </div></div>
 @endsection

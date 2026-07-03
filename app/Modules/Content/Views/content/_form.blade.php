@@ -1,12 +1,14 @@
 @php
     $isEdit = isset($content);
-    $seo = $content?->seoMeta;
     $defaultType = $defaultContentType ?? 'page';
     $contentTypeDefinitions = $contentTypeDefinitions ?? app(\App\Support\ContentTypeRegistry::class)->all();
     $hasPublishingErrors = $errors->hasAny(['content_type', 'status']);
     $hasFeaturedImageErrors = $errors->hasAny(['featured_image_id', 'gallery_media_ids', 'gallery_media_ids.*']);
-    $hasSeoErrors = collect(\App\Support\SeoFields::attributeKeys())->contains(fn (string $field) => $errors->has($field));
 @endphp
+
+<div class="alert alert-info small">
+    Public pages and SEO are managed in <a href="{{ route('admin.pages.index') }}">Page Manager</a>. Content entries here are legacy article/blog storage.
+</div>
 
 <div class="content-form">
     <section class="content-form-main mb-4">
@@ -117,30 +119,6 @@
                                     'values' => $content?->galleryImages?->pluck('id')->all() ?? [],
                                 ])
                                 <div class="form-text">The first image is used as the featured image.</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="contentSeoHeading">
-                            <button
-                                class="accordion-button py-2 {{ $hasSeoErrors ? '' : 'collapsed' }}"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#contentSeoPanel"
-                                aria-expanded="{{ $hasSeoErrors ? 'true' : 'false' }}"
-                                aria-controls="contentSeoPanel"
-                            >
-                                SEO Settings
-                            </button>
-                        </h2>
-                        <div
-                            id="contentSeoPanel"
-                            class="accordion-collapse collapse {{ $hasSeoErrors ? 'show' : '' }}"
-                            aria-labelledby="contentSeoHeading"
-                        >
-                            <div class="accordion-body">
-                                @include('seo::partials.seo-fields', ['seo' => $seo, 'sidebar' => true])
                             </div>
                         </div>
                     </div>

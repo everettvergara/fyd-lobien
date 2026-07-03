@@ -1,0 +1,18 @@
+{
+  "name": "WebForms",
+  "slug": "web-forms",
+  "version": "1.0.0",
+  "description": "Dynamic web forms with JSON schema storage and submission management.",
+  "group": "Forms",
+  "group_icon": "bi-ui-checks",
+  "group_sort": 50,
+  "author": "FYD CMS",
+  "license": "MIT",
+  "fyd_cms": ">=0.0.0",
+  "requires_core": ["AuditLogs", "Content"],
+  "autoload": "App\\Modules\\WebForms",
+  "features": [
+    { "label": "Webforms", "permission": "webforms.view", "route": "admin.webforms.index", "icon": "bi-ui-checks", "sort": 10 },
+    { "label": "Submissions", "permission": "webforms.submissions.view", "route": "admin.webform-submissions.index", "icon": "bi-inbox", "sort": 20 }
+  ]
+}

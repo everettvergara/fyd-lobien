@@ -105,7 +105,7 @@ class SmokeTestFixesTest extends TestCase
     {
         $this->seed();
 
-        $author = User::where('email', 'author@fyd.local')->first();
+        $author = $this->createAuthorUser();
         $admin = User::where('email', 'admin@fyd.local')->first();
 
         $ownContent = Content::create([
@@ -143,7 +143,7 @@ class SmokeTestFixesTest extends TestCase
     {
         $this->seed();
 
-        $author = User::where('email', 'author@fyd.local')->first();
+        $author = $this->createAuthorUser();
         $admin = User::where('email', 'admin@fyd.local')->first();
 
         Content::create([
@@ -174,5 +174,16 @@ class SmokeTestFixesTest extends TestCase
         $admin = User::where('email', 'admin@fyd.local')->first();
 
         $this->actingAs($admin)->get('/admin/content')->assertOk()->assertSee('aria-label="View"', false);
+    }
+
+    protected function createAuthorUser(): User
+    {
+        $author = User::factory()->create([
+            'email' => 'author@fyd.local',
+            'status' => UserStatus::Active,
+        ]);
+        $author->assignRole('author');
+
+        return $author;
     }
 }

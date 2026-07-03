@@ -6,7 +6,7 @@
     <h2 class="h5 text-center mb-2">Forgot Password</h2>
     <p class="text-muted text-center small mb-4">Enter your email address and we will send you a reset link.</p>
 
-    <form method="POST" action="{{ route('admin.password.email') }}">
+    <form method="POST" action="{{ route('admin.password.email', absolute: false) }}">
         @csrf
 
         <div class="mb-4">

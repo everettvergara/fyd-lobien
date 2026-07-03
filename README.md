@@ -123,14 +123,12 @@ app/
 └── Traits/             # Shared traits (HasRoles, HasSeo, Publishable)
 
 contrib/                # Installable business module source (copy → app/Modules/)
+contrib_themes/         # Public theme source (copy → themes/)
+themes/                 # Installed public themes (Vite + activation)
 docs/                   # Authoritative architecture documentation
 resources/
 ├── admin/              # Admin theme SCSS/JS
-├── js/                 # Public Inertia/Vue app
-│   ├── Components/
-│   ├── Layouts/
-│   └── Pages/
-├── scss/               # Public theme styles
+├── scss/               # Admin-only shared tokens
 └── views/
     ├── admin/          # Admin Blade layouts
     └── app.blade.php   # Inertia root template

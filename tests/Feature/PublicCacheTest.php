@@ -6,8 +6,9 @@ use App\Enums\ContentStatus;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use App\Modules\PageManager\Models\Page;
+use App\Modules\PageManager\Models\PageBlock;
 use App\Modules\Cache\Services\PublicCacheService;
-use App\Modules\Content\Models\Content;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -43,14 +44,21 @@ class PublicCacheTest extends TestCase
     {
         $this->enablePublicCache();
 
-        Content::create([
-            'content_type' => 'page',
-            'title' => 'Cached Page',
+        $page = Page::create([
+            'path' => '/cached-page',
             'slug' => 'cached-page',
+            'title' => 'Cached Page',
             'body' => '<p>Cached content</p>',
             'status' => ContentStatus::Published,
             'published_at' => now(),
-            'author_id' => $this->admin->id,
+        ]);
+
+        PageBlock::create([
+            'page_id' => $page->id,
+            'region_key' => 'main',
+            'block_type' => 'page-body',
+            'sort_order' => 0,
+            'config' => [],
         ]);
 
         $this->get('/cached-page');

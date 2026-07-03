@@ -99,7 +99,6 @@ class SampleContentSeeder extends Seeder
                 ]
             );
 
-            $content->saveSeo($data['seo']);
         }
 
         $articles = [
@@ -143,10 +142,6 @@ class SampleContentSeeder extends Seeder
                 ]
             );
 
-            $content->saveSeo([
-                'seo_title' => $data['title'].' — '.$siteName,
-                'meta_description' => $data['summary'],
-            ]);
         }
     }
 

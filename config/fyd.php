@@ -19,4 +19,10 @@ return [
         'theme' => 'fyd-default',
     ],
 
+    'themes' => [
+        'path' => base_path('themes'),
+        'contrib_path' => base_path('contrib_themes'),
+        'default' => 'fyd-default',
+    ],
+
 ];

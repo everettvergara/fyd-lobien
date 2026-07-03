@@ -49,6 +49,21 @@ class FrameworkServicesTest extends TestCase
         $this->assertNotNull($rolesItem);
         $this->assertSame('bi-shield-check', $rolesItem['icon']);
         $this->assertSame('bi bi-shield-fill-check', admin_icon($rolesItem['icon']));
+        $this->assertSame('bi bi-shield-fill-x', admin_icon('bi-shield-x'));
+
+        $pagesItem = collect($sections)
+            ->flatMap(fn (array $section) => $section['items'])
+            ->firstWhere('label', 'Pages');
+
+        $this->assertNotNull($pagesItem);
+        $this->assertSame('bi bi-file-earmark-richtext-fill', admin_icon($pagesItem['icon']));
+
+        $pageMasterItem = collect($sections)
+            ->flatMap(fn (array $section) => $section['items'])
+            ->firstWhere('label', 'Page Master');
+
+        $this->assertNotNull($pageMasterItem);
+        $this->assertSame('bi bi-layers-fill', admin_icon($pageMasterItem['icon']));
     }
 
     public function test_menu_registry_hides_items_without_permission(): void
@@ -92,6 +107,18 @@ class FrameworkServicesTest extends TestCase
 
         $this->assertTrue($names->contains('Content'));
         $this->assertTrue($names->contains('Dashboard'));
+        $this->assertTrue($names->contains('ModuleManager'));
+    }
+
+    public function test_menu_registry_exposes_core_and_business_panels(): void
+    {
+        $this->seed();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $panels = app(MenuRegistry::class)->panelsFor($admin);
+
+        $this->assertNotEmpty($panels['core']);
+        $this->assertArrayHasKey('business', $panels);
     }
 
     public function test_mail_config_service_applies_smtp_settings(): void

@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\Public\PublicPageController;
+use App\Http\Controllers\Public\SearchController;
 use App\Framework\MenuRegistry;
 use App\Framework\ModuleRegistry;
+use App\Services\Module\ModuleManagerService;
+use App\Services\Module\ModuleRuntimeService;
 use App\Services\NavigationService;
 use App\Support\CmsVersion;
 use Illuminate\Support\Facades\Route;
@@ -16,17 +20,27 @@ class ModuleServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ModuleRegistry::class);
         $this->app->singleton(MenuRegistry::class);
+        $this->app->singleton(ModuleManagerService::class);
+        $this->app->singleton(ModuleRuntimeService::class);
     }
 
     public function boot(): void
     {
-        $this->discoverModules();
-        $this->loadModuleRoutes();
-        $this->loadModuleViews();
-        $this->loadModuleMigrations();
+        $bootable = app(ModuleManagerService::class)->bootableModuleNames();
+
+        app(ModuleRuntimeService::class)->discoverAndBoot($bootable);
+        $this->loadModuleRoutes($bootable);
+        $this->registerPublicPageCatchAll();
+        $this->loadModuleViews($bootable);
+        $this->loadModuleMigrations($bootable);
+        $this->registerModuleServiceProviders($bootable);
+        $this->registerModuleCommands($bootable);
 
         View::composer('admin.layouts.partials.sidebar', function ($view) {
-            $view->with('menuSections', app(MenuRegistry::class)->sectionsFor(auth()->user()));
+            $panels = app(MenuRegistry::class)->panelsFor(auth()->user());
+            $view->with('coreMenuSections', $panels['core']);
+            $view->with('businessMenuSections', $panels['business']);
+            $view->with('menuSections', $panels['core']);
         });
 
         View::share('cmsVersion', CmsVersion::info());
@@ -42,35 +56,14 @@ class ModuleServiceProvider extends ServiceProvider
         });
     }
 
-    protected function discoverModules(): void
-    {
-        $registry = app(ModuleRegistry::class);
-        $menuRegistry = app(MenuRegistry::class);
-        $modulesPath = config('modules.path');
-
-        foreach (config('modules.enabled', []) as $module) {
-            $moduleFile = "{$modulesPath}/{$module}/Module.php";
-
-            if (! file_exists($moduleFile)) {
-                continue;
-            }
-
-            $class = "App\\Modules\\{$module}\\Module";
-
-            if (class_exists($class)) {
-                $registry->register(app($class));
-            }
-        }
-
-        $registry->bootPolicies();
-        $registry->bootMenus($menuRegistry);
-    }
-
-    protected function loadModuleRoutes(): void
+    /**
+     * @param  array<int, string>  $bootable
+     */
+    protected function loadModuleRoutes(array $bootable): void
     {
         $modulesPath = config('modules.path');
 
-        foreach (config('modules.enabled', []) as $module) {
+        foreach ($bootable as $module) {
             $adminRoutes = "{$modulesPath}/{$module}/Routes/admin.php";
 
             if (file_exists($adminRoutes)) {
@@ -89,11 +82,26 @@ class ModuleServiceProvider extends ServiceProvider
         }
     }
 
-    protected function loadModuleViews(): void
+    protected function registerPublicPageCatchAll(): void
+    {
+        Route::middleware('web')->group(function () {
+            Route::get('/search', [SearchController::class, 'index'])->name('search');
+            Route::post('/search', [SearchController::class, 'store'])->name('search.submit');
+
+            Route::get('/{path?}', [PublicPageController::class, 'show'])
+                ->where('path', '^(?!(?:api|admin|newsletters(?:/|$)|careers/.+|forms/)).*$')
+                ->name('page.show');
+        });
+    }
+
+    /**
+     * @param  array<int, string>  $bootable
+     */
+    protected function loadModuleViews(array $bootable): void
     {
         $modulesPath = config('modules.path');
 
-        foreach (config('modules.enabled', []) as $module) {
+        foreach ($bootable as $module) {
             $viewsPath = "{$modulesPath}/{$module}/Views";
 
             if (is_dir($viewsPath)) {
@@ -102,16 +110,60 @@ class ModuleServiceProvider extends ServiceProvider
         }
     }
 
-    protected function loadModuleMigrations(): void
+    /**
+     * @param  array<int, string>  $bootable
+     */
+    protected function loadModuleMigrations(array $bootable): void
     {
         $modulesPath = config('modules.path');
 
-        foreach (config('modules.enabled', []) as $module) {
+        foreach ($bootable as $module) {
             foreach (["{$modulesPath}/{$module}/Database/Migrations", "{$modulesPath}/{$module}/Migrations"] as $migrationsPath) {
                 if (is_dir($migrationsPath)) {
                     $this->loadMigrationsFrom($migrationsPath);
                 }
             }
+        }
+    }
+
+    /**
+     * @param  array<int, string>  $bootable
+     */
+    protected function registerModuleServiceProviders(array $bootable): void
+    {
+        foreach ($bootable as $moduleName) {
+            $providerClass = "App\\Modules\\{$moduleName}\\{$moduleName}ServiceProvider";
+
+            if (class_exists($providerClass)) {
+                $this->app->register($providerClass);
+            }
+        }
+    }
+
+    /**
+     * @param  array<int, string>  $bootable
+     */
+    protected function registerModuleCommands(array $bootable): void
+    {
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
+        $manager = app(ModuleManagerService::class);
+        $commands = [];
+
+        foreach ($bootable as $moduleName) {
+            $module = $manager->resolveModule($moduleName);
+
+            if ($module === null) {
+                continue;
+            }
+
+            $commands = array_merge($commands, $module->commands());
+        }
+
+        if ($commands !== []) {
+            $this->commands(array_values(array_unique($commands)));
         }
     }
 }

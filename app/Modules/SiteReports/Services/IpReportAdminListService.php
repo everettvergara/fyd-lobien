@@ -85,7 +85,7 @@ class IpReportAdminListService extends SiteReportAdminListService
                 method: 'POST',
                 ability: 'create',
                 abilityTarget: BlockedIp::class,
-                visible: fn (IpVisitStat $stat) => ! $stat->blocked_ip_id,
+                visible: fn (IpVisitStat $stat) => ! filled($stat->blocked_ip_id),
                 confirm: 'Block this IP address from accessing the public site?',
                 danger: true,
             ),
@@ -97,7 +97,7 @@ class IpReportAdminListService extends SiteReportAdminListService
                 method: 'DELETE',
                 ability: 'delete',
                 abilityTarget: fn (IpVisitStat $stat) => BlockedIp::query()->find($stat->blocked_ip_id) ?? new BlockedIp(['ip_address' => $stat->ip_address]),
-                visible: fn (IpVisitStat $stat) => (bool) $stat->blocked_ip_id,
+                visible: fn (IpVisitStat $stat) => filled($stat->blocked_ip_id),
                 confirm: 'Unblock this IP address?',
             ),
         ];

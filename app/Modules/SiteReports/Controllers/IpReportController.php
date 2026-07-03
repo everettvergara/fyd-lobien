@@ -20,6 +20,7 @@ class IpReportController extends Controller
 
         return view('sitereports::ips.index', [
             'list' => $this->ipReportList->result($request),
+            'canBlockIp' => $request->user()->hasPermission('site_reports.block'),
         ]);
     }
 }

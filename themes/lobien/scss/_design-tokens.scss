@@ -1,0 +1,41 @@
+// =============================================================================
+// Lobien Realty Group — public theme tokens (from lobiengroup.com)
+// =============================================================================
+
+// --- Brand colors -------------------------------------------------------------
+
+$fyd-color-primary: #004aad;
+$fyd-color-primary-dark: #121643;
+$fyd-color-accent: #ba0d26;
+$fyd-color-accent-link: #d1292a;
+$fyd-color-dark: #121643;
+$fyd-color-dark-mid: #182e6b;
+$fyd-color-dark-light: #3e63a1;
+$fyd-color-text: #0d0d0e;
+$fyd-color-text-muted: #444444;
+$fyd-color-bg: #ffffff;
+$fyd-color-bg-alt: #f0f0f0;
+$fyd-color-bg-light: #f9fdff;
+$fyd-color-border: #dddddd;
+$fyd-color-footer-text: #28281e;
+
+// --- Typography (public portal only) -----------------------------------------
+
+$fyd-font-heading: "Century Gothic", "Trebuchet MS", "Futura", "Segoe UI", sans-serif;
+$fyd-font-body: "Century Gothic", "Trebuchet MS", "Futura", "Segoe UI", sans-serif;
+$fyd-font-size-body: 0.875rem;
+$fyd-font-size-lead: 1rem;
+$fyd-font-size-h1: 2rem;
+$fyd-font-size-h2: 1.5rem;
+$fyd-font-size-h3: 1.125rem;
+$fyd-font-size-h4: 1rem;
+$fyd-font-size-h5: 0.875rem;
+$fyd-font-size-h6: 0.875rem;
+$fyd-line-height-body: 1.7;
+$fyd-line-height-heading: 1.2;
+
+// --- Layout (public portal only) ---------------------------------------------
+
+$fyd-section-padding-y: 4.6875rem;
+$fyd-hero-padding-y: 0;
+$fyd-container-max: 1170px;

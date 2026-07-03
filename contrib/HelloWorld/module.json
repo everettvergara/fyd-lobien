@@ -1,0 +1,23 @@
+{
+  "name": "HelloWorld",
+  "slug": "hello-world",
+  "version": "1.0.0",
+  "description": "Minimal hello world module to try the business module lifecycle.",
+  "group": "Hello World",
+  "group_icon": "bi-globe2",
+  "group_sort": 10,
+  "author": "FYD CMS",
+  "license": "MIT",
+  "fyd_cms": ">=0.0.0",
+  "requires_core": [],
+  "autoload": "App\\Modules\\HelloWorld",
+  "features": [
+    {
+      "label": "Hello World",
+      "permission": "hello_world.view",
+      "route": "admin.hello-world.index",
+      "icon": "bi-globe2",
+      "sort": 10
+    }
+  ]
+}

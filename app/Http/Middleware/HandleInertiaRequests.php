@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\NavigationService;
+use App\Services\Theme\ThemeService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -18,6 +19,8 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $nav = app(NavigationService::class);
+        $theme = app(ThemeService::class);
+        $manifest = $theme->activeManifest();
 
         return [
             ...parent::share($request),
@@ -25,6 +28,10 @@ class HandleInertiaRequests extends Middleware
             'navigation' => [
                 'header' => $nav->header(),
                 'footer' => $nav->footer(),
+            ],
+            'theme' => [
+                'slug' => $theme->activeSlug(),
+                'name' => $manifest['name'] ?? $theme->activeSlug(),
             ],
             'recaptcha' => [
                 'enabled' => config('recaptcha.enabled'),

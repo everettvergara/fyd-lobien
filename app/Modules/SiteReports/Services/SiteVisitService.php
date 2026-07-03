@@ -2,11 +2,10 @@
 
 namespace App\Modules\SiteReports\Services;
 
-use App\Modules\SiteReports\Models\BlockedIp;
 use App\Modules\SiteReports\Models\SiteVisit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
+use Symfony\Component\HttpFoundation\Response;
 
 class SiteVisitService
 {
@@ -42,13 +41,20 @@ class SiteVisitService
         return true;
     }
 
+    public function shouldTrackResponse(Response $response): bool
+    {
+        $status = $response->getStatusCode();
+
+        return ($status >= 200 && $status < 300) || $status === 404;
+    }
+
     public function record(Request $request): void
     {
         if (! $this->shouldTrack($request)) {
             return;
         }
 
-        $referer = $request->headers->get('referer');
+        $referer = $request->header('Referer');
         $refererHost = $this->resolveRefererHost($referer, $request);
 
         SiteVisit::create([
@@ -74,14 +80,40 @@ class SiteVisitService
             return null;
         }
 
-        $host = strtolower($host);
-        $appHost = strtolower($request->getHost());
+        $refererHost = $this->normalizeHost($host);
 
-        if ($host === $appHost) {
+        if ($refererHost === null || in_array($refererHost, $this->appHosts($request), true)) {
             return null;
         }
 
-        return $host;
+        return $refererHost;
+    }
+
+    protected function normalizeHost(?string $host): ?string
+    {
+        if ($host === null || $host === '') {
+            return null;
+        }
+
+        $host = strtolower($host);
+
+        return str_starts_with($host, 'www.') ? substr($host, 4) : $host;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function appHosts(Request $request): array
+    {
+        $hosts = [
+            $request->getHost(),
+            parse_url((string) config('app.url'), PHP_URL_HOST),
+        ];
+
+        return array_values(array_filter(array_unique(array_map(
+            fn ($host) => $this->normalizeHost(is_string($host) ? $host : null),
+            $hosts,
+        ))));
     }
 
     public function isBot(?string $userAgent): bool

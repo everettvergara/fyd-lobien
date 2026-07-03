@@ -8,7 +8,6 @@ use App\Modules\Content\Models\Content;
 use App\Modules\Content\Requests\StoreContentRequest;
 use App\Modules\Content\Requests\UpdateContentRequest;
 use App\Modules\Content\Services\ContentAdminListService;
-use App\Modules\SEO\Services\SeoService;
 use App\Modules\Cache\Services\PublicCacheService;
 use App\Modules\SEO\Services\SitemapService;
 use App\Services\ActivityLogger;
@@ -24,7 +23,6 @@ class ContentController extends Controller
     public function __construct(
         protected ContentAdminListService $contentList,
         protected PublishingService $publishing,
-        protected SeoService $seo,
         protected MediaUsageService $usage,
         protected ContentTypeRegistry $contentTypes,
     ) {}
@@ -65,12 +63,11 @@ class ContentController extends Controller
     public function store(StoreContentRequest $request): RedirectResponse
     {
         $content = Content::create([
-            ...$request->safe()->except([...$this->seo->fieldKeys(), 'gallery_media_ids']),
+            ...$request->safe()->except(['gallery_media_ids']),
             'author_id' => $request->user()->id,
         ]);
 
-        $content->saveSeo($this->seo->extract($request->validated()));
-        $content->load('seoMeta');
+        $content->load('featuredImage');
         $this->syncGallery($content, $request->input('gallery_media_ids', []));
         $this->syncMediaUsage($content);
         $this->forgetSitemapCache();
@@ -82,7 +79,7 @@ class ContentController extends Controller
     public function show(Content $content): View
     {
         $this->authorize('view', $content);
-        $content->load(['author', 'seoMeta', 'featuredImage']);
+        $content->load(['author', 'featuredImage']);
 
         return view('content::content.show', compact('content'));
     }
@@ -90,7 +87,7 @@ class ContentController extends Controller
     public function edit(Content $content): View
     {
         $this->authorize('update', $content);
-        $content->load(['seoMeta.ogImage', 'featuredImage', 'galleryImages']);
+        $content->load(['featuredImage', 'galleryImages']);
         $statuses = \App\Enums\ContentStatus::cases();
         $contentTypeOptions = $this->contentTypes->options();
         $contentTypeDefinitions = $this->contentTypes->all();
@@ -100,9 +97,8 @@ class ContentController extends Controller
 
     public function update(UpdateContentRequest $request, Content $content): RedirectResponse
     {
-        $content->update($request->safe()->except([...$this->seo->fieldKeys(), 'gallery_media_ids']));
-        $content->saveSeo($this->seo->extract($request->validated()));
-        $content->load('seoMeta');
+        $content->update($request->safe()->except(['gallery_media_ids']));
+        $content->load('featuredImage');
         $this->syncGallery($content, $request->input('gallery_media_ids', []));
         $this->syncMediaUsage($content);
         $this->forgetSitemapCache();
@@ -116,9 +112,6 @@ class ContentController extends Controller
         $this->authorize('delete', $content);
         ActivityLogger::log('content', 'deleted', $content, ['title' => $content->title]);
         $this->usage->removeModel($content);
-        if ($content->seoMeta) {
-            $this->usage->removeModel($content->seoMeta);
-        }
         $content->delete();
         $this->forgetSitemapCache();
 
@@ -146,7 +139,7 @@ class ContentController extends Controller
     public function duplicate(Content $content): RedirectResponse
     {
         $this->authorize('create', Content::class);
-        $content->load('seoMeta');
+        $content->load('featuredImage');
 
         $duplicate = $this->publishing->duplicate(
             $content,
@@ -202,12 +195,6 @@ class ContentController extends Controller
             $content->galleryImages->pluck('id')->all(),
             'Gallery Image',
         );
-
-        if ($content->seoMeta) {
-            $this->usage->syncModel($content->seoMeta, 'seo', [
-                'og_image_id' => 'Open Graph Image',
-            ]);
-        }
     }
 
     protected function forgetSitemapCache(): void

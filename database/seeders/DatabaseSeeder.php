@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
         // Sample content for new projects
         $this->call([
             SampleContentSeeder::class,
+            \App\Modules\PageManager\Database\Seeders\PageManagerSeeder::class,
         ]);
     }
 }

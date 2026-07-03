@@ -7,6 +7,7 @@ use App\Services\AuthConfigService;
 use App\Services\MailConfigService;
 use App\Services\PasswordPolicyService;
 use App\Services\SettingsService;
+use App\Services\Theme\ThemeService;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
@@ -21,6 +22,30 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(SettingsService::class);
+        $this->app->singleton(\App\Services\Public\PublicBlockRegistry::class);
+        $this->app->singleton(\App\Services\Public\PageRenderService::class);
+
+        $this->app->singleton('inertia.view-finder', function ($app) {
+            $slug = config('fyd.themes.default', 'fyd-default');
+
+            try {
+                $slug = $app->make(ThemeService::class)->activeSlug();
+            } catch (\Throwable) {
+                // Fall back during early bootstrap.
+            }
+
+            $themePagesPath = base_path("themes/{$slug}/js/Pages");
+
+            if (! is_dir($themePagesPath)) {
+                $themePagesPath = base_path('themes/fyd-default/js/Pages');
+            }
+
+            return new \Illuminate\View\FileViewFinder(
+                $app['files'],
+                [$themePagesPath],
+                $app['config']->get('inertia.pages.extensions', ['vue'])
+            );
+        });
     }
 
     public function boot(): void
@@ -31,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Logout::class, [LogAuthenticationEvents::class, 'handleLogout']);
         Event::listen(Registered::class, SendEmailVerificationNotification::class);
 
-        if ($rootUrl = config('app.url')) {
+        if (! app()->environment('local') && ($rootUrl = config('app.url'))) {
             URL::forceRootUrl($rootUrl);
         }
 

@@ -45,8 +45,8 @@ class SiteMaintenanceTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Content/Show')
-            ->where('content.slug', 'site-maintenance')
+            ->component('Page/Show')
+            ->where('page.slug', 'site-maintenance')
         );
     }
 

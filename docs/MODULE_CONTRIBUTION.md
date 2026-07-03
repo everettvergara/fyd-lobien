@@ -206,6 +206,7 @@ Each feature: Controller, Service, Policy, Requests, views, permission domain.
 - [ ] `Module.php` + `module.json`; `isInstallable(): true`
 - [ ] `group` set; `features[]` matches `menuItems()`
 - [ ] All migrations have `down()`
+- [ ] `publicBlocks()` lists every Page Manager block key; feature test confirms uninstall removes blocks from page regions
 - [ ] README: copy path, `requires_core`, permissions, seed notes
 - [ ] Uses framework services; no duplicated kernel logic
 - [ ] Feature tests runnable when copied to `app/Modules/`
@@ -221,3 +222,103 @@ features under group **Demo Module**. Walkthrough:
 - [contrib/README.md](../contrib/README.md)
 - [MODULE_STANDARD.md](MODULE_STANDARD.md)
 - [MODULE_LIFECYCLE.md](MODULE_LIFECYCLE.md)
+- [PAGE_MANAGER.md](PAGE_MANAGER.md) — public blocks and Page Manager integration
+
+## Public blocks
+
+Installable modules expose **blocks** for the Page Manager palette. Modules must **not** attach themselves to pages or theme regions.
+
+### Register blocks in `Module.php`
+
+```php
+public function publicBlocks(): array
+{
+    return [
+        PublicBlock::make('webform')
+            ->label('Web Form')
+            ->icon('bi-ui-checks')
+            ->module($this->name())
+            ->resolver(WebformBlockResolver::class)
+            ->component('WebformBlock')
+            ->configSchema([
+                [
+                    'key' => 'webform_slug',
+                    'label' => 'Web Form',
+                    'type' => 'select',
+                    'required' => true,
+                    'optionsProvider' => WebformOptionsProvider::class,
+                ],
+            ]),
+    ];
+}
+```
+
+Any block with settings **must** declare `configSchema()`. Do not rely on raw `key=value` config in admin — Page Manager renders typed fields from the schema.
+
+### Config options provider
+
+For `select` fields backed by database records, implement `App\Contracts\BlockConfigOptionsProvider`:
+
+```php
+class WebformOptionsProvider implements BlockConfigOptionsProvider
+{
+    public function options(): array
+    {
+        return Webform::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['slug', 'name'])
+            ->map(fn (Webform $form) => [
+                'value' => (string) $form->slug,
+                'label' => (string) $form->name,
+            ])
+            ->values()
+            ->all();
+    }
+}
+```
+
+Reference the provider class in the schema field's `optionsProvider` key. Page Manager resolves options server-side when loading the page editor.
+
+See [PAGE_MANAGER.md](PAGE_MANAGER.md) for the full field contract.
+
+### Or in `module.json`
+
+```json
+"blocks": [
+  {
+    "key": "webform",
+    "label": "Web Form",
+    "icon": "bi-ui-checks",
+    "component": "WebformBlock",
+    "resolver": "App\\Modules\\WebForms\\Blocks\\WebformBlockResolver"
+  }
+]
+```
+
+### Block resolver
+
+Implement `App\Contracts\BlockResolver`:
+
+```php
+public function resolve(array $config, Page $page): array
+{
+    return ['slug' => $config['webform_slug']];
+}
+```
+
+The Vue `component` key is rendered by the theme's shared `BlockRenderer`.
+
+### Uninstall cleanup
+
+When a module is uninstalled, [`ModulePageBlockCleanupService`](../app/Services/Module/ModulePageBlockCleanupService.php) deletes all `page_blocks` and `page_master_blocks` rows whose `block_type` matches keys returned by `publicBlocks()`. **Every block your module registers must appear in `publicBlocks()`** so placements in footer, main, hero, sidebar, and other regions are removed automatically.
+
+- Do **not** hand-delete blocks in `Module::uninstall()` — registration is the contract.
+- Do **not** auto-attach blocks to pages or regions on install.
+- Add a feature test (see [`WebFormsModuleTest`](../tests/Feature/WebFormsModuleTest.php) or [`NewsletterModuleTest`](../tests/Feature/NewsletterModuleTest.php)) that creates page and Page Master blocks, uninstalls the module, and asserts both tables are clean.
+
+### Do not
+
+- Add page attachment or section attachment admin UI
+- Register `*AttachmentResolver` contracts
+- Hardcode public routes for composed pages (JSON API routes for block hydration are OK)

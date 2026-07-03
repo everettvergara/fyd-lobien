@@ -22,6 +22,11 @@ class ModuleRegistry
         return array_values($this->modules);
     }
 
+    public function reset(): void
+    {
+        $this->modules = [];
+    }
+
     public function bootPolicies(): void
     {
         foreach ($this->modules as $module) {
@@ -36,6 +41,15 @@ class ModuleRegistry
         foreach ($this->modules as $module) {
             foreach ($module->menuItems() as $item) {
                 $menuRegistry->register($item);
+            }
+        }
+    }
+
+    public function bootPublicBlocks(\App\Services\Public\PublicBlockRegistry $registry): void
+    {
+        foreach ($this->modules as $module) {
+            foreach ($module->publicBlocks() as $block) {
+                $registry->register($block);
             }
         }
     }

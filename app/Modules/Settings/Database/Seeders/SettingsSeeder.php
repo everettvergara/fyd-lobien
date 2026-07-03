@@ -75,6 +75,9 @@ class SettingsSeeder extends Seeder
                 'default_changefreq_article' => ['weekly', 'string'],
                 'default_priority' => ['0.5', 'string'],
             ],
+            'appearance' => [
+                'active_theme' => ['fyd-default', 'string'],
+            ],
         ];
 
         foreach ($defaults as $group => $items) {

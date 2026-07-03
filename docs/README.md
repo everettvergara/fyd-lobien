@@ -13,12 +13,13 @@ development standards.
 6. [SECURITY.md](SECURITY.md) — Security domain specification
 7. [MEDIA_LIBRARY.md](MEDIA_LIBRARY.md) — Digital Asset Management framework
 8. [CONTENT_MODULE.md](CONTENT_MODULE.md) — Unified content module and content types
-9. [BANNER_MODULE.md](BANNER_MODULE.md) — Reusable banner presentation engine
-10. [SEEDING.md](SEEDING.md) — Database seeders, sample content, and new-install data
-11. [DEVELOPMENT.md](DEVELOPMENT.md) — Day-to-day development guide
-12. [THEME.md](THEME.md) — Design tokens and styling (**read before color/font/theme tasks**)
-13. [ROADMAP.md](ROADMAP.md) — Phases, milestones, and current work
-14. [VERSION.md](VERSION.md) — CMS template version and changelog
+9. [PAGE_MANAGER.md](PAGE_MANAGER.md) — Public site pages, block composition, and SEO
+10. [BANNER_MODULE.md](BANNER_MODULE.md) — Reusable banner presentation engine
+11. [SEEDING.md](SEEDING.md) — Database seeders, sample content, and new-install data
+12. [DEVELOPMENT.md](DEVELOPMENT.md) — Day-to-day development guide
+13. [THEME.md](THEME.md) — Public theme system, tokens, and styling (**read before color/font/theme tasks**)
+14. [ROADMAP.md](ROADMAP.md) — Phases, milestones, and current work
+15. [VERSION.md](VERSION.md) — CMS template version and changelog
 
 ## Document Hierarchy
 
@@ -35,7 +36,7 @@ development standards.
 | BANNER_MODULE.md | Banner templates, keys, rendering, extension points | Content and marketing module authors |
 | SEEDING.md | Seeders, essential vs sample data, new-install inventory | All developers, project setup |
 | DEVELOPMENT.md | Portals, modules, conventions, testing | All developers |
-| THEME.md | Design tokens, manual styling, agent rules for colors/fonts | All developers, **Cursor agents** |
+| THEME.md | Public themes, design tokens, install/activate workflow, agent rules | All developers, **Cursor agents** |
 | ROADMAP.md | Phase status and priorities | Planning, prioritization |
 | VERSION.md | CMS template semver, bump rules, changelog | All developers |
 

@@ -4,6 +4,10 @@ namespace App\Framework;
 
 class MenuItem
 {
+    public const PANEL_CORE = 'core';
+
+    public const PANEL_BUSINESS = 'business';
+
     public function __construct(
         public readonly string $label,
         public readonly string $routeName,
@@ -13,6 +17,7 @@ class MenuItem
         public readonly ?string $routePattern = null,
         public readonly int $sort = 0,
         public readonly array $query = [],
+        public readonly string $panel = self::PANEL_CORE,
     ) {}
 
     public function isActive(): bool

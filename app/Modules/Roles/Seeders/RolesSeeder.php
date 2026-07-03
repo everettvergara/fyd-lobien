@@ -34,7 +34,7 @@ class RolesSeeder extends Seeder
                 'display_name' => 'Editor',
                 'description' => 'Can manage and publish content.',
                 'is_system' => true,
-                'permissions' => $allPermissions->keys()->filter(fn ($name) => in_array(explode('.', $name)[0], ['dashboard', 'content', 'content_types', 'banners', 'menus', 'media', 'provinces', 'cities', 'seo']) || $name === 'dashboard.view')->all(),
+                'permissions' => $allPermissions->keys()->filter(fn ($name) => in_array(explode('.', $name)[0], ['dashboard', 'content', 'content_types', 'pages', 'page-master', 'banners', 'menus', 'media', 'provinces', 'cities', 'seo']) || $name === 'dashboard.view')->all(),
             ],
             'author' => [
                 'display_name' => 'Author',
@@ -43,7 +43,7 @@ class RolesSeeder extends Seeder
                 'permissions' => $allPermissions->keys()->filter(function ($name) {
                     $parts = explode('.', $name);
 
-                    return (in_array($parts[0], ['dashboard', 'content', 'content_types', 'banners', 'media', 'provinces', 'cities'])
+                    return (in_array($parts[0], ['dashboard', 'content', 'content_types', 'pages', 'page-master', 'banners', 'media', 'provinces', 'cities'])
                         && in_array($parts[1] ?? '', ['view', 'create', 'edit']))
                         || ($parts[0] === 'seo' && ($parts[1] ?? '') === 'view');
                 })->all(),

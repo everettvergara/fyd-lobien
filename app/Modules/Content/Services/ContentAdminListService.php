@@ -11,6 +11,7 @@ use App\Framework\Admin\List\AdminListFilter;
 use App\Framework\Admin\List\AdminListResult;
 use App\Framework\Admin\List\AdminListService;
 use App\Modules\Content\Models\Content;
+use App\Modules\PageManager\Models\Page;
 use App\Services\ActivityLogger;
 use App\Services\PublishingService;
 use App\Support\ContentTypeRegistry;
@@ -63,7 +64,7 @@ class ContentAdminListService
             AdminListColumn::make('id', 'ID', sortField: 'id', class: 'text-muted small', headerClass: 'text-muted'),
             AdminListColumn::make('title', 'Title', fn (Content $content) => sprintf(
                 '<a href="%s" class="text-decoration-none fw-medium">%s</a>',
-                route('admin.content.show', $content),
+                $this->titleUrlFor($content),
                 e($content->title),
             ), sortField: 'title', raw: true),
             AdminListColumn::make('content_type', 'Type', fn (Content $content) => $this->contentTypes->badgeHtml($content->content_type), sortField: 'content_type', class: 'small', raw: true),
@@ -94,6 +95,7 @@ class ContentAdminListService
     {
         return [
             AdminListAction::make('view', 'View', 'bi-eye', fn (Content $content) => route('admin.content.show', $content), ability: 'view'),
+            AdminListAction::make('edit-page', 'Edit Page', 'bi-layout-text-window-reverse', fn (Content $content) => route('admin.pages.edit', $this->pageForContent($content)), ability: 'update', abilityTarget: fn (Content $content) => $this->pageForContent($content), visible: fn (Content $content) => $this->pageForContent($content) !== null),
             AdminListAction::make('preview', 'Preview', 'bi-box-arrow-up-right', fn (Content $content) => route('admin.content.preview', $content), ability: 'view', newTab: true),
             AdminListAction::make('edit', 'Edit', 'bi-pencil', fn (Content $content) => route('admin.content.edit', $content), ability: 'update'),
             AdminListAction::make(
@@ -167,5 +169,25 @@ class ContentAdminListService
         });
 
         return $items->count();
+    }
+
+    protected function titleUrlFor(Content $content): string
+    {
+        $page = $this->pageForContent($content);
+
+        if ($page !== null && auth()->user()?->can('update', $page)) {
+            return route('admin.pages.edit', $page);
+        }
+
+        return route('admin.content.show', $content);
+    }
+
+    protected function pageForContent(Content $content): ?Page
+    {
+        if ($content->content_type !== 'page') {
+            return null;
+        }
+
+        return Page::query()->where('path', '/'.$content->slug)->first();
     }
 }

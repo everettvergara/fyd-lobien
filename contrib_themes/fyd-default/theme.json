@@ -1,0 +1,18 @@
+{
+    "name": "FYD Default",
+    "slug": "fyd-default",
+    "version": "1.0.0",
+    "description": "Default corporate public theme for FYD CMS.",
+    "author": "FYD",
+    "assets": {
+        "scss": "scss/theme.scss",
+        "js": "assets/app.js"
+    },
+    "protected": true,
+    "regions": [
+        { "key": "hero", "label": "Hero", "description": "Full-width top banner area" },
+        { "key": "main", "label": "Main", "description": "Primary content column" },
+        { "key": "sidebar", "label": "Sidebar", "description": "Optional side column" },
+        { "key": "footer", "label": "Footer", "description": "Above site footer" }
+    ]
+}

@@ -274,7 +274,7 @@ homepage heroes, sliders, landing heroes, CTA banners, section banners,
 sidebars, footers, and future popup/campaign banners.
 
 Use `App\Modules\Banners\Services\BannerRenderingService` for public banner
-payloads and `resources/js/Components/BannerRenderer.vue` for public display.
+payloads and `themes/fyd-default/js/Components/BannerRenderer.vue` for public display.
 See [BANNER_MODULE.md](BANNER_MODULE.md).
 
 ## Code Conventions

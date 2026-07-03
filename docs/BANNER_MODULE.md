@@ -139,8 +139,8 @@ PublicContent::bannerByKey('sidebar-promo');
 Returns `null` when no published banner exists for the key. Draft and archived
 banners are excluded.
 
-Public Vue rendering uses `resources/js/Components/BannerRenderer.vue` and
-`resources/js/Components/Carousel.vue`. Column templates render each block as
+Public Vue rendering uses `themes/fyd-default/js/Components/BannerRenderer.vue` and
+`themes/fyd-default/js/Components/Carousel.vue`. Column templates render each block as
 an independent column with picture, title, subtitle, text, and CTA. Carousel
 components iterate `banner.slides[]` within a single banner record.
 

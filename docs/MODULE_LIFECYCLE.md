@@ -89,7 +89,7 @@ php artisan module:uninstall Commerce  # confirms + type name unless --force
 | **Install** | Seeded if configured | Active — group in right panel | Migrations run |
 | **Disable** | Preserved | Hidden — group removed | Unchanged |
 | **Enable** | Unchanged | Restored | Unchanged |
-| **Uninstall** | Removed | Removed | Tables dropped (migration rollback) |
+| **Uninstall** | Removed | Removed | Tables dropped (migration rollback); Page Manager blocks for the module's `publicBlocks()` keys removed from all pages and Page Master |
 
 ## Confirmation requirements
 

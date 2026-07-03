@@ -5,7 +5,6 @@ namespace App\Modules\Content\Requests;
 use App\Enums\ContentStatus;
 use App\Support\ContentTypeRegistry;
 use App\Support\HtmlSanitizer;
-use App\Support\SeoFields;
 use App\Support\SlugValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -26,7 +25,7 @@ class StoreContentRequest extends FormRequest
 
     public function rules(): array
     {
-        return array_merge([
+        return [
             'content_type' => ['required', 'string', Rule::in(app(ContentTypeRegistry::class)->keys())],
             'title' => ['required', 'string', 'max:255'],
             'slug' => SlugValidation::rules('unique:contents,slug'),
@@ -37,6 +36,6 @@ class StoreContentRequest extends FormRequest
             'gallery_media_ids.*' => ['exists:media,id'],
             'status' => ['required', Rule::enum(ContentStatus::class)],
             'published_at' => ['nullable', 'date'],
-        ], SeoFields::rules());
+        ];
     }
 }

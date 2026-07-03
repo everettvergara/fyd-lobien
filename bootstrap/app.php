@@ -22,11 +22,21 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         \App\Modules\SiteReports\Console\PruneSiteVisitsCommand::class,
+        \App\Console\Commands\ModuleInstallCommand::class,
+        \App\Console\Commands\ModuleDisableCommand::class,
+        \App\Console\Commands\ModuleEnableCommand::class,
+        \App\Console\Commands\ModuleUninstallCommand::class,
+        \App\Console\Commands\MakeModuleCommand::class,
+        \App\Console\Commands\MakeThemeCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('site-reports:prune')->daily();
     })
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(prepend: [
+            \App\Http\Middleware\UseRequestRootUrlInLocal::class,
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\RejectBlockedIp::class,

@@ -9,7 +9,7 @@
 
     @include('partials.site-favicon')
 
-    @vite(['resources/scss/public.scss', 'resources/js/app.js'])
+    @vite(app(\App\Services\Theme\ThemeService::class)->viteAssets())
     @inertiaHead
 </head>
 <body>

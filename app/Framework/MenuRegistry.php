@@ -15,17 +15,41 @@ class MenuRegistry
         $this->items[] = $item;
     }
 
+    public function reset(): void
+    {
+        $this->items = [];
+    }
+
+    /**
+     * @return array{core: array<int, array{title: ?string, items: array<int, array<string, mixed>>}>, business: array<int, array{title: ?string, items: array<int, array<string, mixed>>}>}
+     */
+    public function panelsFor(?User $user): array
+    {
+        return [
+            'core' => $this->sectionsForPanel($user, MenuItem::PANEL_CORE),
+            'business' => $this->sectionsForPanel($user, MenuItem::PANEL_BUSINESS),
+        ];
+    }
+
     /**
      * @return array<int, array{title: ?string, items: array<int, array{label: string, url: string, icon: string, active: bool}>}>
      */
     public function sectionsFor(?User $user): array
+    {
+        return $this->panelsFor($user)['core'];
+    }
+
+    /**
+     * @return array<int, array{title: ?string, items: array<int, array{label: string, url: string, icon: string, active: bool}>}>
+     */
+    protected function sectionsForPanel(?User $user, string $panel): array
     {
         if (! $user) {
             return [];
         }
 
         $visible = collect($this->items)
-            ->filter(fn (MenuItem $item) => $user->hasPermission($item->permission))
+            ->filter(fn (MenuItem $item) => $item->panel === $panel && $user->hasPermission($item->permission))
             ->sortBy('sort')
             ->values();
 
@@ -52,6 +76,9 @@ class MenuRegistry
             ];
         }
 
-        return array_values(array_map(fn (string $key) => $sections[$key], $order));
+        return array_values(array_filter(
+            array_map(fn (string $key) => $sections[$key], $order),
+            fn (array $section) => $section['items'] !== [],
+        ));
     }
 }

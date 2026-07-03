@@ -28,7 +28,7 @@ class TrackSiteVisitTest extends TestCase
         $this->assertDatabaseCount('site_visits', 1);
         $this->assertDatabaseHas('site_visits', [
             'path' => '/',
-            'route_name' => 'home',
+            'route_name' => 'page.show',
         ]);
     }
 
@@ -46,7 +46,7 @@ class TrackSiteVisitTest extends TestCase
         $this->assertDatabaseCount('site_visits', 1);
         $this->assertDatabaseHas('site_visits', [
             'path' => '/',
-            'route_name' => 'home',
+            'route_name' => 'page.show',
         ]);
     }
 
@@ -80,5 +80,38 @@ class TrackSiteVisitTest extends TestCase
         $this->assertDatabaseHas('site_visits', [
             'referer_host' => 'example.com',
         ]);
+    }
+
+    public function test_404_with_external_referer_is_recorded(): void
+    {
+        $this->withHeaders([
+            'Referer' => 'https://example.com/page',
+        ])->get('/this-page-does-not-exist');
+
+        $this->assertDatabaseHas('site_visits', [
+            'path' => '/this-page-does-not-exist',
+            'referer_host' => 'example.com',
+        ]);
+    }
+
+    public function test_www_and_bare_domain_referrers_are_treated_as_same_site(): void
+    {
+        $host = parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'localhost';
+
+        $this->withHeaders([
+            'Referer' => 'https://www.'.$host.'/about',
+        ])->get('/');
+
+        $visit = SiteVisit::first();
+
+        $this->assertNotNull($visit);
+        $this->assertNull($visit->referer_host);
+    }
+
+    public function test_redirect_response_is_not_tracked(): void
+    {
+        $this->get('/admin');
+
+        $this->assertDatabaseCount('site_visits', 0);
     }
 }
