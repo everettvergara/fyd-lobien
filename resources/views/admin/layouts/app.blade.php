@@ -10,6 +10,8 @@
     @include('partials.site-favicon')
 
     @vite(['resources/admin/scss/app.scss', 'resources/admin/js/app.js'])
+
+    @stack('styles')
 </head>
 <body
     class="admin-body"

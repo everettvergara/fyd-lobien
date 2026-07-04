@@ -5,15 +5,17 @@
         </button>
 
         <button
-            class="btn btn-link text-dark d-none d-lg-inline-flex align-items-center p-0 admin-sidebar-toggle-btn"
+            class="btn btn-outline-secondary btn-sm d-none d-lg-inline-flex align-items-center gap-1 admin-sidebar-toggle-btn"
             type="button"
             data-admin-sidebar-toggle
             aria-label="Hide menu"
             aria-pressed="false"
             title="Hide menu"
         >
-            <i class="{{ admin_icon('bi-layout-sidebar-inset') }} fs-5" data-sidebar-icon-visible aria-hidden="true"></i>
-            <i class="{{ admin_icon('bi-layout-sidebar') }} fs-5 d-none" data-sidebar-icon-hidden aria-hidden="true"></i>
+            <i class="{{ admin_icon('bi-layout-sidebar-inset') }}" data-sidebar-icon-visible aria-hidden="true"></i>
+            <i class="{{ admin_icon('bi-layout-sidebar') }} d-none" data-sidebar-icon-hidden aria-hidden="true"></i>
+            <span class="admin-sidebar-toggle-label" data-sidebar-label-visible>Hide menu</span>
+            <span class="admin-sidebar-toggle-label d-none" data-sidebar-label-hidden>Show menu</span>
         </button>
     </div>
 

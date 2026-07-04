@@ -34,8 +34,12 @@ class AdminIcon
         'bi-shield-check' => 'bi-shield-fill-check',
         'bi-shield-x' => 'bi-shield-fill-x',
         'bi-link-45deg' => 'bi-signpost-split-fill',
+        'bi-view-stacked' => 'bi-grid-fill',
         'bi-layout-text-window-reverse' => 'bi-file-earmark-richtext-fill',
+        'bi-layout-sidebar-inset' => 'bi-layout-sidebar-inset',
+        'bi-layout-sidebar' => 'bi-layout-sidebar',
         'bi-sliders' => 'bi-sliders',
+        'bi-grip-vertical' => 'bi-grip-vertical',
     ];
 
     public static function solid(?string $icon): string

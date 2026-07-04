@@ -905,6 +905,100 @@ $pagination-active-border-color: $fyd-admin-link-color;
     background-color: $fyd-admin-form-bg !important;
 }
 
+.admin-body .content-block-editor {
+    @mixin content-block-section-theme($border, $header-bg, $divider, $title-bg) {
+        border-color: $border;
+
+        .content-block-section__header {
+            background-color: $header-bg !important;
+            border-bottom-color: $divider;
+        }
+
+        .content-block-section__title {
+            background-color: $title-bg;
+        }
+
+        .accordion-button {
+            background-color: $header-bg !important;
+            border-bottom: 1px solid $divider;
+            color: #000 !important;
+            font-weight: 700;
+            box-shadow: none;
+
+            &:not(.collapsed) {
+                background-color: $header-bg !important;
+                color: #000 !important;
+                border-bottom: 1px solid $divider;
+            }
+
+            &::after {
+                filter: none;
+            }
+        }
+    }
+
+    .content-block-section {
+        border-width: 1px;
+        border-style: solid;
+        box-shadow: none;
+
+        .card-body,
+        .accordion-body {
+            background-color: #fff !important;
+        }
+
+        &__header {
+            border-bottom-width: 1px;
+            border-bottom-style: solid;
+        }
+
+        &__title {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            color: #000;
+        }
+
+        &--general {
+            @include content-block-section-theme(#3b82f6, #eff6ff, #93c5fd, #dbeafe);
+        }
+
+        &--content-types {
+            @include content-block-section-theme(#10b981, #ecfdf5, #6ee7b7, #d1fae5);
+        }
+
+        &--fields {
+            @include content-block-section-theme(#8b5cf6, #f5f3ff, #c4b5fd, #ede9fe);
+        }
+
+        &--filters {
+            @include content-block-section-theme(#f59e0b, #fffbeb, #fcd34d, #fef3c7);
+        }
+
+        &--sort-pager {
+            @include content-block-section-theme(#06b6d4, #ecfeff, #67e8f9, #cffafe);
+        }
+
+        &--formatter {
+            @include content-block-section-theme(#ec4899, #fdf2f8, #f9a8d4, #fce7f3);
+        }
+
+        &--preview {
+            @include content-block-section-theme(#6366f1, #eef2ff, #a5b4fc, #c7d2fe);
+        }
+
+        &--generated-sql {
+            @include content-block-section-theme(#475569, #f8fafc, #cbd5e1, #e2e8f0);
+        }
+    }
+}
+
+.admin-body .content-block-preview-accordion {
+    .accordion-item + .accordion-item {
+        margin-top: 0.75rem;
+    }
+}
+
 .page-block-editor {
     .page-block-editor-layout {
         display: grid;

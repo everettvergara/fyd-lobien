@@ -1,0 +1,11 @@
+=== 1. FILES THAT DIFFER (content hash) ===
+Views/listings/_fees-tab.blade.php
+Views/listings/_units-tab.blade.php
+
+=== 2. FILES ONLY IN app/Modules/PropertyListings (sync scope, Tests excluded) ===
+
+=== 2b. FILES ONLY IN app (Tests/ only) ===
+
+=== 3. FILES ONLY IN contrib/PropertyListings ===
+
+Counts: differ=2, only_app=0, only_app_tests=0, only_contrib=0

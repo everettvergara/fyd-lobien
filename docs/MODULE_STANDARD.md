@@ -53,6 +53,7 @@ Search fields must be explicitly configured per module:
 |--------|---------------|-------------|
 | Content | `title`, `slug` | Search title or slug... |
 | Banners | `name`, `title` | Search name or title... |
+| Content Blocks | `name`, `key` | Search name or key... |
 | Menus | `name` | Search menu name... |
 | Users | `name`, `email` | Search name or email... |
 | Roles | `name`, `display_name` | Search role name... |

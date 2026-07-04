@@ -15,6 +15,7 @@ return [
         'AuditLogs',
         'Sessions',
         'Content',
+        'ContentBlocks',
         'PageManager',
         'Banners',
         'Menus',

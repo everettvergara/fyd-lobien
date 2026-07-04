@@ -3,8 +3,6 @@
 namespace App\Modules\PageManager;
 
 use App\Framework\PublicBlock;
-use App\Modules\PageManager\Blocks\FeaturedContentBlockResolver;
-use App\Modules\PageManager\Blocks\LatestArticlesBlockResolver;
 use App\Modules\PageManager\Blocks\PageBodyBlockResolver;
 use App\Modules\PageManager\Blocks\PageHeaderBlockResolver;
 use App\Modules\PageManager\Database\Seeders\PageManagerSeeder;
@@ -12,7 +10,6 @@ use App\Modules\PageManager\Models\Page;
 use App\Modules\PageManager\Models\PageMaster;
 use App\Modules\PageManager\Policies\PageMasterPolicy;
 use App\Modules\PageManager\Policies\PagePolicy;
-use App\Modules\PageManager\Support\ContentTypeOptionsProvider;
 
 class Module extends \App\Framework\Module
 {
@@ -69,57 +66,6 @@ class Module extends \App\Framework\Module
                 ->module($this->name())
                 ->resolver(PageBodyBlockResolver::class)
                 ->component('PageBodyBlock'),
-            PublicBlock::make('featured-content')
-                ->label('Featured Content')
-                ->icon('bi-grid')
-                ->module($this->name())
-                ->resolver(FeaturedContentBlockResolver::class)
-                ->component('FeaturedContentBlock')
-                ->configSchema([
-                    [
-                        'key' => 'heading',
-                        'label' => 'Heading',
-                        'type' => 'text',
-                        'default' => 'Featured Content',
-                    ],
-                    [
-                        'key' => 'limit',
-                        'label' => 'Limit',
-                        'type' => 'number',
-                        'default' => 3,
-                        'min' => 1,
-                        'max' => 12,
-                    ],
-                    [
-                        'key' => 'content_type',
-                        'label' => 'Content Type',
-                        'type' => 'select',
-                        'default' => 'page',
-                        'optionsProvider' => ContentTypeOptionsProvider::class,
-                    ],
-                ]),
-            PublicBlock::make('latest-articles')
-                ->label('Latest Articles')
-                ->icon('bi-newspaper')
-                ->module($this->name())
-                ->resolver(LatestArticlesBlockResolver::class)
-                ->component('LatestArticlesBlock')
-                ->configSchema([
-                    [
-                        'key' => 'heading',
-                        'label' => 'Heading',
-                        'type' => 'text',
-                        'default' => 'Latest Articles',
-                    ],
-                    [
-                        'key' => 'limit',
-                        'label' => 'Limit',
-                        'type' => 'number',
-                        'default' => 3,
-                        'min' => 1,
-                        'max' => 12,
-                    ],
-                ]),
         ];
     }
 }

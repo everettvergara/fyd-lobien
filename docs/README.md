@@ -13,13 +13,14 @@ development standards.
 6. [SECURITY.md](SECURITY.md) — Security domain specification
 7. [MEDIA_LIBRARY.md](MEDIA_LIBRARY.md) — Digital Asset Management framework
 8. [CONTENT_MODULE.md](CONTENT_MODULE.md) — Unified content module and content types
-9. [PAGE_MANAGER.md](PAGE_MANAGER.md) — Public site pages, block composition, and SEO
-10. [BANNER_MODULE.md](BANNER_MODULE.md) — Reusable banner presentation engine
-11. [SEEDING.md](SEEDING.md) — Database seeders, sample content, and new-install data
-12. [DEVELOPMENT.md](DEVELOPMENT.md) — Day-to-day development guide
-13. [THEME.md](THEME.md) — Public theme system, tokens, and styling (**read before color/font/theme tasks**)
-14. [ROADMAP.md](ROADMAP.md) — Phases, milestones, and current work
-15. [VERSION.md](VERSION.md) — CMS template version and changelog
+9. [CONTENT_BLOCKS_MODULE.md](CONTENT_BLOCKS_MODULE.md) — Content aggregation views for Page Manager blocks
+10. [PAGE_MANAGER.md](PAGE_MANAGER.md) — Public site pages, block composition, and SEO
+11. [BANNER_MODULE.md](BANNER_MODULE.md) — Reusable banner presentation engine
+12. [SEEDING.md](SEEDING.md) — Database seeders, sample content, and new-install data
+13. [DEVELOPMENT.md](DEVELOPMENT.md) — Day-to-day development guide
+14. [THEME.md](THEME.md) — Public theme system, tokens, and styling (**read before color/font/theme tasks**)
+15. [ROADMAP.md](ROADMAP.md) — Phases, milestones, and current work
+16. [VERSION.md](VERSION.md) — CMS template version and changelog
 
 ## Document Hierarchy
 
@@ -33,6 +34,7 @@ development standards.
 | SECURITY.md | Auth, RBAC, audit, sessions | Security-sensitive work |
 | MEDIA_LIBRARY.md | Media services, storage, usage, UI integration | Framework and module authors |
 | CONTENT_MODULE.md | Content module, content-types registry, admin/public integration | Content module authors |
+| CONTENT_BLOCKS_MODULE.md | Content aggregation views, formatters, Page Manager block integration | Content module authors |
 | BANNER_MODULE.md | Banner templates, keys, rendering, extension points | Content and marketing module authors |
 | SEEDING.md | Seeders, essential vs sample data, new-install inventory | All developers, project setup |
 | DEVELOPMENT.md | Portals, modules, conventions, testing | All developers |

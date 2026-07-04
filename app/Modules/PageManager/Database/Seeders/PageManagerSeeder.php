@@ -47,8 +47,8 @@ class PageManagerSeeder extends Seeder
             $home->blocks()->delete();
             foreach ([
                 ['region_key' => 'hero', 'block_type' => 'banner', 'sort_order' => 0, 'config' => ['banner_key' => 'homepage-hero']],
-                ['region_key' => 'main', 'block_type' => 'featured-content', 'sort_order' => 0, 'config' => ['heading' => 'Featured Content', 'limit' => 3]],
-                ['region_key' => 'main', 'block_type' => 'latest-articles', 'sort_order' => 1, 'config' => ['heading' => 'Latest Articles', 'limit' => 3]],
+                ['region_key' => 'main', 'block_type' => 'content-block', 'sort_order' => 0, 'config' => ['content_block_key' => 'featured-pages']],
+                ['region_key' => 'main', 'block_type' => 'content-block', 'sort_order' => 1, 'config' => ['content_block_key' => 'latest-articles']],
             ] as $block) {
                 PageBlock::create([...$block, 'page_id' => $home->id]);
             }

@@ -54,28 +54,23 @@ class PageManagerBlockConfigTest extends TestCase
         );
     }
 
-    public function test_palette_for_admin_exposes_featured_content_schema_fields(): void
+    public function test_palette_for_admin_exposes_content_block_schema_fields(): void
     {
         $palette = app(PublicBlockRegistry::class)->paletteForAdmin();
-        $block = collect($palette)->firstWhere('key', 'featured-content');
+        $block = collect($palette)->firstWhere('key', 'content-block');
 
         $this->assertNotNull($block);
 
         $keys = collect($block['config_schema'])->pluck('key')->all();
 
-        $this->assertSame(['heading', 'limit', 'content_type'], $keys);
-        $this->assertSame('number', collect($block['config_schema'])->firstWhere('key', 'limit')['type']);
+        $this->assertSame(['content_block_key'], $keys);
     }
 
-    public function test_default_config_for_block_uses_schema_defaults(): void
+    public function test_default_config_for_content_block_is_empty(): void
     {
-        $defaults = app(PublicBlockRegistry::class)->defaultConfigFor('featured-content');
+        $defaults = app(PublicBlockRegistry::class)->defaultConfigFor('content-block');
 
-        $this->assertSame([
-            'heading' => 'Featured Content',
-            'limit' => 3,
-            'content_type' => 'page',
-        ], $defaults);
+        $this->assertSame([], $defaults);
     }
 
     public function test_admin_page_update_persists_typed_block_config(): void
@@ -92,12 +87,10 @@ class PageManagerBlockConfigTest extends TestCase
             'blocks' => [
                 [
                     'region_key' => 'main',
-                    'block_type' => 'featured-content',
+                    'block_type' => 'content-block',
                     'sort_order' => 0,
                     'config' => [
-                        'heading' => 'Our Highlights',
-                        'limit' => 6,
-                        'content_type' => 'page',
+                        'content_block_key' => 'featured-pages',
                     ],
                 ],
                 [
@@ -113,19 +106,17 @@ class PageManagerBlockConfigTest extends TestCase
 
         $this->assertDatabaseHas('page_blocks', [
             'page_id' => $page->id,
-            'block_type' => 'featured-content',
+            'block_type' => 'content-block',
             'region_key' => 'main',
         ]);
 
         $block = PageBlock::query()
             ->where('page_id', $page->id)
-            ->where('block_type', 'featured-content')
+            ->where('block_type', 'content-block')
             ->firstOrFail();
 
         $this->assertSame([
-            'heading' => 'Our Highlights',
-            'limit' => 6,
-            'content_type' => 'page',
+            'content_block_key' => 'featured-pages',
         ], $block->config);
 
         $header = PageBlock::query()
@@ -148,7 +139,7 @@ class PageManagerBlockConfigTest extends TestCase
             ->assertOk()
             ->assertSee('data-block-palette-json', false)
             ->assertSee('promo-banner', false)
-            ->assertSee('Featured Content', false)
-            ->assertSee('Content Type', false);
+            ->assertSee('Content Block', false)
+            ->assertSee('featured-pages', false);
     }
 }

@@ -5,6 +5,7 @@ window.bootstrap = bootstrap;
 import './media-picker.js';
 import './media-library.js';
 import './admin-list.js';
+import './listing-comparator.js';
 import './rich-text-editor.js';
 import './password-toggle.js';
 import { initAdminSidebarPanelToggle, initAdminSidebarSections } from './admin-sidebar.js';

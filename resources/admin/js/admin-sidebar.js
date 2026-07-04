@@ -74,6 +74,10 @@ function setSidebarPanelHidden(hidden) {
     }
 }
 
+function isSidebarPanelHiddenInDom() {
+    return document.documentElement.classList.contains('admin-sidebar-hidden');
+}
+
 function applySidebarPanelState(hidden) {
     document.body.classList.toggle('admin-sidebar-hidden', hidden);
     document.documentElement.classList.toggle('admin-sidebar-hidden', hidden);
@@ -86,6 +90,8 @@ function applySidebarPanelState(hidden) {
 
     const iconVisible = toggle.querySelector('[data-sidebar-icon-visible]');
     const iconHidden = toggle.querySelector('[data-sidebar-icon-hidden]');
+    const labelVisible = toggle.querySelector('[data-sidebar-label-visible]');
+    const labelHidden = toggle.querySelector('[data-sidebar-label-hidden]');
 
     toggle.setAttribute('aria-pressed', hidden ? 'true' : 'false');
     toggle.setAttribute('aria-label', hidden ? 'Show menu' : 'Hide menu');
@@ -93,6 +99,8 @@ function applySidebarPanelState(hidden) {
 
     iconVisible?.classList.toggle('d-none', hidden);
     iconHidden?.classList.toggle('d-none', ! hidden);
+    labelVisible?.classList.toggle('d-none', hidden);
+    labelHidden?.classList.toggle('d-none', ! hidden);
 }
 
 export function initAdminSidebarPanelToggle() {
@@ -105,7 +113,7 @@ export function initAdminSidebarPanelToggle() {
     }
 
     toggle.addEventListener('click', () => {
-        const hidden = ! document.body.classList.contains('admin-sidebar-hidden');
+        const hidden = ! isSidebarPanelHiddenInDom();
         setSidebarPanelHidden(hidden);
         applySidebarPanelState(hidden);
     });

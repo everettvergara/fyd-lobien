@@ -55,6 +55,12 @@ class PublicContent
         return app(BannerRenderingService::class)->bannerByKey($key);
     }
 
+    public static function contentBlockByKey(string $key, int $page = 1): ?array
+    {
+        return app(\App\Modules\ContentBlocks\Services\ContentBlockRenderingService::class)
+            ->contentBlockByKey($key, $page);
+    }
+
     public static function media($media): ?array
     {
         if (! $media) {

@@ -88,19 +88,17 @@ Blocks with no settings omit `configSchema()` or pass `[]`.
 ### Example
 
 ```php
-PublicBlock::make('featured-content')
-    ->label('Featured Content')
-    ->resolver(FeaturedContentBlockResolver::class)
-    ->component('FeaturedContentBlock')
+PublicBlock::make('content-block')
+    ->label('Content Block')
+    ->resolver(ContentBlockBlockResolver::class)
+    ->component('ContentBlockBlock')
     ->configSchema([
-        ['key' => 'heading', 'label' => 'Heading', 'type' => 'text', 'default' => 'Featured Content'],
-        ['key' => 'limit', 'label' => 'Limit', 'type' => 'number', 'default' => 3, 'min' => 1, 'max' => 12],
         [
-            'key' => 'content_type',
-            'label' => 'Content Type',
+            'key' => 'content_block_key',
+            'label' => 'Content Block',
             'type' => 'select',
-            'default' => 'page',
-            'optionsProvider' => ContentTypeOptionsProvider::class,
+            'required' => true,
+            'optionsProvider' => ContentBlockKeyOptionsProvider::class,
         ],
     ]),
 ```

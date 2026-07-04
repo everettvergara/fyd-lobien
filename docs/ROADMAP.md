@@ -33,7 +33,7 @@ Focus on:
 ## Next Milestones
 
 1.  Framework Modules
-2.  Content Engine
+2.  Content Engine — Content Blocks module (Views-style aggregation)
 3.  Marketing modules built on Banner keys/templates
 4.  Commerce
 5.  Client-specific Modules

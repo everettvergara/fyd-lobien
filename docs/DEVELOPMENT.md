@@ -277,6 +277,20 @@ Use `App\Modules\Banners\Services\BannerRenderingService` for public banner
 payloads and `themes/fyd-default/js/Components/BannerRenderer.vue` for public display.
 See [BANNER_MODULE.md](BANNER_MODULE.md).
 
+## Admin Sidebar
+
+The core admin layout includes a manual hide/show control for the left
+navigation sidebar:
+
+- **Toggle:** navbar button on desktop (`lg+`) with `data-admin-sidebar-toggle`
+- **Persistence:** `localStorage` key `admin-sidebar-panel-hidden` (`1` = hidden)
+- **Scope:** desktop only; below `992px` the hamburger opens a temporary offcanvas menu
+- **Sections:** nav group expand/collapse is separate, stored under
+  `admin-sidebar-sections`
+
+Module admin views inherit this via `admin.layouts.app`; do not add
+module-specific sidebar hide/show controls.
+
 ## Code Conventions
 
 - Follow Laravel conventions

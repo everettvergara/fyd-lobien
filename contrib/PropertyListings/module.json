@@ -1,0 +1,18 @@
+{
+  "name": "PropertyListings",
+  "slug": "property-listings",
+  "version": "1.0.0",
+  "description": "Property and building listings with units, fees, assets, and admin-managed lookups.",
+  "group": "Property Listings",
+  "group_icon": "bi-buildings",
+  "group_sort": 50,
+  "author": "FYD CMS",
+  "license": "MIT",
+  "fyd_cms": ">=1.0.0",
+  "requires_core": ["Address", "Media", "AuditLogs"],
+  "autoload": "App\\Modules\\PropertyListings",
+  "features": [
+    { "label": "Listings", "permission": "listings.view", "route": "admin.listings.index", "icon": "bi-buildings", "sort": 10 },
+    { "label": "Dropdown Values", "permission": "listings.lookups.view", "route": "admin.listing-lookups.index", "icon": "bi-menu-button-wide", "sort": 20 }
+  ]
+}
