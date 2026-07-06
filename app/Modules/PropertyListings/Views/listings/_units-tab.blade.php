@@ -200,7 +200,6 @@
         display: block;
         flex: none !important;
         padding: 0.3rem 0.35rem;
-        font-size: 0.875rem;
     }
 
     .listing-units-table .listing-unit-floor-input {
@@ -233,7 +232,6 @@
     .listing-units-table .listing-unit-select {
         display: block;
         flex: none !important;
-        font-size: 0.875rem;
         line-height: 1.4;
         color: #0f172a;
         background-color: #fff;

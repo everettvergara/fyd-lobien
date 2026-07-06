@@ -13,6 +13,7 @@
   "autoload": "App\\Modules\\PropertyListings",
   "features": [
     { "label": "Listings", "permission": "listings.view", "route": "admin.listings.index", "icon": "bi-buildings", "sort": 10 },
-    { "label": "Dropdown Values", "permission": "listings.lookups.view", "route": "admin.listing-lookups.index", "icon": "bi-menu-button-wide", "sort": 20 }
+    { "label": "Property Uploaders", "permission": "listings.import", "route": "admin.property-uploaders.index", "icon": "bi-cloud-arrow-up", "sort": 20 },
+    { "label": "Dropdown Values", "permission": "listings.lookups.view", "route": "admin.listing-lookups.index", "icon": "bi-menu-button-wide", "sort": 30 }
   ]
 }

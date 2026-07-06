@@ -26,8 +26,8 @@ Repository-level docs:
 | **Dropdown Values** | Admin-managed `listing_lookups` per group (property type, grade, asset types, etc.) |
 | **List index** | Table + thumbnail views; comprehensive listing + unit filters |
 | **Comparator** | Bin (max 5); click bin icon → compare page; add/remove from table or thumbnails |
-| **CSV import/export** | Listing header + units; filtered export; import preview |
-| **Batch assets** | `{code}__{asset_type}.{ext}` filename matching; replace same type per listing |
+| **Property Uploaders** | Header, units, fees CSV templates/import/export plus bulk assets |
+| **Batch assets** | Select one asset type, then match files by `{code}__{whatever_text}.{ext}` |
 | **Image optimization** | Raster assets resized (max 1920px), JPEG 75% before Media storage |
 
 ## Post-MVP (not in initial release)

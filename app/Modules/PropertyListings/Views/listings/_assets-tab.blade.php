@@ -7,4 +7,5 @@
         'listing' => $listing ?? null,
         'lookups' => $lookups,
     ])
+    @include('propertylistings::listings._compare-image-preview-modal')
 </div>

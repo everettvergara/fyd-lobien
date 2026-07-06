@@ -26,8 +26,10 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
-            $table->string('province');
-            $table->string('city');
+            $table->string('summary', 500)->nullable();
+            $table->longText('description')->nullable();
+            $table->string('province')->nullable();
+            $table->string('city')->nullable();
             $table->string('brgy')->nullable();
             $table->text('address')->nullable();
             $table->decimal('office_rental_rate', 12, 2)->nullable();
@@ -53,7 +55,7 @@ return new class extends Migration
             $table->decimal('gross_leasable_area', 12, 2)->nullable();
             $table->decimal('typical_floor_area', 12, 2)->nullable();
             $table->decimal('typical_retail_floor_area', 12, 2)->nullable();
-            $table->decimal('floor_efficiency', 5, 2)->nullable();
+            $table->string('floor_efficiency')->nullable();
             $table->timestamps();
 
             $table->unique('listing_id');
@@ -64,10 +66,10 @@ return new class extends Migration
             $table->foreignId('listing_id')->constrained('listings')->cascadeOnDelete();
             $table->string('operating_hours')->nullable();
             $table->string('ac_system')->nullable();
-            $table->unsignedInteger('no_of_lifts_passenger')->nullable();
-            $table->unsignedInteger('no_of_lifts_service')->nullable();
+            $table->string('no_of_lifts_passenger')->nullable();
+            $table->string('no_of_lifts_service')->nullable();
             $table->string('telco')->nullable();
-            $table->unsignedInteger('backup_power')->nullable();
+            $table->string('backup_power')->nullable();
             $table->timestamps();
 
             $table->unique('listing_id');

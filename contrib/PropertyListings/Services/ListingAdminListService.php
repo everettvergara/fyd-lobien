@@ -14,6 +14,7 @@ use App\Modules\Address\Models\Province;
 use App\Modules\PropertyListings\Models\Listing;
 use App\Modules\PropertyListings\Support\ListingLookupGroups;
 use App\Modules\PropertyListings\Support\ListingLookupRegistry;
+use App\Modules\PropertyListings\Support\ListingUnitSummary;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
@@ -24,6 +25,7 @@ class ListingAdminListService
     public function __construct(
         protected AdminListService $lists,
         protected ListingLookupRegistry $registry,
+        protected ListingUnitSummary $unitSummary,
     ) {}
 
     public function result(Request $request): AdminListResult
@@ -31,8 +33,11 @@ class ListingAdminListService
         $definition = $this->definition();
         $this->lastState = AdminListState::fromRequest($request, $definition);
 
+        $viewMode = $request->query('view', 'table');
+
         $query = Listing::query()
-            ->with(['spec'])
+            ->with(['spec', 'units'])
+            ->when($viewMode === 'thumbnails', fn (Builder $q) => $q->with(['assets.media']))
             ->withCount('units')
             ->leftJoin('listing_specs', 'listing_specs.listing_id', '=', 'listings.id')
             ->select('listings.*');
@@ -59,11 +64,11 @@ class ListingAdminListService
                     $this->registry->label(ListingLookupGroups::COMPLETION_STATUS, $listing->completion_status),
                 ), sortField: 'listings.completion_status', class: 'small'),
                 AdminListColumn::make('units_count', 'Units', fn (Listing $listing) => (string) $listing->units_count, sortField: 'units_count', class: 'small text-muted'),
+                AdminListColumn::make('unit_types', 'Property Types', fn (Listing $listing) => e($this->unitSummary->propertyTypeSummary($listing)), class: 'small text-muted'),
+                AdminListColumn::make('unit_avl', 'AVL', fn (Listing $listing) => e($this->unitSummary->availabilitySummary($listing)), class: 'small text-muted'),
+                AdminListColumn::make('unit_intent', 'Lease / Sale', fn (Listing $listing) => $this->unitIntentBadges($listing), raw: true, class: 'small'),
+                AdminListColumn::make('published_to_public', 'Public', fn (Listing $listing) => view('propertylistings::listings._published-toggle', ['listing' => $listing])->render(), sortField: 'listings.published_to_public', raw: true, class: 'text-center', headerClass: 'text-center'),
                 AdminListColumn::make('match_summary', 'Match Summary', fn (Listing $listing) => e($this->matchSummary($listing)), class: 'small text-muted'),
-                AdminListColumn::make('compare', '', fn (Listing $listing) => view('propertylistings::listings._compare-toggle', [
-                    'listing' => $listing,
-                    'class' => 'btn btn-sm btn-outline-secondary admin-icon-btn',
-                ])->render(), class: 'text-center', headerClass: 'text-muted', raw: true),
             ],
             filters: [
                 AdminListFilter::make(
@@ -214,7 +219,7 @@ class ListingAdminListService
                 ),
             ],
             searchQuery: fn (Builder $query, string $search) => $this->applySearch($query, $search),
-            searchPlaceholder: 'Search code, name, address, province, city, or developer...',
+            searchPlaceholder: 'Search code, name, city...',
             defaultSort: 'code',
             defaultDirection: 'asc',
             defaultPerPage: 25,
@@ -232,6 +237,21 @@ class ListingAdminListService
                 ->orWhere('listings.brgy', 'like', "%{$search}%")
                 ->orWhere('listing_specs.developer', 'like', "%{$search}%");
         });
+    }
+
+    protected function unitIntentBadges(Listing $listing): string
+    {
+        $badges = [];
+
+        if ($this->unitSummary->hasForLease($listing)) {
+            $badges[] = '<span class="badge bg-secondary-subtle text-secondary-emphasis">For Lease</span>';
+        }
+
+        if ($this->unitSummary->hasForSale($listing)) {
+            $badges[] = '<span class="badge bg-secondary-subtle text-secondary-emphasis">For Sale</span>';
+        }
+
+        return $badges === [] ? '—' : implode(' ', $badges);
     }
 
     protected function matchSummary(Listing $listing): string

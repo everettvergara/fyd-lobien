@@ -28,8 +28,8 @@
         ->count();
 @endphp
 
-<div class="listings-filters-toolbar border-bottom" data-listings-filters>
-    <form method="GET" class="p-3" data-admin-list-search-form>
+<div class="p-3 admin-list-toolbar listings-filters-toolbar" data-listings-filters>
+    <form method="GET" class="listings-filters-form" data-admin-list-search-form>
         @foreach (request()->except(['search', 'per_page', 'sort', 'direction', ...$listingFilterKeys, ...$unitFilterKeys]) as $key => $value)
             @if (is_array($value))
                 @foreach ($value as $item)
@@ -40,23 +40,25 @@
             @endif
         @endforeach
 
-        <div class="d-flex flex-wrap gap-2 align-items-end">
+        <div class="listings-filters-toolbar-row" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:.75rem;width:100%;">
             @if ($definition->hasSearch())
-                <div class="admin-list-filter-field flex-grow-1" style="min-width:12rem;max-width:20rem;">
-                    <label class="form-label small mb-1" for="{{ $definition->id }}-search">Search</label>
+                <div class="listings-filters-toolbar-search admin-list-filter-field" style="flex:0 0 16rem;min-width:0;max-width:16rem;width:16rem;">
+                    <label class="form-label" for="{{ $definition->id }}-search">Search</label>
                     <input
                         id="{{ $definition->id }}-search"
                         type="search"
                         name="search"
                         value="{{ $state->search }}"
-                        class="form-control form-control-sm"
+                        class="form-control"
+                        style="display:block;width:16rem;min-width:0;max-width:16rem;"
                         placeholder="{{ $definition->searchPlaceholder ?? 'Search...' }}"
                         data-admin-list-search
                     >
                 </div>
             @endif
 
-            <div class="admin-list-filter-field">
+            <div class="listings-filters-toolbar-filters admin-list-filter-field" style="flex:0 0 auto;min-width:0;">
+                <label class="form-label listings-filters-toolbar-spacer" aria-hidden="true">&nbsp;</label>
                 <button type="button"
                         class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
                         data-listings-filters-toggle
@@ -70,9 +72,9 @@
                 </button>
             </div>
 
-            <div class="admin-list-filter-field">
-                <label class="form-label small mb-1" for="{{ $definition->id }}-per-page">Per page</label>
-                <select id="{{ $definition->id }}-per-page" name="per_page" class="form-select form-select-sm">
+            <div class="listings-filters-toolbar-per-page admin-list-filter-field" style="flex:0 0 auto;min-width:0;">
+                <label class="form-label" for="{{ $definition->id }}-per-page">Per page</label>
+                <select id="{{ $definition->id }}-per-page" name="per_page" class="form-select">
                     @foreach ($definition->perPageOptions as $option)
                         <option value="{{ $option }}" @selected($state->perPage === $option)>{{ $option }}</option>
                     @endforeach
@@ -82,9 +84,12 @@
             <input type="hidden" name="sort" value="{{ $state->sort }}">
             <input type="hidden" name="direction" value="{{ $state->direction }}">
 
-            <div class="admin-list-filter-actions d-flex gap-2 ms-auto">
-                <button type="submit" class="btn btn-sm btn-outline-primary">Apply</button>
-                <a href="{{ $resetRoute }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+            <div class="listings-filters-toolbar-actions admin-list-filter-actions" style="display:flex;flex:0 0 auto;flex-direction:column;align-items:flex-start;min-width:0;">
+                <label class="form-label listings-filters-toolbar-spacer" aria-hidden="true">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary">Apply</button>
+                    <a href="{{ $resetRoute }}" class="btn btn-outline-secondary">Reset</a>
+                </div>
             </div>
         </div>
 
@@ -165,6 +170,45 @@
 
         .listings-filters-toolbar .listings-filters-panel.show {
             display: block;
+        }
+
+        .listings-filters-toolbar .listings-filters-toolbar-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 0.75rem;
+            width: 100%;
+        }
+
+        .listings-filters-toolbar .listings-filters-toolbar-row > * {
+            flex: 0 0 auto;
+            min-width: 0;
+        }
+
+        .listings-filters-toolbar .listings-filters-toolbar-search {
+            width: 10rem;
+            max-width: 100%;
+        }
+
+        .listings-filters-toolbar .listings-filters-toolbar-search input[name='search'],
+        .listings-filters-toolbar .listings-filters-toolbar-search input[type='search'] {
+            display: block;
+            width: 10rem;
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        .listings-filters-toolbar .listings-filters-toolbar-spacer {
+            display: block;
+            margin-bottom: 0.25rem;
+            min-height: 1rem;
+            visibility: hidden;
+        }
+
+        .listings-filters-toolbar .listings-filters-toolbar-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
     </style>
     @endpush

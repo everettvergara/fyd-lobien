@@ -46,7 +46,7 @@
                             @if (! empty($fee['id']))
                                 <input type="hidden" name="fees[{{ $index }}][id]" value="{{ $fee['id'] }}">
                             @endif
-                            <select class="form-select listing-fee-type-select @error('fees.'.$index.'.fee_type') is-invalid @enderror"
+                            <select class="form-select form-select-sm listing-fee-type-select @error('fees.'.$index.'.fee_type') is-invalid @enderror"
                                     name="fees[{{ $index }}][fee_type]">
                                 <option value="">—</option>
                                 @foreach ($lookups[ListingLookupGroups::FEE_TYPE] ?? [] as $value => $label)
@@ -81,7 +81,7 @@
     <tr class="listing-fee-row" data-listing-fee-row draggable="true">
         <td class="listing-drag-handle" style="cursor:grab;color:#64748b;"><i class="{{ admin_icon('bi-grip-vertical') }} fs-5" aria-hidden="true"></i></td>
         <td class="listing-fee-type-col">
-            <select class="form-select listing-fee-type-select" data-field="fee_type">
+            <select class="form-select form-select-sm listing-fee-type-select" data-field="fee_type">
                 <option value="">—</option>
                 @foreach ($lookups[ListingLookupGroups::FEE_TYPE] ?? [] as $value => $label)
                     <option value="{{ $value }}">{{ $label }}</option>
@@ -134,7 +134,6 @@
         min-width: 11rem !important;
         max-width: 11rem !important;
         flex: none !important;
-        font-size: 0.875rem;
         line-height: 1.4;
         color: #0f172a;
         background-color: #fff;

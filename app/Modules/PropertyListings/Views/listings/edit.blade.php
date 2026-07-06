@@ -9,7 +9,11 @@
         ['label' => $listing->name],
     ]" />
 
-    <x-admin.page-header title="Edit Listing — {{ $listing->code }}" />
+    <x-admin.page-header title="Edit Listing — {{ $listing->code }}">
+        <x-slot:actions>
+            @include('propertylistings::listings._brochure-shortcuts', ['listing' => $listing])
+        </x-slot:actions>
+    </x-admin.page-header>
 
     <div class="card border-0 shadow-sm">
         <div class="card-body">
@@ -19,6 +23,8 @@
                 'provinces' => $provinces,
                 'formAction' => route('admin.listings.update', $listing),
                 'formMethod' => 'PUT',
+                'remarks' => $remarks ?? null,
+                'remarksUnitFilter' => $remarksUnitFilter ?? null,
             ])
         </div>
         <div class="card-footer bg-white border-top d-flex gap-2">

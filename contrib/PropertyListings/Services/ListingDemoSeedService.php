@@ -292,6 +292,7 @@ class ListingDemoSeedService
                 'unit_market_size' => round($totalArea * 0.12, 2),
                 'retail_market_rate' => round($officeRate * 1.15, 2),
                 'completion_status' => 'existing',
+                'published_to_public' => true,
             ],
             'spec' => [
                 'developer' => $developer,
@@ -306,15 +307,15 @@ class ListingDemoSeedService
                 'gross_leasable_area' => round($totalArea * 0.82, 2),
                 'typical_floor_area' => round($totalArea / 28, 2),
                 'typical_retail_floor_area' => 650,
-                'floor_efficiency' => 82,
+                'floor_efficiency' => '82% efficient',
             ],
             'building_service' => [
                 'operating_hours' => 'Mon–Fri 7AM–7PM',
                 'ac_system' => 'Central chilled water',
-                'no_of_lifts_passenger' => 8,
-                'no_of_lifts_service' => 2,
+                'no_of_lifts_passenger' => '8 passenger lifts',
+                'no_of_lifts_service' => '2 service lifts',
                 'telco' => 'PLDT, Globe, Converge',
-                'backup_power' => 100,
+                'backup_power' => '100% backup',
             ],
             'other_info' => [
                 'peza_accreditation' => 'yes',

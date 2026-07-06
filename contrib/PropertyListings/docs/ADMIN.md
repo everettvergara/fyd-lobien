@@ -6,7 +6,8 @@ All features below are **admin portal only** for MVP. The public website uses Pa
 
 | Menu item | Route prefix | Purpose |
 |-----------|--------------|---------|
-| **Listings** | `admin/listings` | CRUD, import/export, batch assets, list views, comparator |
+| **Listings** | `admin/listings` | CRUD, list views, filters, comparator |
+| **Property Uploaders** | `admin/property-uploaders` | CSV templates/import/export for headers, units, fees; bulk assets |
 | **Dropdown Values** | `admin/listing-lookups` | Manage `listing_lookups` option sets |
 | **Configuration** | `admin/listings/configuration` | Module settings; manual sample listing seed |
 
@@ -23,7 +24,7 @@ All features below are **admin portal only** for MVP. The public website uses Pa
 
 ### Header cards (listing core)
 
-1. **Identity** — code*, name*, completion_status  
+1. **Identity** — code*, name*, completion_status, **published_to_public** (Publish to PUBLIC)  
 2. **Location** — province*, city*, brgy, address (Address module selects where possible)  
 3. **Rates & sizing** — office_rental_rate, total_area_size, unit_market_size, retail_market_rate  
 
@@ -50,13 +51,14 @@ Tab labels and pane outlines are color-coded: Units (blue), Fees (amber), Assets
 
 On **create**, the upload pane is disabled until the listing is saved.
 
-**Global batch** (list toolbar → Batch Upload Assets) still accepts `{code}__{asset_type_slug}.{ext}` filenames for multi-listing uploads.
+**Global batch** (Property Uploaders → Assets Uploader) requires selecting one asset type first, then accepts `{code}__{whatever_text}.{ext}` filenames for multi-listing uploads.
 
 ### Remarks sidebar (not a tab)
 
 - Chronological feed (user, date, comment)  
 - Optional unit filter  
 - Quick-add form  
+- Users with `listings.edit` can delete remarks via the red trash icon on each card (confirm dialog)  
 - On create: enabled after first save (or AJAX once listing exists)
 - Hide via header chevron; form columns expand to full width when hidden
 
@@ -64,12 +66,21 @@ On **create**, the upload pane is disabled until the listing is saved.
 
 ### View modes
 
-- **Table** (default) — standard admin list  
-- **Thumbnails** — card grid with building image, same summary fields  
+- **Table** (default) — standard admin list; search/filter toolbar uses `admin-list-toolbar` styling; toolbar and table share one card  
+- **Thumbnails** — card grid with building images from `building` assets; click image or title to open edit; multiple building assets show a carousel  
+
+Table and thumbnail views show per listing:
+
+- **Property Types** — distinct unit property types (lookup labels)
+- **AVL** — unit availability counts (e.g. Vacant (2), Leased (1))
+- **Lease / Sale** — badges when any unit is for lease and/or for sale
+- **Public** — inline toggle for `published_to_public` (users with `listings.update`); PATCH saves immediately
 
 Toggle persists in `sessionStorage` (`listings_view`).
 
 ### Filtering
+
+Search/filter toolbar matches standard admin list background (`admin-list-toolbar`).
 
 **Search:** code, name, address, province, city, developer  
 
@@ -82,25 +93,68 @@ Toggle persists in `sessionStorage` (`listings_view`).
 | Action | Behavior |
 |--------|----------|
 | **Compare** on table row or thumbnail | Add/remove from bin |
-| **Click bin icon or label** | Navigate to `/admin/listings/compare?ids=…` |
+| **Compare bin** | Inline strip below filters, above table/grid (hidden when empty) |
+| **Click bin Compare** | Navigate to `/admin/listings/compare?ids=…` |
 | **× on chip / Clear all** | Remove from bin |
 
-Compare page shows side-by-side matrix when ≥2 listings; otherwise prompts to add more.
+Compare page (≥2 listings) section order:
+
+0. **Unit filter** — toolbar above compare table; client-side filter for units row only (hidden when printing)
+1. **Building** — image carousel per listing column (`asset_type = building`)
+2. **Floor plan** — image carousel per listing column (`asset_type = floor-plan`)
+3. **Location** — province, city, barangay, address per column
+4. **Units** — read-only unit table per column (floor, unit, area, rent, HO, availability, etc.)
+5. **Fees** — read-only fee table per column (fee type, amount)
+6. **Field matrix** — identity, rates, specs, building services
+7. **Disclaimer** — standard leasing disclaimer footer
+
+| Feature | Behavior |
+|---------|----------|
+| **Click carousel image** | Full-size popup preview (building or floor plan) |
+| **Print** | Print button or Ctrl+P; landscape layout; unit filter excluded; filtered unit rows + carousel images + fees + disclaimer included |
+| **Compare bin on compare page** | Fixed bottom bar (hidden when printing) |
+
+Compare page prompts to add more when fewer than two listings are selected.
 
 State: `sessionStorage` key `fyd-listing-comparator`.
 
-### Import / export (list toolbar)
+### Property Uploaders
 
-| Action | Description |
-|--------|-------------|
-| **Download CSV** | Exports filtered results; flat rows (header + unit columns per row) |
-| **Download Template** | Empty CSV with column headers |
-| **Upload CSV** | Preview → confirm; upsert by `code`; multiple rows = multiple units |
-| **Batch Upload Assets** | Multi-file or ZIP; filename `{code}__{asset_type_slug}.{ext}` |
+Uploader actions live on **Property Uploaders**, not on the Listings index toolbar.
 
-**CSV scope:** listing header + units only. Fees via admin UI. Assets via batch or Assets tab.
+| Uploader | Template/export/import behavior | Upsert key |
+|----------|---------------------------------|------------|
+| **Property Header** | Listing-level fields only: `listings` + specs + building services + other info | `code` |
+| **Property Units** | Unit rows linked to parent listing by `code` | `code` + `floor` + `unit` |
+| **Property Fees** | Fee rows linked to parent listing by `code` | `code` + `fee_type` |
 
-**Batch asset replace rule:** same listing + asset_type replaces existing asset.
+Each CSV has:
+
+- **Template** — empty CSV with the prescribed columns
+- **Export Existing** — exports current data for the selected CSV type
+- **Upload** — preview → confirm; inserts new rows and updates matching rows
+
+CSV uploads are full-batch validated before commit:
+
+- Uploaded columns must exactly match the selected template.
+- Required fields must be filled. Property Header requires `code` and `name`; `province` and `city` may be blank.
+- Dropdown-backed fields should use maintained `listing_lookups.value` codes, not labels.
+- Unknown dropdown codes are reported as warnings, marked with `*` in preview, and imported as blank values.
+- Unit rows with unknown parent listing `code` values are reported as warnings and ignored.
+- Fees reject missing parent listing `code` values.
+- Missing rows in an uploaded CSV do **not** delete existing units or fees.
+
+### Assets Uploader
+
+Bulk asset uploading also lives on **Property Uploaders**.
+
+1. Select the asset type for the whole batch (for example `flyers`).
+2. Select individual files or upload a ZIP. Individual multi-select uploads are staged one file at a time so per-file errors are visible.
+3. Name each file `{code}__{whatever_text}.{ext}`.
+
+Only the filename text before `__` is used as the listing `code`; the text after `__` is descriptive. The selected asset type applies to every file in the batch.
+
+**Batch asset replace rule:** same listing + selected asset_type replaces existing asset.
 
 ## Assets — upload rules
 
@@ -111,17 +165,41 @@ State: `sessionStorage` key `fyd-listing-comparator`.
 
 Validation uses `listing_lookups.meta.file_kind` for the selected asset type.
 
+## Brochures (print preview)
+
+Each listing supports six browser-printable brochure previews:
+
+| Type | Route suffix | Content |
+|------|--------------|---------|
+| Interior | `interior` | Interior asset images |
+| Property photos | `property-photos` | Building asset images |
+| Floor plan | `floor-plan` | Floor plan asset images |
+| Floors / units | `floors-units` | Units table, fees, disclaimer |
+| Property information | `property-information` | Specs, building + map images |
+| Print all | `all` | All sections combined |
+
+Routes:
+
+- Hub: `GET /admin/listings/{listing}/brochures`
+- Preview: `GET /admin/listings/{listing}/brochures/{type}`
+
+**Shortcuts:** icon buttons on the listings table/thumbnail actions and the edit page header open each preview in a new tab. Each preview page includes a **Print** button; printing outputs only the branded template (logo hexagon, property name banner, copyright footer) plus that brochure's content.
+
+**Header branding:** the hexagon is a fixed PNG frame (`public/modules/property-listings/brochure-hexagon-frame.png`, transparent center) layered over the site logo from **Settings → Site Logo** (`general.site_logo_id`). The navy ribbon's height equals one hexagon side and joins the hexagon's right edge seamlessly. Copyright in the footer uses **Settings → Website Name** (`general.website_name`).
+
+Uses `listings.view` permission.
+
 ## Permissions
 
 | Permission | Capability |
 |------------|------------|
-| `listings.view` | View listings, compare page |
+| `listings.view` | View listings, compare page, brochure previews |
 | `listings.create` | Create |
 | `listings.edit` | Edit |
 | `listings.delete` | Delete |
-| `listings.export` | Download CSV |
-| `listings.import` | Upload CSV / template |
-| `listings.assets.batch` | Batch asset upload |
+| `listings.export` | Export CSVs from Property Uploaders |
+| `listings.import` | Upload CSVs / download templates from Property Uploaders |
+| `listings.assets.batch` | Bulk asset upload from Property Uploaders |
 | `listings.lookups.view` | View dropdown hub |
 | `listings.lookups.create` | Add lookup values |
 | `listings.lookups.edit` | Edit lookup values |

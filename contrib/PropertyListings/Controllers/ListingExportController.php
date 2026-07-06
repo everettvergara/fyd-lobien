@@ -10,10 +10,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ListingExportController extends Controller
 {
-    public function export(Request $request, ListingExportService $export): StreamedResponse
+    public function export(Request $request, ListingExportService $export, string $type = 'header'): StreamedResponse
     {
         $this->authorize('export', Listing::class);
 
-        return $export->download($request);
+        return $export->download($request, $type);
     }
 }

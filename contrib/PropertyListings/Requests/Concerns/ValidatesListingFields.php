@@ -21,8 +21,8 @@ trait ValidatesListingFields
         return [
             'code' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
-            'province' => ['required', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
+            'province' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:255'],
             'brgy' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string'],
             'office_rental_rate' => ['nullable', 'numeric', 'min:0'],
@@ -30,6 +30,7 @@ trait ValidatesListingFields
             'unit_market_size' => ['nullable', 'numeric', 'min:0'],
             'retail_market_rate' => ['nullable', 'numeric', 'min:0'],
             'completion_status' => ['nullable', 'string', 'max:100', Rule::in($registry->values(ListingLookupGroups::COMPLETION_STATUS))],
+            'published_to_public' => ['nullable', 'boolean'],
 
             'spec' => ['nullable', 'array'],
             'spec.developer' => ['nullable', 'string', 'max:255'],
@@ -44,15 +45,15 @@ trait ValidatesListingFields
             'spec.gross_leasable_area' => ['nullable', 'numeric', 'min:0'],
             'spec.typical_floor_area' => ['nullable', 'numeric', 'min:0'],
             'spec.typical_retail_floor_area' => ['nullable', 'numeric', 'min:0'],
-            'spec.floor_efficiency' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'spec.floor_efficiency' => ['nullable', 'string', 'max:255'],
 
             'building_service' => ['nullable', 'array'],
             'building_service.operating_hours' => ['nullable', 'string', 'max:255'],
             'building_service.ac_system' => ['nullable', 'string', 'max:255'],
-            'building_service.no_of_lifts_passenger' => ['nullable', 'integer', 'min:0'],
-            'building_service.no_of_lifts_service' => ['nullable', 'integer', 'min:0'],
+            'building_service.no_of_lifts_passenger' => ['nullable', 'string', 'max:255'],
+            'building_service.no_of_lifts_service' => ['nullable', 'string', 'max:255'],
             'building_service.telco' => ['nullable', 'string', 'max:255'],
-            'building_service.backup_power' => ['nullable', 'integer', 'min:0'],
+            'building_service.backup_power' => ['nullable', 'string', 'max:255'],
 
             'other_info' => ['nullable', 'array'],
             'other_info.peza_accreditation' => ['nullable', 'string', 'max:100', Rule::in($registry->values(ListingLookupGroups::PEZA_ACCREDITATION))],
@@ -97,6 +98,11 @@ trait ValidatesListingFields
             'unit_market_size' => $this->filled('unit_market_size') ? $this->input('unit_market_size') : null,
             'retail_market_rate' => $this->filled('retail_market_rate') ? $this->input('retail_market_rate') : null,
             'completion_status' => $this->input('completion_status') ?: null,
+            'published_to_public' => filter_var(
+                $this->input('published_to_public', false),
+                FILTER_VALIDATE_BOOLEAN,
+                FILTER_NULL_ON_FAILURE,
+            ) ?? false,
         ]);
 
         if ($this->has('other_info.other_info_visible')) {

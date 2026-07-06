@@ -23,8 +23,7 @@ class ListingCompareController extends Controller
 
         $listings = Listing::query()
             ->whereIn('id', $ids)
-            ->with(['spec', 'buildingService', 'otherInfo', 'units', 'fees', 'assets'])
-            ->withCount(['units', 'fees', 'assets'])
+            ->with(['spec', 'buildingService', 'otherInfo', 'units', 'fees', 'assets.media'])
             ->get()
             ->sortBy(fn (Listing $listing) => array_search($listing->id, $ids, true))
             ->values();

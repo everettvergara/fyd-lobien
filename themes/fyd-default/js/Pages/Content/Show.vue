@@ -3,7 +3,7 @@ import PublicLayout from '../../Layouts/PublicLayout.vue';
 import SeoHead from '../../Components/SeoHead.vue';
 import Breadcrumb from '../../Components/Breadcrumb.vue';
 import BannerRenderer from '../../Components/BannerRenderer.vue';
-import WebformRenderer from '../../../_shared/Components/WebformRenderer.vue';
+import WebformRenderer from '../../../../_shared/Components/WebformRenderer.vue';
 import CareersListingRenderer from '../../Components/CareersListingRenderer.vue';
 
 defineProps({

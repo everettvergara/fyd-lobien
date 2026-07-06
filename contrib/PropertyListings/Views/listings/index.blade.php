@@ -7,7 +7,7 @@
 @section('title', 'Listings')
 
 @section('content')
-    <div class="listing-index-page pb-5" data-listing-index data-listings-view="{{ $viewMode }}">
+    <div class="listing-index-page" data-listing-index data-listings-view="{{ $viewMode }}">
         <x-admin.breadcrumbs :items="[
             ['label' => 'Dashboard', 'url' => route('admin.dashboard')],
             ['label' => 'Listings'],
@@ -35,26 +35,6 @@
                     </button>
                 </div>
 
-                @can('export', App\Modules\PropertyListings\Models\Listing::class)
-                    <a href="{{ route('admin.listings.export', request()->query()) }}" class="btn btn-outline-secondary">
-                        <i class="{{ admin_icon('bi-download') }} me-1"></i> Download CSV
-                    </a>
-                @endcan
-
-                @can('import', App\Modules\PropertyListings\Models\Listing::class)
-                    <a href="{{ route('admin.listings.import.template') }}" class="btn btn-outline-secondary">
-                        <i class="{{ admin_icon('bi-file-earmark-spreadsheet') }} me-1"></i> Template
-                    </a>
-                    <a href="{{ route('admin.listings.import') }}" class="btn btn-outline-secondary">
-                        <i class="{{ admin_icon('bi-upload') }} me-1"></i> Upload CSV
-                    </a>
-                @endcan
-
-                @can('batchAssets', App\Modules\PropertyListings\Models\Listing::class)
-                    <a href="{{ route('admin.listings.assets.batch') }}" class="btn btn-outline-secondary">
-                        <i class="{{ admin_icon('bi-images') }} me-1"></i> Batch Assets
-                    </a>
-                @endcan
             </x-slot:actions>
         </x-admin.page-header>
 
@@ -64,17 +44,19 @@
             ]));
         @endphp
 
-        <x-admin.card :padding="false" class="admin-list-card mb-4">
-            @include('propertylistings::listings._filters', [
-                'result' => $list,
-                'resetRoute' => $resetRoute,
-            ])
-        </x-admin.card>
-
         @if ($viewMode === 'thumbnails')
-            <div class="row g-3 mb-4" data-listings-thumbnail-grid>
+            <x-admin.card :padding="false" class="admin-list-card mb-4">
+                @include('propertylistings::listings._filters', [
+                    'result' => $list,
+                    'resetRoute' => $resetRoute,
+                ])
+            </x-admin.card>
+
+            @include('propertylistings::listings._compare-bin')
+
+            <div class="row g-2 mb-4" data-listings-thumbnail-grid>
                 @forelse ($list->records as $listing)
-                    <div class="col-sm-6 col-md-4 col-xl-3">
+                    <div class="listing-thumbnail-grid-item">
                         @include('propertylistings::listings._thumbnail-card', ['listing' => $listing])
                     </div>
                 @empty
@@ -93,7 +75,14 @@
             @endif
         @else
             <x-admin.card :padding="false" class="admin-list-card mb-5">
-                <x-admin.list.table :result="$list" />
+                @include('propertylistings::listings._filters', [
+                    'result' => $list,
+                    'resetRoute' => $resetRoute,
+                ])
+
+                @include('propertylistings::listings._compare-bin')
+
+                @include('propertylistings::listings._table', ['result' => $list])
 
                 @if ($list->records->hasPages())
                     <x-slot:footer>
@@ -102,28 +91,6 @@
                 @endif
             </x-admin.card>
         @endif
-    </div>
-
-    <div class="listing-comparator-bin border-top bg-white shadow-sm position-fixed bottom-0 start-0 end-0 d-none"
-         data-listing-comparator-bin
-         data-compare-url="{{ route('admin.listings.compare') }}"
-         style="z-index:1030;">
-        <div class="container-fluid py-2">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <button type="button"
-                        class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
-                        data-listing-comparator-open
-                        title="Compare selected listings">
-                    <i class="{{ admin_icon('bi-intersect') }}" aria-hidden="true"></i>
-                    <span>Compare</span>
-                    <span class="badge bg-primary rounded-pill" data-listing-comparator-count>0</span>
-                </button>
-                <div class="d-flex flex-wrap gap-1 flex-grow-1" data-listing-comparator-chips></div>
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-listing-comparator-clear>
-                    Clear all
-                </button>
-            </div>
-        </div>
     </div>
 @endsection
 
@@ -156,3 +123,43 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 @endpush
+
+@once
+    @push('styles')
+    <style>
+        [data-listings-thumbnail-grid] {
+            --bs-gutter-x: 0.5rem;
+            --bs-gutter-y: 0.5rem;
+        }
+
+        [data-listings-thumbnail-grid] .listing-thumbnail-grid-item {
+            flex: 0 0 75%;
+            max-width: 75%;
+            padding-right: calc(var(--bs-gutter-x) * 0.5);
+            padding-left: calc(var(--bs-gutter-x) * 0.5);
+            margin-top: var(--bs-gutter-y);
+        }
+
+        @media (min-width: 576px) {
+            [data-listings-thumbnail-grid] .listing-thumbnail-grid-item {
+                flex-basis: 37.5%;
+                max-width: 37.5%;
+            }
+        }
+
+        @media (min-width: 768px) {
+            [data-listings-thumbnail-grid] .listing-thumbnail-grid-item {
+                flex-basis: 25%;
+                max-width: 25%;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            [data-listings-thumbnail-grid] .listing-thumbnail-grid-item {
+                flex-basis: 18.75%;
+                max-width: 18.75%;
+            }
+        }
+    </style>
+    @endpush
+@endonce

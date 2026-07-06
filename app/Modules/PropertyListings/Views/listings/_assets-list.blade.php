@@ -1,14 +1,43 @@
 @php
+    use App\Models\Media;
     use App\Modules\PropertyListings\Support\ListingLookupGroups;
 
-    $assets = old('assets', ($listing ?? null)?->assets?->loadMissing('media')->map(fn ($asset) => [
+    $mapListingAsset = static fn ($asset) => [
         'id' => $asset->id,
         'asset_type' => $asset->asset_type,
         'media_id' => $asset->media_id,
         'sort_order' => $asset->sort_order,
         'filename' => $asset->media?->filename ?? $asset->media?->original_filename ?? '',
         'preview_url' => $asset->media?->variantUrl('thumbnail') ?? $asset->media?->url(),
-    ])->values()->all() ?? []);
+        'full_url' => $asset->media?->url(),
+        'is_pdf' => $asset->media?->isPdf() ?? false,
+    ];
+
+    $mapOldAsset = static function (array $asset): array {
+        $media = ! empty($asset['media_id']) ? Media::query()->find($asset['media_id']) : null;
+
+        return [
+            'id' => $asset['id'] ?? null,
+            'asset_type' => $asset['asset_type'] ?? '',
+            'media_id' => $asset['media_id'] ?? null,
+            'sort_order' => $asset['sort_order'] ?? 0,
+            'filename' => $asset['filename'] ?? $media?->filename ?? $media?->original_filename ?? '',
+            'preview_url' => $asset['preview_url'] ?? $media?->variantUrl('thumbnail') ?? $media?->url(),
+            'full_url' => $asset['full_url'] ?? $media?->url(),
+            'is_pdf' => $asset['is_pdf'] ?? $media?->isPdf() ?? false,
+        ];
+    };
+
+    $oldAssets = old('assets');
+    if (is_array($oldAssets) && $oldAssets !== []) {
+        $assets = collect($oldAssets)
+            ->filter(fn ($asset) => is_array($asset))
+            ->map($mapOldAsset)
+            ->values()
+            ->all();
+    } else {
+        $assets = ($listing ?? null)?->assets?->loadMissing('media')->map($mapListingAsset)->values()->all() ?? [];
+    }
 @endphp
 
 <div class="listing-assets-list">
@@ -35,14 +64,31 @@
                             <i class="{{ admin_icon('bi-grip-vertical') }} fs-5" aria-hidden="true"></i>
                         </td>
                         <td>
-                            @if (! empty($asset['preview_url']))
-                                <img src="{{ $asset['preview_url'] }}" alt="" class="rounded border" style="width:40px;height:40px;object-fit:cover;">
+                            @if (! empty($asset['is_pdf']) && ! empty($asset['full_url']))
+                                <a href="{{ $asset['full_url'] }}"
+                                   target="_blank"
+                                   rel="noopener"
+                                   class="d-inline-flex align-items-center justify-content-center rounded border text-danger text-decoration-none"
+                                   style="width:40px;height:40px;"
+                                   title="Open PDF"
+                                   aria-label="Open {{ $asset['filename'] ?? 'PDF' }}">
+                                    <i class="{{ admin_icon('bi-file-earmark-pdf') }} fs-4" aria-hidden="true"></i>
+                                </a>
+                            @elseif (! empty($asset['preview_url']) && ! empty($asset['full_url']))
+                                <button type="button"
+                                        class="btn p-0 border-0 d-block"
+                                        data-listing-compare-preview
+                                        data-preview-url="{{ $asset['full_url'] }}"
+                                        data-preview-title="{{ $asset['filename'] ?? 'Asset preview' }}"
+                                        aria-label="Preview {{ $asset['filename'] ?? 'asset' }}">
+                                    <img src="{{ $asset['preview_url'] }}" alt="" class="rounded border" style="width:40px;height:40px;object-fit:cover;">
+                                </button>
                             @else
                                 <span class="text-muted small">—</span>
                             @endif
                         </td>
                         <td class="small">{{ $lookups[ListingLookupGroups::IMAGE_TYPE][$asset['asset_type'] ?? ''] ?? ($asset['asset_type'] ?? '—') }}</td>
-                        <td class="small"><code>{{ $asset['filename'] ?: '—' }}</code></td>
+                        <td class="small"><code>{{ ($asset['filename'] ?? '') !== '' ? $asset['filename'] : '—' }}</code></td>
                         <td class="text-end">
                             @if (! empty($asset['id']))
                                 <input type="hidden" form="listing-edit-form" name="assets[{{ $index }}][id]" value="{{ $asset['id'] }}">

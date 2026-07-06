@@ -17,15 +17,6 @@ class ListingBuildingService extends Model
         'backup_power',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'no_of_lifts_passenger' => 'integer',
-            'no_of_lifts_service' => 'integer',
-            'backup_power' => 'integer',
-        ];
-    }
-
     public function listing(): BelongsTo
     {
         return $this->belongsTo(Listing::class);

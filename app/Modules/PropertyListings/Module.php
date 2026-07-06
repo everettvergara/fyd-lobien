@@ -9,6 +9,8 @@ use App\Modules\PropertyListings\Models\ListingLookup;
 use App\Modules\PropertyListings\Policies\ListingConfigurationPolicy;
 use App\Modules\PropertyListings\Policies\ListingLookupPolicy;
 use App\Modules\PropertyListings\Policies\ListingPolicy;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class Module extends \App\Framework\Module
 {
@@ -53,14 +55,42 @@ class Module extends \App\Framework\Module
     {
         return [
             $this->menuItem('Listings', 'admin.listings.index', 'listings.view', 'bi-buildings', sort: 10),
-            $this->menuItem('Dropdown Values', 'admin.listing-lookups.index', 'listings.lookups.view', 'bi-menu-button-wide', sort: 20),
-            $this->menuItem('Configuration', 'admin.listings.configuration.index', 'listings.configuration.manage', 'bi-sliders', sort: 30),
+            $this->menuItem('Property Uploaders', 'admin.property-uploaders.index', 'listings.import', 'bi-cloud-arrow-up', sort: 20),
+            $this->menuItem('Dropdown Values', 'admin.listing-lookups.index', 'listings.lookups.view', 'bi-menu-button-wide', sort: 30),
+            $this->menuItem('Configuration', 'admin.listings.configuration.index', 'listings.configuration.manage', 'bi-sliders', sort: 40),
         ];
     }
 
     public function seeders(): array
     {
         return [ListingLookupSeeder::class];
+    }
+
+    public function uninstall(): void
+    {
+        Schema::dropIfExists('listing_assets');
+        Schema::dropIfExists('listing_fees');
+        Schema::dropIfExists('listing_remarks');
+        Schema::dropIfExists('listing_units');
+        Schema::dropIfExists('listing_other_infos');
+        Schema::dropIfExists('listing_building_services');
+        Schema::dropIfExists('listing_specs');
+        Schema::dropIfExists('listings');
+        Schema::dropIfExists('listing_lookups');
+
+        if (Schema::hasTable('migrations')) {
+            DB::table('migrations')
+                ->whereIn('migration', [
+                    '2026_07_04_600001_create_property_listing_tables',
+                    '2026_07_05_600002_add_published_to_public_to_listings',
+                    '2026_07_06_600003_ensure_density_ratio_is_string',
+                    '2026_07_06_600004_allow_nullable_fee_type_on_listing_fees',
+                    '2026_07_06_600005_allow_nullable_import_conversion_fields',
+                    '2026_07_06_600006_change_lift_power_and_efficiency_fields_to_strings',
+                    '2026_07_06_600007_allow_nullable_listing_location',
+                ])
+                ->delete();
+        }
     }
 
     public function publicBlocks(): array

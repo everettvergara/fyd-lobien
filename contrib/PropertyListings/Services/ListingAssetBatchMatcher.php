@@ -27,12 +27,15 @@ class ListingAssetBatchMatcher
      *     listing_name: ?string,
      *     replaces_existing: bool,
      *     existing_asset_id: ?int,
+     *     skipped: bool,
+     *     skip_reason: ?string,
      *     errors: array<int, string>
      * }
      */
-    public function match(UploadedFile $file): array
+    public function match(UploadedFile $file, ?string $selectedAssetType = null): array
     {
         $filename = $file->getClientOriginalName();
+        $selectedAssetType = $selectedAssetType !== null ? strtolower(trim($selectedAssetType)) : null;
         $result = [
             'filename' => $filename,
             'valid' => false,
@@ -44,8 +47,14 @@ class ListingAssetBatchMatcher
             'listing_name' => null,
             'replaces_existing' => false,
             'existing_asset_id' => null,
+            'skipped' => false,
+            'skip_reason' => null,
             'errors' => [],
         ];
+
+        if ($selectedAssetType !== null && $selectedAssetType !== '') {
+            return $this->matchSelectedType($file, $selectedAssetType, $result);
+        }
 
         if (! str_contains($filename, '__')) {
             $result['errors'][] = 'Filename must match {code}__{asset_type_slug}.{ext}.';
@@ -88,7 +97,8 @@ class ListingAssetBatchMatcher
 
         $listing = Listing::query()->where('code', $code)->first();
         if ($listing === null) {
-            $result['errors'][] = "Listing code \"{$code}\" was not found.";
+            $result['skipped'] = true;
+            $result['skip_reason'] = "Listing code \"{$code}\" was not found.";
 
             return $result;
         }
@@ -101,6 +111,79 @@ class ListingAssetBatchMatcher
         $existing = ListingAsset::query()
             ->where('listing_id', $listing->id)
             ->where('asset_type', $assetTypeSlug)
+            ->first();
+
+        if ($existing !== null) {
+            $result['replaces_existing'] = true;
+            $result['existing_asset_id'] = $existing->id;
+        }
+
+        $result['valid'] = $result['errors'] === [];
+
+        return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     * @return array<string, mixed>
+     */
+    protected function matchSelectedType(UploadedFile $file, string $assetType, array $result): array
+    {
+        $filename = $file->getClientOriginalName();
+
+        if (! str_contains($filename, '__')) {
+            $result['errors'][] = 'Filename must match {code}__{whatever_text}.{ext}.';
+
+            return $result;
+        }
+
+        [$code, $rest] = explode('__', $filename, 2);
+        $code = trim($code);
+        $rest = trim($rest);
+        $extension = strtolower(pathinfo($rest, PATHINFO_EXTENSION));
+
+        $result['code'] = $code !== '' ? $code : null;
+        $result['extension'] = $extension !== '' ? $extension : null;
+
+        if ($code === '' || $rest === '') {
+            $result['errors'][] = 'Filename must include a listing code before the double underscore.';
+
+            return $result;
+        }
+
+        if ($extension === '') {
+            $result['errors'][] = 'Filename must include a file extension.';
+
+            return $result;
+        }
+
+        if (! $this->registry->hasValue(ListingLookupGroups::IMAGE_TYPE, $assetType)) {
+            $result['errors'][] = "Unknown asset type \"{$assetType}\".";
+
+            return $result;
+        }
+
+        $validationError = $this->validator->validate($assetType, $file);
+        if ($validationError !== null) {
+            $result['errors'][] = $validationError;
+        }
+
+        $listing = Listing::query()->where('code', $code)->first();
+        if ($listing === null) {
+            $result['skipped'] = true;
+            $result['skip_reason'] = "Listing code \"{$code}\" was not found.";
+
+            return $result;
+        }
+
+        $result['asset_type'] = $assetType;
+        $result['asset_type_label'] = $this->registry->label(ListingLookupGroups::IMAGE_TYPE, $assetType);
+        $result['listing_id'] = $listing->id;
+        $result['listing_name'] = $listing->name;
+
+        $existing = ListingAsset::query()
+            ->where('listing_id', $listing->id)
+            ->where('asset_type', $assetType)
             ->first();
 
         if ($existing !== null) {

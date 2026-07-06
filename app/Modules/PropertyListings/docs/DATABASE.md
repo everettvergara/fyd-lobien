@@ -90,8 +90,10 @@ Re-running the seed action refreshes demo rows by `code` (idempotent). Requires 
 | id | PK | |
 | code | string, unique | yes |
 | name | string | yes |
-| province | string | yes |
-| city | string | yes |
+| summary | string(500), nullable | |
+| description | longText (HTML), nullable | |
+| province | string, nullable | |
+| city | string, nullable | |
 | brgy | string | |
 | address | text | |
 | office_rental_rate | decimal | |
@@ -99,18 +101,19 @@ Re-running the seed action refreshes demo rows by `code` (idempotent). Requires 
 | unit_market_size | decimal | |
 | retail_market_rate | decimal | |
 | completion_status | string (lookup) | |
+| published_to_public | boolean, default false | |
 
 **Note:** `listing_type` was removed. Lease/sale intent is on units via `for_lease` / `for_sale`.
 
 ### `listing_specs` (1:1)
 
-developer, grade, completion_year, completion_qtr, no_of_floors, no_of_basement, density_ratio, parking_allocation, floor_to_ceiling_height, gross_leasable_area, typical_floor_area, typical_retail_floor_area, floor_efficiency
+developer, grade, completion_year, completion_qtr, no_of_floors, no_of_basement, density_ratio (text ratio, e.g. `1:450`), parking_allocation, floor_to_ceiling_height, gross_leasable_area, typical_floor_area, typical_retail_floor_area, floor_efficiency (text, e.g. `85% efficient`)
 
-**Computed (not stored):** `net_usable_area` = `typical_retail_floor_area × floor_efficiency`
+**Computed (not stored):** `net_usable_area` = `typical_retail_floor_area × floor_efficiency` only when `floor_efficiency` is numeric
 
 ### `listing_building_services` (1:1)
 
-operating_hours, ac_system, no_of_lifts_passenger, no_of_lifts_service, telco, backup_power
+operating_hours, ac_system, no_of_lifts_passenger (text), no_of_lifts_service (text), telco, backup_power (text)
 
 ### `listing_other_infos` (1:1)
 

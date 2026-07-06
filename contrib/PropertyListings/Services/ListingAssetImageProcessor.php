@@ -7,12 +7,16 @@ use Illuminate\Support\Str;
 
 class ListingAssetImageProcessor
 {
+    protected const PROCESS_MEMORY_LIMIT = '512M';
+
     protected const MAX_LONG_EDGE = 1920;
 
     protected const JPEG_QUALITY = 75;
 
     public function process(UploadedFile $file): UploadedFile
     {
+        $this->ensureProcessMemoryLimit();
+
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension());
         $mime = strtolower((string) $file->getMimeType());
 
@@ -20,7 +24,7 @@ class ListingAssetImageProcessor
             return $file;
         }
 
-        if (! function_exists('imagecreatefromstring')) {
+        if (! function_exists('imagecreatetruecolor') || ! function_exists('imagejpeg')) {
             return $file;
         }
 
@@ -29,13 +33,20 @@ class ListingAssetImageProcessor
             return $file;
         }
 
-        $source = @imagecreatefromstring((string) file_get_contents($sourcePath));
-        if (! $source) {
+        $size = @getimagesize($sourcePath);
+        if ($size === false) {
             return $file;
         }
 
-        $width = imagesx($source);
-        $height = imagesy($source);
+        [$width, $height] = $size;
+        if (! $this->canProcessImage((int) $width, (int) $height)) {
+            return $file;
+        }
+
+        $source = $this->createImageFromPath($sourcePath, $extension, $mime);
+        if (! $source) {
+            return $file;
+        }
 
         if ($width <= 0 || $height <= 0) {
             imagedestroy($source);
@@ -113,6 +124,76 @@ class ListingAssetImageProcessor
         }
 
         return false;
+    }
+
+    /**
+     * @return \GdImage|false
+     */
+    protected function createImageFromPath(string $path, string $extension, string $mime): \GdImage|false
+    {
+        return match (true) {
+            in_array($extension, ['jpg', 'jpeg'], true) || $mime === 'image/jpeg' => function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($path) : false,
+            $extension === 'png' || $mime === 'image/png' => function_exists('imagecreatefrompng') ? @imagecreatefrompng($path) : false,
+            $extension === 'webp' || $mime === 'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
+            $extension === 'gif' || $mime === 'image/gif' => function_exists('imagecreatefromgif') ? @imagecreatefromgif($path) : false,
+            $extension === 'bmp' || $mime === 'image/bmp' => function_exists('imagecreatefrombmp') ? @imagecreatefrombmp($path) : false,
+            default => false,
+        };
+    }
+
+    protected function canProcessImage(int $width, int $height): bool
+    {
+        if ($width <= 0 || $height <= 0) {
+            return false;
+        }
+
+        $memoryLimit = $this->phpSizeToBytes(ini_get('memory_limit') ?: '');
+        if ($memoryLimit === null || $memoryLimit < 0) {
+            return true;
+        }
+
+        [$targetWidth, $targetHeight] = $this->scaledDimensions($width, $height);
+        $sourcePixels = $width * $height;
+        $targetPixels = $targetWidth * $targetHeight;
+        $estimatedBytes = (($sourcePixels + $targetPixels) * 5) + (24 * 1024 * 1024);
+        $availableBytes = $memoryLimit - memory_get_usage(true);
+
+        return $availableBytes > $estimatedBytes;
+    }
+
+    protected function ensureProcessMemoryLimit(): void
+    {
+        $current = $this->phpSizeToBytes(ini_get('memory_limit') ?: '');
+        $required = $this->phpSizeToBytes(self::PROCESS_MEMORY_LIMIT);
+
+        if ($current === null || $required === null || $current < 0 || $current >= $required) {
+            return;
+        }
+
+        ini_set('memory_limit', self::PROCESS_MEMORY_LIMIT);
+    }
+
+    protected function phpSizeToBytes(string $value): ?int
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if ($value === '-1') {
+            return -1;
+        }
+
+        $unit = strtolower(substr($value, -1));
+        $number = (float) $value;
+
+        return match ($unit) {
+            'g' => (int) ($number * 1024 * 1024 * 1024),
+            'm' => (int) ($number * 1024 * 1024),
+            'k' => (int) ($number * 1024),
+            default => (int) $number,
+        };
     }
 
     /**

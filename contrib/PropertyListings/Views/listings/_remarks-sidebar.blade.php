@@ -1,8 +1,12 @@
 @php
     $listingModel = $listing ?? null;
-    $remarks = $listingModel?->remarks?->loadMissing(['user.avatar', 'unit']) ?? collect();
+    $remarksPaginator = $remarks ?? null;
+    $remarksUnitFilter = $remarksUnitFilter ?? request()->query('remarks_unit');
     $unitsForFilter = $listingModel?->units ?? collect();
     $canAddRemarks = $listingModel?->exists ?? false;
+    $remarksEditUrl = $listingModel?->exists
+        ? route('admin.listings.edit', $listingModel)
+        : null;
 @endphp
 
 <div class="listing-remarks-shell position-relative" data-listing-remarks-panel>
@@ -45,10 +49,13 @@
 
                 <div class="mb-2">
                     <label class="form-label small" for="remarks_unit_filter">Filter feed</label>
-                    <select class="form-select form-select-sm" id="remarks_unit_filter" data-remarks-unit-filter>
+                    <select class="form-select form-select-sm"
+                            id="remarks_unit_filter"
+                            data-remarks-unit-filter
+                            data-remarks-edit-url="{{ $remarksEditUrl }}">
                         <option value="">All remarks</option>
                         @foreach ($unitsForFilter as $unit)
-                            <option value="{{ $unit->id }}">
+                            <option value="{{ $unit->id }}" @selected((string) $remarksUnitFilter === (string) $unit->id)>
                                 {{ trim(($unit->floor ? 'Fl. '.$unit->floor.' — ' : '').($unit->unit ?: 'Unit #'.$unit->id)) }}
                             </option>
                         @endforeach
@@ -58,40 +65,24 @@
                 <p class="small mb-3 listing-remarks-muted">Save the listing once to add remarks.</p>
             @endif
 
-            <div class="listing-remarks-feed" data-remarks-feed style="max-height:24rem;overflow-y:auto;">
-                @forelse ($remarks as $remark)
-                    @php
-                        $remarkUser = $remark->user;
-                        $avatarUrl = $remarkUser?->avatarUrl();
-                        $initial = strtoupper((string) \Illuminate\Support\Str::of($remarkUser?->name ?? 'U')->substr(0, 1));
-                    @endphp
-                    <div class="listing-remark-card card border-0 shadow-sm mb-2"
-                         data-remark-item
-                         data-unit-id="{{ $remark->listing_unit_id ?? '' }}">
-                        <div class="card-body p-2 small">
-                            <div class="d-flex justify-content-between gap-2 mb-1">
-                                <div class="d-flex align-items-center gap-2 min-w-0">
-                                    @if ($avatarUrl)
-                                        <img src="{{ $avatarUrl }}" alt="{{ $remarkUser?->name ?? 'User' }}" class="listing-remark-avatar">
-                                    @else
-                                        <span class="listing-remark-avatar listing-remark-avatar-fallback">{{ $initial }}</span>
-                                    @endif
-                                    <strong class="text-truncate">{{ $remarkUser?->name ?? 'User' }}</strong>
-                                </div>
-                                <span class="listing-remarks-muted text-nowrap">{{ $remark->remarked_at?->format('M j, Y g:i A') }}</span>
-                            </div>
-                            @if ($remark->unit)
-                                <div class="listing-remarks-muted mb-1">
-                                    Unit: {{ trim(($remark->unit->floor ? 'Fl. '.$remark->unit->floor.' — ' : '').($remark->unit->unit ?: '#'.$remark->unit->id)) }}
-                                </div>
-                            @endif
-                            <div>{{ $remark->comment }}</div>
-                        </div>
-                    </div>
-                @empty
+            <div class="listing-remarks-feed" data-remarks-feed>
+                @if ($remarksPaginator && $remarksPaginator->count() > 0)
+                    @foreach ($remarksPaginator as $remark)
+                        @include('propertylistings::listings._remark-card', [
+                            'remark' => $remark,
+                            'listing' => $listingModel,
+                        ])
+                    @endforeach
+                @else
                     <p class="small mb-0 listing-remarks-muted" data-remarks-empty>No remarks yet.</p>
-                @endforelse
+                @endif
             </div>
+
+            @if ($remarksPaginator?->hasPages())
+                <div class="listing-remarks-pager mt-2 d-flex justify-content-center">
+                    {{ $remarksPaginator->links('vendor.pagination.admin') }}
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -196,6 +187,27 @@
     .listing-remarks-panel .listing-remarks-form {
         border-color: rgba(255, 255, 255, 0.08) !important;
     }
+
+    .listing-remarks-pager .pagination {
+        --bs-pagination-bg: #334155;
+        --bs-pagination-border-color: rgba(255, 255, 255, 0.12);
+        --bs-pagination-color: rgba(255, 255, 255, 0.88);
+        --bs-pagination-hover-bg: #475569;
+        --bs-pagination-hover-color: #fff;
+        --bs-pagination-hover-border-color: rgba(255, 255, 255, 0.18);
+        --bs-pagination-focus-bg: #475569;
+        --bs-pagination-focus-color: #fff;
+        --bs-pagination-active-bg: #0d6efd;
+        --bs-pagination-active-border-color: #0d6efd;
+        --bs-pagination-active-color: #fff;
+        --bs-pagination-disabled-bg: #1e293b;
+        --bs-pagination-disabled-color: rgba(255, 255, 255, 0.35);
+        --bs-pagination-disabled-border-color: rgba(255, 255, 255, 0.08);
+        --bs-pagination-font-size: 0.6875rem;
+        --bs-pagination-padding-y: 0.15rem;
+        --bs-pagination-padding-x: 0.45rem;
+        margin-bottom: 0;
+    }
 </style>
 @endpush
 
@@ -207,7 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const toolbarToggle = document.querySelector('[data-listing-remarks-toggle]');
     const toggleLabels = document.querySelectorAll('[data-listing-remarks-toggle-label]');
     const filter = document.querySelector('[data-remarks-unit-filter]');
-    const items = document.querySelectorAll('[data-remark-item]');
 
     const setRemarksOpen = (open) => {
         editorRoot?.classList.toggle('is-remarks-hidden', !open);
@@ -234,14 +245,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     filter?.addEventListener('change', () => {
+        const editUrl = filter.dataset.remarksEditUrl;
+        if (!editUrl) {
+            return;
+        }
+
         const unitId = filter.value;
-        items.forEach((item) => {
-            if (!unitId) {
-                item.hidden = false;
-                return;
-            }
-            item.hidden = item.dataset.unitId !== unitId;
-        });
+        const url = new URL(editUrl, window.location.origin);
+
+        if (unitId) {
+            url.searchParams.set('remarks_unit', unitId);
+        } else {
+            url.searchParams.delete('remarks_unit');
+        }
+
+        url.searchParams.delete('remarks_page');
+        window.location.assign(url.toString());
     });
 });
 </script>

@@ -24,15 +24,15 @@ class ListingAssetBatchImportService
      * @param  array<int, UploadedFile>  $files
      * @return array{
      *     items: array<int, array<string, mixed>>,
-     *     summary: array{valid: int, invalid: int, replace: int}
+     *     summary: array{valid: int, invalid: int, skipped: int, replace: int}
      * }
      */
-    public function preview(array $files): array
+    public function preview(array $files, ?string $assetType = null): array
     {
         $items = [];
 
         foreach ($this->expandFiles($files) as $file) {
-            $items[] = $this->matcher->match($file);
+            $items[] = $this->previewOne($file, $assetType);
         }
 
         return [
@@ -42,10 +42,18 @@ class ListingAssetBatchImportService
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function previewOne(UploadedFile $file, ?string $assetType = null): array
+    {
+        return $this->matcher->match($file, $assetType);
+    }
+
+    /**
      * @param  array<int, array{asset_type: string, file: UploadedFile}>  $typedFiles
      * @return array{
      *     items: array<int, array<string, mixed>>,
-     *     summary: array{valid: int, invalid: int, replace: int}
+     *     summary: array{valid: int, invalid: int, skipped: int, replace: int}
      * }
      */
     public function previewTyped(Listing $listing, array $typedFiles): array
@@ -73,24 +81,48 @@ class ListingAssetBatchImportService
      *     attached: int,
      *     replaced: int,
      *     failed: int,
+     *     skipped: int,
      *     errors: array<int, string>
      * }
      */
-    public function commit(array $files, int $userId): array
+    public function commit(array $files, int $userId, ?string $assetType = null): array
     {
         $attached = 0;
         $replaced = 0;
         $failed = 0;
+        $skipped = 0;
         $errors = [];
+        $items = [];
+        $expandedFiles = $this->expandFiles($files);
 
-        DB::transaction(function () use ($files, $userId, &$attached, &$replaced, &$failed, &$errors) {
-            foreach ($this->expandFiles($files) as $file) {
-                $item = $this->matcher->match($file);
+        foreach ($expandedFiles as $file) {
+            $item = $this->matcher->match($file, $assetType);
+            $items[] = [$item, $file];
 
-                if (! $item['valid']) {
-                    $failed++;
-                    $errors[] = $item['filename'].': '.implode(' ', $item['errors']);
+            if ((bool) ($item['skipped'] ?? false)) {
+                $skipped++;
 
+                continue;
+            }
+
+            if (! $item['valid']) {
+                $errors[] = $item['filename'].': '.implode(' ', $item['errors']);
+            }
+        }
+
+        if ($errors !== []) {
+            return [
+                'attached' => 0,
+                'replaced' => 0,
+                'failed' => count($errors),
+                'skipped' => $skipped,
+                'errors' => $errors,
+            ];
+        }
+
+        DB::transaction(function () use ($items, $userId, &$attached, &$replaced, &$failed, &$errors) {
+            foreach ($items as [$item, $file]) {
+                if ((bool) ($item['skipped'] ?? false)) {
                     continue;
                 }
 
@@ -114,14 +146,82 @@ class ListingAssetBatchImportService
             'attached' => $attached,
             'replaced' => $replaced,
             'failed' => $failed,
+            'skipped' => $skipped,
         ]);
 
         return [
             'attached' => $attached,
             'replaced' => $replaced,
             'failed' => $failed,
+            'skipped' => $skipped,
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * @return array{
+     *     filename: string,
+     *     status: string,
+     *     attached: int,
+     *     replaced: int,
+     *     failed: int,
+     *     skipped: int,
+     *     errors: array<int, string>
+     * }
+     */
+    public function commitOne(UploadedFile $file, int $userId, ?string $assetType = null): array
+    {
+        $item = $this->matcher->match($file, $assetType);
+        $filename = (string) ($item['filename'] ?? $file->getClientOriginalName());
+
+        if ((bool) ($item['skipped'] ?? false)) {
+            return [
+                'filename' => $filename,
+                'status' => 'skipped',
+                'attached' => 0,
+                'replaced' => 0,
+                'failed' => 0,
+                'skipped' => 1,
+                'errors' => [],
+            ];
+        }
+
+        if (! (bool) ($item['valid'] ?? false)) {
+            return [
+                'filename' => $filename,
+                'status' => 'failed',
+                'attached' => 0,
+                'replaced' => 0,
+                'failed' => 1,
+                'skipped' => 0,
+                'errors' => [$filename.': '.implode(' ', $item['errors'] ?? [])],
+            ];
+        }
+
+        try {
+            $listing = Listing::query()->findOrFail($item['listing_id']);
+            $outcome = $this->attachMatchedItem($listing, $item, $file, $userId);
+
+            return [
+                'filename' => $filename,
+                'status' => $outcome,
+                'attached' => $outcome === 'attached' ? 1 : 0,
+                'replaced' => $outcome === 'replaced' ? 1 : 0,
+                'failed' => 0,
+                'skipped' => 0,
+                'errors' => [],
+            ];
+        } catch (\Throwable $exception) {
+            return [
+                'filename' => $filename,
+                'status' => 'failed',
+                'attached' => 0,
+                'replaced' => 0,
+                'failed' => 1,
+                'skipped' => 0,
+                'errors' => [$filename.': '.$exception->getMessage()],
+            ];
+        }
     }
 
     /**
@@ -243,13 +343,17 @@ class ListingAssetBatchImportService
 
     /**
      * @param  array<int, array<string, mixed>>  $items
-     * @return array{valid: int, invalid: int, replace: int}
+     * @return array{valid: int, invalid: int, skipped: int, replace: int}
      */
     protected function summarize(array $items): array
     {
         return [
             'valid' => collect($items)->where('valid', true)->count(),
-            'invalid' => collect($items)->where('valid', false)->count(),
+            'invalid' => collect($items)
+                ->where('valid', false)
+                ->reject(fn (array $item) => (bool) ($item['skipped'] ?? false))
+                ->count(),
+            'skipped' => collect($items)->filter(fn (array $item) => (bool) ($item['skipped'] ?? false))->count(),
             'replace' => collect($items)->where('replaces_existing', true)->where('valid', true)->count(),
         ];
     }

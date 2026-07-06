@@ -20,6 +20,7 @@ class Listing extends Model
         'unit_market_size',
         'retail_market_rate',
         'completion_status',
+        'published_to_public',
     ];
 
     protected function casts(): array
@@ -29,6 +30,7 @@ class Listing extends Model
             'total_area_size' => 'decimal:2',
             'unit_market_size' => 'decimal:2',
             'retail_market_rate' => 'decimal:2',
+            'published_to_public' => 'boolean',
         ];
     }
 
@@ -75,6 +77,52 @@ class Listing extends Model
             return null;
         }
 
+        if (! is_numeric($spec->floor_efficiency)) {
+            return null;
+        }
+
         return round((float) $spec->typical_retail_floor_area * ((float) $spec->floor_efficiency / 100), 2);
+    }
+
+    /**
+     * @return array<int, array{thumb: string, full: string, alt: string}>
+     */
+    public function assetImages(string $assetType): array
+    {
+        return $this->assets
+            ->where('asset_type', $assetType)
+            ->sortBy([
+                ['sort_order', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->map(function (ListingAsset $asset) {
+                $media = $asset->media;
+
+                if ($media === null) {
+                    return null;
+                }
+
+                $full = $media->url();
+                $thumb = $media->variantUrl('thumbnail') ?? $full;
+
+                return [
+                    'thumb' => $thumb,
+                    'full' => $full,
+                    'alt' => $media->alt_text ?: $media->displayName(),
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function buildingImageUrls(): array
+    {
+        return collect($this->assetImages('building'))
+            ->pluck('thumb')
+            ->all();
     }
 }

@@ -113,14 +113,55 @@ const openCompare = () => {
     window.location.href = url.toString();
 };
 
-const initListingComparator = () => {
-    if (!document.querySelector('[data-listing-comparator-bin]') && !document.querySelector('[data-listing-compare]')) {
+let comparePreviewModal = null;
+
+const initComparePreviewModal = () => {
+    const modalElement = document.getElementById('listingCompareImagePreviewModal');
+
+    if (!modalElement || comparePreviewModal) {
         return;
     }
 
-    renderBin();
+    comparePreviewModal = new bootstrap.Modal(modalElement);
+};
+
+const openComparePreview = (trigger) => {
+    const title = document.getElementById('listingCompareImagePreviewTitle');
+    const image = document.getElementById('listingCompareImagePreviewImg');
+    const url = trigger.dataset.previewUrl;
+
+    if (!comparePreviewModal || !title || !image || !url) {
+        return;
+    }
+
+    title.textContent = trigger.dataset.previewTitle || 'Image Preview';
+    image.src = url;
+    image.alt = trigger.dataset.previewTitle || 'Listing image';
+    comparePreviewModal.show();
+};
+
+const initListingComparator = () => {
+    const hasComparator = document.querySelector('[data-listing-comparator-bin]') || document.querySelector('[data-listing-compare]');
+    const hasPreview = document.getElementById('listingCompareImagePreviewModal');
+
+    if (!hasComparator && !hasPreview) {
+        return;
+    }
+
+    initComparePreviewModal();
+
+    if (hasComparator) {
+        renderBin();
+    }
 
     document.addEventListener('click', (event) => {
+        const previewTrigger = event.target.closest('[data-listing-compare-preview]');
+        if (previewTrigger) {
+            event.preventDefault();
+            openComparePreview(previewTrigger);
+            return;
+        }
+
         const compareButton = event.target.closest('[data-listing-compare]');
         if (compareButton) {
             event.preventDefault();

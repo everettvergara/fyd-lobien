@@ -3,6 +3,8 @@
 namespace App\Modules\PropertyListings\Requests;
 
 use App\Modules\PropertyListings\Models\Listing;
+use App\Modules\PropertyListings\Support\ListingLookupGroups;
+use App\Modules\PropertyListings\Support\ListingLookupRegistry;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ListingAssetBatchRequest extends FormRequest
@@ -15,6 +17,7 @@ class ListingAssetBatchRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'asset_type' => ['nullable', 'string', 'max:100'],
             'files' => ['nullable', 'array', 'max:200'],
             'files.*' => ['file', 'max:51200'],
             'archive' => ['nullable', 'file', 'mimes:zip', 'max:102400'],
@@ -54,6 +57,17 @@ class ListingAssetBatchRequest extends FormRequest
 
             if ($hasFiles && $hasArchive) {
                 $validator->errors()->add('archive', 'Upload either individual files or a ZIP archive, not both.');
+            }
+
+            $assetType = trim((string) $this->input('asset_type'));
+            if ($assetType === '') {
+                $validator->errors()->add('asset_type', 'Choose the asset type for this batch.');
+
+                return;
+            }
+
+            if (! app(ListingLookupRegistry::class)->hasValue(ListingLookupGroups::IMAGE_TYPE, $assetType)) {
+                $validator->errors()->add('asset_type', "Unknown asset type \"{$assetType}\".");
             }
         });
     }

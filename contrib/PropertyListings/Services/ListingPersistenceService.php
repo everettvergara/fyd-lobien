@@ -59,6 +59,7 @@ class ListingPersistenceService
             'unit_market_size',
             'retail_market_rate',
             'completion_status',
+            'published_to_public',
         ]);
     }
 

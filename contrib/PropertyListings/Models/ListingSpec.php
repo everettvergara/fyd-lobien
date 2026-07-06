@@ -31,7 +31,6 @@ class ListingSpec extends Model
             'gross_leasable_area' => 'decimal:2',
             'typical_floor_area' => 'decimal:2',
             'typical_retail_floor_area' => 'decimal:2',
-            'floor_efficiency' => 'decimal:2',
         ];
     }
 

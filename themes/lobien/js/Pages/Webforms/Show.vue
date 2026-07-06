@@ -1,7 +1,7 @@
 <script setup>
 import PublicLayout from '../../Layouts/PublicLayout.vue';
 import SeoHead from '../../Components/SeoHead.vue';
-import WebformRenderer from '../../../_shared/Components/WebformRenderer.vue';
+import WebformRenderer from '../../../../_shared/Components/WebformRenderer.vue';
 
 defineProps({
     webform: { type: Object, required: true },

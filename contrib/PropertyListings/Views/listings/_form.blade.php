@@ -70,6 +70,19 @@
                             </select>
                             @error('completion_status')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input type="hidden" name="published_to_public" value="0">
+                                <input type="checkbox"
+                                       class="form-check-input @error('published_to_public') is-invalid @enderror"
+                                       id="published_to_public"
+                                       name="published_to_public"
+                                       value="1"
+                                       @checked(old('published_to_public', $listingModel?->published_to_public ?? false))>
+                                <label class="form-check-label" for="published_to_public">Publish to PUBLIC</label>
+                                @error('published_to_public')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -82,9 +95,8 @@
                             <label class="form-label small text-muted" for="listing_province">Province</label>
                             <select class="form-select @error('province') is-invalid @enderror"
                                     id="listing_province"
-                                    name="province"
-                                    required>
-                                <option value="">Select province...</option>
+                                    name="province">
+                                <option value="">No province selected</option>
                                 @foreach ($provinces ?? [] as $province)
                                     <option value="{{ $province->name }}"
                                             data-province-id="{{ $province->id }}"
@@ -99,9 +111,8 @@
                             <label class="form-label small text-muted" for="listing_city">City / Municipality</label>
                             <select class="form-select @error('city') is-invalid @enderror"
                                     id="listing_city"
-                                    name="city"
-                                    required>
-                                <option value="">Select city...</option>
+                                    name="city">
+                                <option value="">No city selected</option>
                                 @if (old('city', $listingModel?->city))
                                     <option value="{{ old('city', $listingModel?->city) }}" selected>{{ old('city', $listingModel?->city) }}</option>
                                 @endif
@@ -244,7 +255,10 @@
                             <input type="text"
                                    class="form-control @error('spec.density_ratio') is-invalid @enderror"
                                    name="spec[density_ratio]"
+                                   maxlength="50"
+                                   placeholder="e.g. 1:450"
                                    value="{{ old('spec.density_ratio', $spec?->density_ratio) }}">
+                            <div class="form-text">Text ratio; accepts values like 1:450.</div>
                             @error('spec.density_ratio')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
@@ -447,7 +461,10 @@
     @endif
 
     <aside class="listing-editor-remarks">
-        @include('propertylistings::listings._remarks-sidebar')
+        @include('propertylistings::listings._remarks-sidebar', [
+            'remarks' => $remarks ?? null,
+            'remarksUnitFilter' => $remarksUnitFilter ?? null,
+        ])
     </aside>
 </div>
 
@@ -658,6 +675,17 @@
     .listing-pane-assets .listing-assets-upload-pane .card-header {
         background-color: rgba(13, 202, 240, 0.12) !important;
         border-bottom-color: rgba(13, 202, 240, 0.2);
+    }
+
+    .listing-editor-tabs .form-control,
+    .listing-editor-tabs .form-select {
+        font-size: 0.6875rem;
+    }
+
+    .listing-editor-tabs .listing-assets-tab .table td,
+    .listing-editor-tabs .listing-assets-tab .table th,
+    .listing-editor-tabs .listing-assets-tab code {
+        font-size: 0.6875rem;
     }
 
     .listing-relation-tabs .nav-link {
