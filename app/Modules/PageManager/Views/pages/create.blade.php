@@ -16,7 +16,7 @@
 <div class="card border-0 shadow-none">
     <div class="card-body p-0">
         <form method="POST" action="{{ route('admin.pages.store') }}" id="page-form">@csrf
-            @include('pagemanager::pages._form')
+            @include('pagemanager::pages._form', ['page' => null])
             <button type="submit" class="btn btn-primary">Create Page</button>
         </form>
     </div>

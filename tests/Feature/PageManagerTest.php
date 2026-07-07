@@ -132,6 +132,16 @@ class PageManagerTest extends TestCase
             ->assertOk();
     }
 
+    public function test_admin_can_open_create_page_form(): void
+    {
+        $admin = User::where('email', 'admin@fyd.local')->first();
+
+        $this->actingAs($admin)
+            ->get(route('admin.pages.create'))
+            ->assertOk()
+            ->assertSee('Create Page');
+    }
+
     public function test_pages_list_shows_edit_action_for_authorized_users(): void
     {
         $page = Page::query()->where('path', '/about')->firstOrFail();
