@@ -16,7 +16,7 @@ defineProps({
 
         <div class="container py-5">
             <Breadcrumb :items="[
-                { label: 'Careers', href: '#' },
+                { label: 'Careers', href: '/careers' },
                 { label: job.title },
             ]" />
 

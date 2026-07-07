@@ -89,7 +89,7 @@ class ModuleServiceProvider extends ServiceProvider
             Route::post('/search', [SearchController::class, 'store'])->name('search.submit');
 
             Route::get('/{path?}', [PublicPageController::class, 'show'])
-                ->where('path', '^(?!(?:api|admin|newsletters(?:/|$)|careers/.+|forms/)).*$')
+                ->where('path', '^(?!(?:api|admin|newsletters(?:/|$)|careers/.+)).*$')
                 ->name('page.show');
         });
     }

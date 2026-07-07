@@ -7,6 +7,7 @@ use App\Models\InstalledModule;
 use App\Models\User;
 use App\Modules\Careers\Models\CareerApplication;
 use App\Modules\Careers\Models\CareerJob;
+use App\Modules\Careers\Services\CareerPageSyncService;
 use App\Modules\PageManager\Models\Page;
 use App\Modules\PageManager\Models\PageBlock;
 use App\Services\Recaptcha\RecaptchaService;
@@ -49,6 +50,58 @@ class CareersModuleTest extends TestCase
         $this->assertDatabaseHas('career_jobs', ['slug' => 'senior-web-developer']);
     }
 
+    public function test_install_creates_careers_page_with_listing_block(): void
+    {
+        $this->installCareers();
+
+        $page = Page::query()->where('path', '/careers')->first();
+
+        $this->assertNotNull($page);
+        $this->assertSame('Careers', $page->title);
+        $this->assertSame(ContentStatus::Published, $page->status);
+
+        $this->assertDatabaseHas('page_blocks', [
+            'page_id' => $page->id,
+            'region_key' => 'main',
+            'block_type' => 'careers-listing',
+        ]);
+    }
+
+    public function test_install_does_not_overwrite_existing_careers_page(): void
+    {
+        $this->seed();
+
+        $page = Page::create([
+            'path' => '/careers',
+            'slug' => 'careers',
+            'title' => 'Custom Careers',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+        ]);
+
+        PageBlock::create([
+            'page_id' => $page->id,
+            'region_key' => 'main',
+            'block_type' => 'page-body',
+            'sort_order' => 0,
+            'config' => [],
+        ]);
+
+        Artisan::call('module:install', ['name' => 'Careers', '--force' => true]);
+
+        $page->refresh();
+
+        $this->assertSame('Custom Careers', $page->title);
+        $this->assertDatabaseMissing('page_blocks', [
+            'page_id' => $page->id,
+            'block_type' => 'careers-listing',
+        ]);
+        $this->assertDatabaseHas('page_blocks', [
+            'page_id' => $page->id,
+            'block_type' => 'page-body',
+        ]);
+    }
+
     public function test_public_api_returns_open_jobs(): void
     {
         $this->installCareers();
@@ -56,7 +109,56 @@ class CareersModuleTest extends TestCase
         $response = $this->getJson('/api/careers/jobs');
 
         $response->assertOk()
-            ->assertJsonPath('jobs.0.slug', 'senior-web-developer');
+            ->assertJsonPath('jobs.0.slug', 'senior-web-developer')
+            ->assertJsonStructure([
+                'jobs',
+                'pagination' => ['current_page', 'last_page', 'per_page', 'total'],
+            ]);
+    }
+
+    public function test_public_api_returns_all_job_fields(): void
+    {
+        $this->installCareers();
+
+        $response = $this->getJson('/api/careers/jobs');
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'jobs' => [
+                    '*' => [
+                        'id',
+                        'title',
+                        'slug',
+                        'summary',
+                        'description',
+                        'requirements',
+                        'department',
+                        'location',
+                        'salary_range',
+                        'employment_type',
+                        'employment_type_label',
+                        'closing_date',
+                        'published_at',
+                        'sort_order',
+                        'picture',
+                        'url',
+                    ],
+                ],
+            ]);
+    }
+
+    public function test_public_api_paginates_jobs(): void
+    {
+        $this->installCareers();
+        $this->seedExtraJobs(8);
+
+        $response = $this->getJson('/api/careers/jobs?per_page=5&page=2');
+
+        $response->assertOk()
+            ->assertJsonPath('pagination.current_page', 2)
+            ->assertJsonPath('pagination.per_page', 5)
+            ->assertJsonPath('pagination.total', 10)
+            ->assertJsonCount(5, 'jobs');
     }
 
     public function test_public_apply_stores_application_with_pdf(): void
@@ -112,26 +214,64 @@ class CareersModuleTest extends TestCase
     {
         $this->installCareers();
 
-        $page = Page::updateOrCreate(
-            ['path' => '/careers'],
-            [
-                'slug' => 'careers',
-                'title' => 'Careers',
-                'status' => ContentStatus::Published,
-                'published_at' => now(),
-            ],
-        );
-
-        PageBlock::updateOrCreate(
-            ['page_id' => $page->id, 'region_key' => 'main', 'block_type' => 'careers-listing'],
-            ['sort_order' => 0, 'config' => []],
-        );
-
         $this->get('/careers')
             ->assertOk()
             ->assertInertia(fn ($inertia) => $inertia
                 ->component('Page/Show')
-                ->where('regions.main.0.type', 'careers-listing'));
+                ->where('regions.main.0.type', 'careers-listing')
+                ->has('regions.main.0.props.jobs', 2)
+                ->where('regions.main.0.props.jobs.0.slug', 'senior-web-developer')
+                ->where('regions.main.0.props.jobs.0.url', url('/careers/senior-web-developer'))
+                ->where('regions.main.0.props.pagination.current_page', 1)
+                ->where('regions.main.0.props.pagination.total', 2));
+    }
+
+    public function test_careers_listing_paginates(): void
+    {
+        $this->installCareers();
+        $this->seedExtraJobs(8);
+
+        $page = Page::query()->where('path', '/careers')->first();
+        PageBlock::query()
+            ->where('page_id', $page->id)
+            ->where('block_type', 'careers-listing')
+            ->update(['config' => ['per_page' => 5]]);
+
+        $this->get('/careers?page=2')
+            ->assertOk()
+            ->assertInertia(fn ($inertia) => $inertia
+                ->component('Page/Show')
+                ->has('regions.main.0.props.jobs', 5)
+                ->where('regions.main.0.props.pagination.current_page', 2)
+                ->where('regions.main.0.props.pagination.total', 10));
+    }
+
+    public function test_job_listing_links_to_detail_page(): void
+    {
+        $this->installCareers();
+
+        $job = CareerJob::where('slug', 'senior-web-developer')->first();
+
+        $this->get('/careers/senior-web-developer')
+            ->assertOk()
+            ->assertInertia(fn ($inertia) => $inertia
+                ->component('Careers/Show')
+                ->where('job.slug', 'senior-web-developer')
+                ->where('job.title', $job->title)
+                ->where('job.description', $job->description)
+                ->where('job.url', url('/careers/senior-web-developer')));
+    }
+
+    public function test_uninstall_removes_managed_careers_page(): void
+    {
+        $this->installCareers();
+
+        $page = Page::query()->where('path', CareerPageSyncService::INDEX_PATH)->first();
+        $this->assertNotNull($page);
+
+        Artisan::call('module:uninstall', ['name' => 'Careers', '--force' => true]);
+
+        $this->assertNull(Page::query()->where('path', CareerPageSyncService::INDEX_PATH)->first());
     }
 
     public function test_admin_can_filter_applications_by_job(): void
@@ -205,6 +345,21 @@ class CareersModuleTest extends TestCase
 
         $this->registerModuleRoutes();
         $this->registerModuleViews();
+    }
+
+    protected function seedExtraJobs(int $count): void
+    {
+        for ($i = 1; $i <= $count; $i++) {
+            CareerJob::create([
+                'slug' => 'extra-job-'.$i,
+                'title' => 'Extra Job '.$i,
+                'description' => '<p>Description '.$i.'</p>',
+                'status' => CareerJob::STATUS_PUBLISHED,
+                'published_at' => now(),
+                'employment_type' => 'full_time',
+                'sort_order' => 100 + $i,
+            ]);
+        }
     }
 
     protected function registerModuleViews(): void
