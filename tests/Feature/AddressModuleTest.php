@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Media;
 use App\Models\User;
 use App\Modules\Address\Models\City;
 use App\Modules\Address\Models\Province;
@@ -109,5 +110,68 @@ class AddressModuleTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('error');
         $this->assertDatabaseHas('cities', ['id' => $city->id]);
+    }
+
+    public function test_admin_can_create_province_and_city_with_summary_description_and_image(): void
+    {
+        $admin = $this->admin();
+        Storage::disk('public')->put('address/cebu.png', 'image-content');
+
+        $media = Media::create([
+            'filename' => 'cebu.png',
+            'original_filename' => 'cebu.png',
+            'mime_type' => 'image/png',
+            'extension' => 'png',
+            'size' => 12,
+            'disk' => 'public',
+            'path' => 'address/cebu.png',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)->post('/admin/provinces', [
+            'name' => 'Content Province',
+            'code' => 'CP',
+            'summary' => 'Province summary text.',
+            'description' => '<p>Province <strong>description</strong>.</p>',
+            'image_id' => $media->id,
+            'is_active' => 1,
+        ])->assertRedirect('/admin/provinces');
+
+        $province = Province::where('name', 'Content Province')->firstOrFail();
+
+        $this->assertDatabaseHas('provinces', [
+            'id' => $province->id,
+            'summary' => 'Province summary text.',
+            'description' => '<p>Province <strong>description</strong>.</p>',
+            'image_id' => $media->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get("/admin/provinces/{$province->id}")
+            ->assertOk()
+            ->assertSee('Province summary text.', false);
+
+        $this->actingAs($admin)->post('/admin/cities', [
+            'province_id' => $province->id,
+            'name' => 'Content City',
+            'summary' => 'City summary text.',
+            'description' => '<p>City <em>description</em>.</p>',
+            'image_id' => $media->id,
+            'is_active' => 1,
+        ])->assertRedirect('/admin/cities');
+
+        $city = City::where('name', 'Content City')->firstOrFail();
+
+        $this->assertDatabaseHas('cities', [
+            'id' => $city->id,
+            'summary' => 'City summary text.',
+            'description' => '<p>City <em>description</em>.</p>',
+            'image_id' => $media->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get("/admin/cities/{$city->id}")
+            ->assertOk()
+            ->assertSee('City summary text.', false);
     }
 }

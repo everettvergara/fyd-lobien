@@ -60,6 +60,38 @@
                                    required>
                             @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">Summary</label>
+                            <textarea class="form-control @error('summary') is-invalid @enderror"
+                                      name="summary"
+                                      rows="2"
+                                      maxlength="500">{{ old('summary', $listingModel?->summary) }}</textarea>
+                            @error('summary')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-12">
+                            <x-admin.form.rich-text
+                                label="Description"
+                                name="description"
+                                :value="old('description', $listingModel?->description)"
+                            />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Slug</label>
+                            <input type="text"
+                                   class="form-control @error('slug') is-invalid @enderror"
+                                   name="slug"
+                                   value="{{ old('slug', $listingModel?->slug) }}"
+                                   placeholder="auto-generated-from-name">
+                            @php
+                                $previewCitySlug = \Illuminate\Support\Str::slug(old('city', $listingModel?->city ?? ''));
+                                $previewSlug = old('slug', $listingModel?->slug ?? 'your-slug');
+                            @endphp
+                            <div class="form-text">
+                                Public URL:
+                                <code>/properties/{{ $previewCitySlug ?: '{city-slug}' }}/{{ $previewSlug ?: '{slug}' }}</code>
+                            </div>
+                            @error('slug')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label small text-muted">Completion Status</label>
                             <select class="form-select @error('completion_status') is-invalid @enderror" name="completion_status">

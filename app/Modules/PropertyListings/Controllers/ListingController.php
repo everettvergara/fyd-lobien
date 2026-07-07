@@ -108,6 +108,36 @@ class ListingController extends Controller
         ]);
     }
 
+    public function publishAll(Request $request): RedirectResponse
+    {
+        $this->authorize('viewAny', Listing::class);
+
+        if (! $request->user()?->hasPermission('listings.edit')) {
+            abort(403);
+        }
+
+        $count = Listing::query()->update(['published_to_public' => true]);
+
+        ActivityLogger::log('listings', 'publish_all', null, ['count' => $count]);
+
+        return $this->redirectToIndex($request, "Published {$count} listing(s) to public.");
+    }
+
+    public function unpublishAll(Request $request): RedirectResponse
+    {
+        $this->authorize('viewAny', Listing::class);
+
+        if (! $request->user()?->hasPermission('listings.edit')) {
+            abort(403);
+        }
+
+        $count = Listing::query()->update(['published_to_public' => false]);
+
+        ActivityLogger::log('listings', 'unpublish_all', null, ['count' => $count]);
+
+        return $this->redirectToIndex($request, "Unpublished {$count} listing(s) from public.");
+    }
+
     public function destroy(Request $request, Listing $listing): RedirectResponse
     {
         $this->authorize('delete', $listing);
@@ -122,5 +152,18 @@ class ListingController extends Controller
         $listing->delete();
 
         return redirect()->route('admin.listings.index')->with('success', 'Listing deleted.');
+    }
+
+    protected function redirectToIndex(Request $request, string $message): RedirectResponse
+    {
+        $params = array_filter([
+            'view' => in_array($view = $request->input('view', $request->query('view')), ['table', 'thumbnails'], true)
+                ? $view
+                : null,
+        ]);
+
+        return redirect()
+            ->route('admin.listings.index', $params)
+            ->with('success', $message);
     }
 }

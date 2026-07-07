@@ -8,6 +8,7 @@ use App\Modules\PropertyListings\Models\Listing;
 use App\Modules\PropertyListings\Models\ListingFee;
 use App\Modules\PropertyListings\Models\ListingUnit;
 use App\Modules\PropertyListings\Support\ListingLookupGroups;
+use App\Modules\PropertyListings\Support\ListingSlugHelper;
 use App\Modules\PropertyListings\Support\ListingLookupRegistry;
 use App\Services\ActivityLogger;
 use Illuminate\Http\UploadedFile;
@@ -144,8 +145,7 @@ class ListingImportService
 
             $row = [];
             foreach ($headers as $index => $header) {
-                $cell = isset($data[$index]) ? trim((string) $data[$index]) : '';
-                $row[$header] = $this->normalizeImportEncoding($cell);
+                $row[$header] = isset($data[$index]) ? trim((string) $data[$index]) : '';
             }
 
             $rows[] = $row;
@@ -533,7 +533,7 @@ class ListingImportService
     protected function stringMaxFields(string $type): array
     {
         return match ($type) {
-            'header' => ['density_ratio' => 50, 'summary' => 500],
+            'header' => ['density_ratio' => 50],
             'units', 'fees' => [],
         };
     }
@@ -544,13 +544,25 @@ class ListingImportService
      */
     protected function listingPayloadFromRow(array $row): array
     {
+        $city = $this->nullableString($row['city'] ?? null);
+        $name = trim((string) $row['name']);
+        $code = trim((string) $row['code']);
+        $slugInput = $this->nullableString($row['slug'] ?? null);
+
+        if ($slugInput === null || $slugInput === '') {
+            $helper = app(ListingSlugHelper::class);
+            $base = $helper->generateFromName($name, $code);
+            $slugInput = $helper->ensureUnique($base, $city);
+        }
+
         return [
-            'code' => trim((string) $row['code']),
-            'name' => trim((string) $row['name']),
+            'code' => $code,
+            'name' => $name,
             'summary' => $this->nullableString($row['summary'] ?? null),
             'description' => $this->nullableString($row['description'] ?? null),
+            'slug' => $slugInput,
             'province' => $this->nullableString($row['province'] ?? null),
-            'city' => $this->nullableString($row['city'] ?? null),
+            'city' => $city,
             'brgy' => $this->nullableString($row['brgy'] ?? null),
             'address' => $this->nullableString($row['address'] ?? null),
             'office_rental_rate' => $this->nullableDecimal($row['office_rental_rate'] ?? null),
@@ -707,30 +719,9 @@ class ListingImportService
 
     protected function nullableString(mixed $value): ?string
     {
-        $value = $this->normalizeImportEncoding(trim((string) $value));
+        $value = trim((string) $value);
 
         return $value === '' ? null : $value;
-    }
-
-    protected function normalizeImportEncoding(string $value): string
-    {
-        if ($value === '') {
-            return '';
-        }
-
-        if (mb_check_encoding($value, 'UTF-8')) {
-            return mb_convert_encoding($value, 'UTF-8', 'UTF-8');
-        }
-
-        foreach (['Windows-1252', 'ISO-8859-1'] as $encoding) {
-            $converted = mb_convert_encoding($value, 'UTF-8', $encoding);
-
-            if (mb_check_encoding($converted, 'UTF-8')) {
-                return mb_convert_encoding($converted, 'UTF-8', 'UTF-8');
-            }
-        }
-
-        return mb_convert_encoding($value, 'UTF-8', 'UTF-8');
     }
 
     protected function nullableLookupString(mixed $value, string $group): ?string

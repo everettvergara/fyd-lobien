@@ -35,6 +35,34 @@
                     </button>
                 </div>
 
+                @if (auth()->user()?->hasPermission('listings.edit'))
+                    <form method="POST"
+                          action="{{ route('admin.listings.publish-all') }}"
+                          class="d-inline"
+                          onsubmit="return confirm('Publish ALL listings to public?');">
+                        @csrf
+                        @if ($viewMode !== 'table')
+                            <input type="hidden" name="view" value="{{ $viewMode }}">
+                        @endif
+                        <button type="submit" class="btn btn-outline-success">
+                            Publish all to public
+                        </button>
+                    </form>
+
+                    <form method="POST"
+                          action="{{ route('admin.listings.unpublish-all') }}"
+                          class="d-inline"
+                          onsubmit="return confirm('Unpublish ALL listings from public?');">
+                        @csrf
+                        @if ($viewMode !== 'table')
+                            <input type="hidden" name="view" value="{{ $viewMode }}">
+                        @endif
+                        <button type="submit" class="btn btn-outline-warning">
+                            Unpublish all from public
+                        </button>
+                    </form>
+                @endif
+
             </x-slot:actions>
         </x-admin.page-header>
 

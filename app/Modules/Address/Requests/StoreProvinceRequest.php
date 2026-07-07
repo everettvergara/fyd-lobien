@@ -16,6 +16,9 @@ class StoreProvinceRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', 'unique:provinces,name'],
+            'summary' => ['nullable', 'string', 'max:500'],
+            'description' => ['nullable', 'string'],
+            'image_id' => ['nullable', 'integer', 'exists:media,id'],
             'code' => ['nullable', 'string', 'max:50', 'unique:provinces,code'],
             'is_active' => ['nullable', 'boolean'],
         ];

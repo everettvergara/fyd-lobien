@@ -31,6 +31,23 @@
                         <dt class="col-sm-4 text-muted">Name</dt>
                         <dd class="col-sm-8">{{ $city->name }}</dd>
 
+                        @if ($city->image)
+                            <dt class="col-sm-4 text-muted">Image</dt>
+                            <dd class="col-sm-8">
+                                <img src="{{ $city->image->url() }}" alt="{{ $city->name }}" class="img-fluid rounded border" style="max-width:240px;">
+                            </dd>
+                        @endif
+
+                        @if ($city->summary)
+                            <dt class="col-sm-4 text-muted">Summary</dt>
+                            <dd class="col-sm-8">{{ $city->summary }}</dd>
+                        @endif
+
+                        @if ($city->description)
+                            <dt class="col-sm-4 text-muted">Description</dt>
+                            <dd class="col-sm-8">{!! $city->description !!}</dd>
+                        @endif
+
                         <dt class="col-sm-4 text-muted">Province</dt>
                         <dd class="col-sm-8">
                             <a href="{{ route('admin.provinces.show', $city->province) }}" class="text-decoration-none">

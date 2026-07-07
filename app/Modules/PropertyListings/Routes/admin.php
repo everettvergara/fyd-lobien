@@ -60,12 +60,17 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::get('listings/configuration', [ListingConfigurationController::class, 'index'])->name('listings.configuration.index');
     Route::post('listings/configuration/seed-samples', [ListingConfigurationController::class, 'seedSamples'])->name('listings.configuration.seed-samples');
+    Route::post('listings/configuration/generate-pages', [ListingConfigurationController::class, 'generatePages'])->name('listings.configuration.generate-pages');
+    Route::get('listings/configuration/generate-pages/status', [ListingConfigurationController::class, 'generatePagesStatus'])->name('listings.configuration.generate-pages.status');
+    Route::post('listings/configuration/clear-pages', [ListingConfigurationController::class, 'clearPages'])->name('listings.configuration.clear-pages');
 
     Route::get('listings/{listing}/remarks', [ListingRemarkController::class, 'index'])->name('listings.remarks.index');
     Route::post('listings/{listing}/remarks', [ListingRemarkController::class, 'store'])->name('listings.remarks.store');
     Route::delete('listings/{listing}/remarks/{remark}', [ListingRemarkController::class, 'destroy'])->name('listings.remarks.destroy');
 
     Route::patch('listings/{listing}/published', [ListingController::class, 'updatePublished'])->name('listings.published');
+    Route::post('listings/publish-all', [ListingController::class, 'publishAll'])->name('listings.publish-all');
+    Route::post('listings/unpublish-all', [ListingController::class, 'unpublishAll'])->name('listings.unpublish-all');
 
     Route::resource('listings', ListingController::class)->except(['show']);
 

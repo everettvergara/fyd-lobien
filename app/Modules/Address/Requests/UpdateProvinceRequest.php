@@ -18,6 +18,9 @@ class UpdateProvinceRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('provinces', 'name')->ignore($province->id)],
+            'summary' => ['nullable', 'string', 'max:500'],
+            'description' => ['nullable', 'string'],
+            'image_id' => ['nullable', 'integer', 'exists:media,id'],
             'code' => ['nullable', 'string', 'max:50', Rule::unique('provinces', 'code')->ignore($province->id)],
             'is_active' => ['nullable', 'boolean'],
         ];

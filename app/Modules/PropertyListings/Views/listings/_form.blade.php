@@ -61,11 +61,11 @@
                             @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-12">
-                            <label class="form-label small text-muted" for="listing_summary">Summary</label>
-                            <textarea id="listing_summary"
-                                      class="form-control @error('summary') is-invalid @enderror"
+                            <label class="form-label small text-muted">Summary</label>
+                            <textarea class="form-control @error('summary') is-invalid @enderror"
                                       name="summary"
-                                      rows="3">{{ old('summary', $listingModel?->summary) }}</textarea>
+                                      rows="2"
+                                      maxlength="500">{{ old('summary', $listingModel?->summary) }}</textarea>
                             @error('summary')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-12">
@@ -73,8 +73,24 @@
                                 label="Description"
                                 name="description"
                                 :value="old('description', $listingModel?->description)"
-                                data-rich-text-compact
                             />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Slug</label>
+                            <input type="text"
+                                   class="form-control @error('slug') is-invalid @enderror"
+                                   name="slug"
+                                   value="{{ old('slug', $listingModel?->slug) }}"
+                                   placeholder="auto-generated-from-name">
+                            @php
+                                $previewCitySlug = \Illuminate\Support\Str::slug(old('city', $listingModel?->city ?? ''));
+                                $previewSlug = old('slug', $listingModel?->slug ?? 'your-slug');
+                            @endphp
+                            <div class="form-text">
+                                Public URL:
+                                <code>/properties/{{ $previewCitySlug ?: '{city-slug}' }}/{{ $previewSlug ?: '{slug}' }}</code>
+                            </div>
+                            @error('slug')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small text-muted">Completion Status</label>

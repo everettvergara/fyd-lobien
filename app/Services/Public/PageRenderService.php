@@ -94,6 +94,7 @@ class PageRenderService
     {
         return match ($type) {
             'newsletter', 'webform' => ($props['slug'] ?? '') === '',
+            'property-listing-detail' => ($props['listing'] ?? null) === null,
             default => false,
         };
     }

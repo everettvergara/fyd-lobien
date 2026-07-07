@@ -10,6 +10,7 @@ use App\Modules\Address\Requests\StoreCityRequest;
 use App\Modules\Address\Requests\UpdateCityRequest;
 use App\Modules\Address\Services\CityAdminListService;
 use App\Services\ActivityLogger;
+use App\Services\Media\MediaUsageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class CityController extends Controller
 {
     public function __construct(
         protected CityAdminListService $cityList,
+        protected MediaUsageService $usage,
     ) {}
 
     public function index(Request $request): View
@@ -42,6 +44,7 @@ class CityController extends Controller
     public function store(StoreCityRequest $request): RedirectResponse
     {
         $city = City::create($request->validated());
+        $this->syncMediaUsage($city);
 
         ActivityLogger::log('cities', 'created', $city);
 
@@ -53,7 +56,7 @@ class CityController extends Controller
     {
         $this->authorize('view', $city);
 
-        $city->load('province');
+        $city->load(['province', 'image']);
 
         return view('address::cities.show', compact('city'));
     }
@@ -63,6 +66,7 @@ class CityController extends Controller
         $this->authorize('update', $city);
 
         $provinces = Province::query()->orderBy('name')->get();
+        $city->load('image');
 
         return view('address::cities.edit', compact('city', 'provinces'));
     }
@@ -70,6 +74,7 @@ class CityController extends Controller
     public function update(UpdateCityRequest $request, City $city): RedirectResponse
     {
         $city->update($request->validated());
+        $this->syncMediaUsage($city->refresh());
 
         ActivityLogger::log('cities', 'updated', $city);
 
@@ -86,6 +91,7 @@ class CityController extends Controller
         }
 
         ActivityLogger::log('cities', 'deleted', $city);
+        $this->usage->removeModel($city);
         $city->delete();
 
         return redirect()->route('admin.cities.index')
@@ -101,5 +107,12 @@ class CityController extends Controller
             ->get(['id', 'name']);
 
         return response()->json(['cities' => $cities]);
+    }
+
+    protected function syncMediaUsage(City $city): void
+    {
+        $this->usage->syncModel($city, 'address', [
+            'image_id' => 'City Image',
+        ]);
     }
 }

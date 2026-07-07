@@ -90,8 +90,6 @@ Re-running the seed action refreshes demo rows by `code` (idempotent). Requires 
 | id | PK | |
 | code | string, unique | yes |
 | name | string | yes |
-| summary | string(500), nullable | |
-| description | longText (HTML), nullable | |
 | province | string, nullable | |
 | city | string, nullable | |
 | brgy | string | |

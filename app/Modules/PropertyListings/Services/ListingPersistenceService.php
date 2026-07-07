@@ -52,6 +52,7 @@ class ListingPersistenceService
             'name',
             'summary',
             'description',
+            'slug',
             'province',
             'city',
             'brgy',

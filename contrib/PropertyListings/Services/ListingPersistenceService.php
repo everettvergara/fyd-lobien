@@ -50,6 +50,9 @@ class ListingPersistenceService
         return Arr::only($data, [
             'code',
             'name',
+            'summary',
+            'description',
+            'slug',
             'province',
             'city',
             'brgy',

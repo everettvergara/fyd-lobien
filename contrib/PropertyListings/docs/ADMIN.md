@@ -1,6 +1,6 @@
 # Property Listings — Admin Guidelines
 
-All features below are **admin portal only** for MVP. The public website uses Page Manager blocks (post-MVP).
+All features below are **admin portal** unless noted. The public website uses generated Page Manager pages and public blocks — see [POST-MVP.md](POST-MVP.md).
 
 ## Admin menu
 
@@ -9,14 +9,23 @@ All features below are **admin portal only** for MVP. The public website uses Pa
 | **Listings** | `admin/listings` | CRUD, list views, filters, comparator |
 | **Property Uploaders** | `admin/property-uploaders` | CSV templates/import/export for headers, units, fees; bulk assets |
 | **Dropdown Values** | `admin/listing-lookups` | Manage `listing_lookups` option sets |
-| **Configuration** | `admin/listings/configuration` | Module settings; manual sample listing seed |
+| **Configuration** | `admin/listings/configuration` | Module settings; sample seed; **bulk public page generation** |
 
 ## Configuration
 
 - **Dropdown values** are seeded automatically on `module:install PropertyListings --force` (lookups only).
 - **Property listings** are never seeded on install.
 - Use **Seed Sample Listings** on the Configuration page to create or refresh five demo listings (`DEMO-001` … `DEMO-005`) with full form data, units, fees, remarks, and image assets.
+- Use **Generate Public Website** to create/update the `/properties` hub page (city cards + search banner), the `/properties/search` results page, city hub pages, listing pages for all listings with **Publish to PUBLIC** enabled (requires city + slug), and the **Properties** footer menu. Shows a progress bar while the queue job runs.
+- Use **Clear Public Website** to remove all generated pages, their blocks, and the Properties footer menu entries.
 - Requires `listings.configuration.manage` permission.
+
+## Listing slug (public URL)
+
+- **Slug** field on the listing form (auto-generated from name on save if empty).
+- Public URL preview: `/properties/{city-slug}/{slug}`
+- Unique per city (same slug allowed in different cities).
+- Required when **Publish to PUBLIC** is enabled.
 
 ## Listing data entry (create / edit)
 
@@ -24,7 +33,7 @@ All features below are **admin portal only** for MVP. The public website uses Pa
 
 ### Header cards (listing core)
 
-1. **Identity** — code*, name*, completion_status, **published_to_public** (Publish to PUBLIC)  
+1. **Identity** — code*, name*, summary (plain text, max 500 chars), description (rich HTML with Visual/Source editor), slug (public URL segment), completion_status, **published_to_public** (Publish to PUBLIC)  
 2. **Location** — province*, city*, brgy, address (Address module selects where possible)  
 3. **Rates & sizing** — office_rental_rate, total_area_size, unit_market_size, retail_market_rate  
 
@@ -75,6 +84,13 @@ Table and thumbnail views show per listing:
 - **AVL** — unit availability counts (e.g. Vacant (2), Leased (1))
 - **Lease / Sale** — badges when any unit is for lease and/or for sale
 - **Public** — inline toggle for `published_to_public` (users with `listings.update`); PATCH saves immediately
+
+**Bulk publish actions** (users with `listings.edit`, page header):
+
+- **Publish all to public** — sets `published_to_public = true` on every listing in the database
+- **Unpublish all from public** — sets `published_to_public = false` on every listing
+
+These do not generate or remove public pages; use **Configuration → Generate Public Website** / **Clear Public Website** for page sync.
 
 Toggle persists in `sessionStorage` (`listings_view`).
 

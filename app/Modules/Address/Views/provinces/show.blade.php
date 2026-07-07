@@ -31,6 +31,23 @@
                         <dt class="col-sm-4 text-muted">Name</dt>
                         <dd class="col-sm-8">{{ $province->name }}</dd>
 
+                        @if ($province->image)
+                            <dt class="col-sm-4 text-muted">Image</dt>
+                            <dd class="col-sm-8">
+                                <img src="{{ $province->image->url() }}" alt="{{ $province->name }}" class="img-fluid rounded border" style="max-width:240px;">
+                            </dd>
+                        @endif
+
+                        @if ($province->summary)
+                            <dt class="col-sm-4 text-muted">Summary</dt>
+                            <dd class="col-sm-8">{{ $province->summary }}</dd>
+                        @endif
+
+                        @if ($province->description)
+                            <dt class="col-sm-4 text-muted">Description</dt>
+                            <dd class="col-sm-8">{!! $province->description !!}</dd>
+                        @endif
+
                         <dt class="col-sm-4 text-muted">Code</dt>
                         <dd class="col-sm-8">{{ $province->code ?? '—' }}</dd>
 

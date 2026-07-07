@@ -2,6 +2,7 @@
 
 namespace App\Modules\PropertyListings\Models;
 
+use App\Modules\PropertyListings\Support\ListingPathHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -13,6 +14,7 @@ class Listing extends Model
         'name',
         'summary',
         'description',
+        'slug',
         'province',
         'city',
         'brgy',
@@ -23,6 +25,7 @@ class Listing extends Model
         'retail_market_rate',
         'completion_status',
         'published_to_public',
+        'public_page_path',
     ];
 
     protected function casts(): array
@@ -126,5 +129,24 @@ class Listing extends Model
         return collect($this->assetImages('building'))
             ->pluck('thumb')
             ->all();
+    }
+
+    public function citySlug(): ?string
+    {
+        return ListingPathHelper::citySlug($this->city);
+    }
+
+    public function publicPath(): ?string
+    {
+        return ListingPathHelper::listingPath($this);
+    }
+
+    public function isPublicPageEligible(): bool
+    {
+        if (! $this->published_to_public) {
+            return false;
+        }
+
+        return $this->citySlug() !== null && trim((string) ($this->slug ?? '')) !== '';
     }
 }

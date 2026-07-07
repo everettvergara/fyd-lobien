@@ -387,8 +387,8 @@ class PropertyListingsModuleTest extends TestCase
         $admin = User::where('email', 'admin@fyd.local')->first();
 
         $csv = implode("\n", [
-            'code,name,province,city,brgy,address,office_rental_rate,total_area_size,unit_market_size,retail_market_rate,completion_status,published_to_public,developer,grade,completion_year,completion_qtr,no_of_floors,no_of_basement,density_ratio,parking_allocation,floor_to_ceiling_height,gross_leasable_area,typical_floor_area,typical_retail_floor_area,floor_efficiency,operating_hours,ac_system,no_of_lifts_passenger,no_of_lifts_service,telco,backup_power,peza_accreditation,sustainability,other_info_visible',
-            'IMP-001,Import Tower,Metro Manila,Makati,Legazpi Village,Ayala Avenue,900,10000,150,1200,existing,1,Import Developer,a,2026,Q1,30,3,1:8,1:100,2.7,9000,1000,200,85% efficient,24/7,VRF,8 passenger lifts,2 service lifts,Globe,100% backup,yes,LEED,1',
+            'code,name,summary,description,slug,province,city,brgy,address,office_rental_rate,total_area_size,unit_market_size,retail_market_rate,completion_status,published_to_public,developer,grade,completion_year,completion_qtr,no_of_floors,no_of_basement,density_ratio,parking_allocation,floor_to_ceiling_height,gross_leasable_area,typical_floor_area,typical_retail_floor_area,floor_efficiency,operating_hours,ac_system,no_of_lifts_passenger,no_of_lifts_service,telco,backup_power,peza_accreditation,sustainability,other_info_visible',
+            'IMP-001,Import Tower,,,,Metro Manila,Makati,Legazpi Village,Ayala Avenue,900,10000,150,1200,existing,1,Import Developer,a,2026,Q1,30,3,1:8,1:100,2.7,9000,1000,200,85% efficient,24/7,VRF,8 passenger lifts,2 service lifts,Globe,100% backup,yes,LEED,1',
         ]);
 
         $file = UploadedFile::fake()->createWithContent('listings.csv', $csv);
@@ -529,6 +529,8 @@ class PropertyListingsModuleTest extends TestCase
 
         $header = $this->actingAs($admin)->get('/admin/property-uploaders/header/template');
         $header->assertOk();
+        $this->assertStringContainsString('summary', $header->streamedContent());
+        $this->assertStringContainsString('description', $header->streamedContent());
         $this->assertStringContainsString('developer', $header->streamedContent());
         $this->assertStringNotContainsString('fee_type', $header->streamedContent());
         $this->assertStringNotContainsString('floor,unit', $header->streamedContent());
@@ -540,6 +542,66 @@ class PropertyListingsModuleTest extends TestCase
         $fees = $this->actingAs($admin)->get('/admin/property-uploaders/fees/template');
         $fees->assertOk();
         $this->assertStringContainsString('code,fee_type,fee,sort_order', $fees->streamedContent());
+    }
+
+    public function test_header_csv_import_persists_summary_and_description(): void
+    {
+        $this->installPropertyListings();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+
+        $file = UploadedFile::fake()->createWithContent('header-summary-desc.csv', $this->headerCsv([
+            'code' => 'SUMMARY-DESC-001',
+            'name' => 'Summary Desc Tower',
+            'summary' => 'Short marketing summary.',
+            'description' => '<p>Rich <em>HTML</em> body.</p>',
+        ]));
+
+        $this->actingAs($admin)
+            ->post('/admin/property-uploaders/header/import/preview', ['file' => $file])
+            ->assertOk()
+            ->assertSee('Confirm Import', false);
+
+        $importKey = session('listing_import.path');
+        $this->assertNotEmpty($importKey);
+
+        $this->actingAs($admin)
+            ->post('/admin/property-uploaders/header/import/commit', ['import_key' => $importKey])
+            ->assertRedirect('/admin/property-uploaders');
+
+        $this->assertDatabaseHas('listings', [
+            'code' => 'SUMMARY-DESC-001',
+            'name' => 'Summary Desc Tower',
+            'summary' => 'Short marketing summary.',
+            'description' => '<p>Rich <em>HTML</em> body.</p>',
+        ]);
+    }
+
+    public function test_listing_update_persists_summary_and_description(): void
+    {
+        $this->installPropertyListings();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $listing = $this->createSampleListing();
+
+        $this->actingAs($admin)
+            ->put(route('admin.listings.update', $listing), [
+                'code' => $listing->code,
+                'name' => $listing->name,
+                'summary' => 'Updated summary text.',
+                'description' => '<p>Updated <strong>description</strong>.</p>',
+                'city' => $listing->city,
+                'province' => $listing->province,
+                'completion_status' => $listing->completion_status,
+                'published_to_public' => '0',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('listings', [
+            'id' => $listing->id,
+            'summary' => 'Updated summary text.',
+            'description' => '<p>Updated <strong>description</strong>.</p>',
+        ]);
     }
 
     public function test_units_csv_import_inserts_and_updates_by_code_floor_unit(): void
@@ -1427,6 +1489,66 @@ class PropertyListingsModuleTest extends TestCase
         ]);
     }
 
+    public function test_publish_all_sets_published_to_public_on_every_listing(): void
+    {
+        $this->installPropertyListings();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+
+        Listing::create([
+            'code' => 'PUB-ALL-1',
+            'name' => 'Tower One',
+            'city' => 'Makati City',
+            'completion_status' => 'existing',
+            'published_to_public' => false,
+        ]);
+        Listing::create([
+            'code' => 'PUB-ALL-2',
+            'name' => 'Tower Two',
+            'city' => 'Pasig City',
+            'completion_status' => 'existing',
+            'published_to_public' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/listings/publish-all')
+            ->assertRedirect(route('admin.listings.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('listings', ['code' => 'PUB-ALL-1', 'published_to_public' => true]);
+        $this->assertDatabaseHas('listings', ['code' => 'PUB-ALL-2', 'published_to_public' => true]);
+    }
+
+    public function test_unpublish_all_clears_published_to_public_on_every_listing(): void
+    {
+        $this->installPropertyListings();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+
+        Listing::create([
+            'code' => 'UNPUB-ALL-1',
+            'name' => 'Tower Alpha',
+            'city' => 'Makati City',
+            'completion_status' => 'existing',
+            'published_to_public' => true,
+        ]);
+        Listing::create([
+            'code' => 'UNPUB-ALL-2',
+            'name' => 'Tower Beta',
+            'city' => 'Quezon City',
+            'completion_status' => 'existing',
+            'published_to_public' => false,
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/listings/unpublish-all')
+            ->assertRedirect(route('admin.listings.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('listings', ['code' => 'UNPUB-ALL-1', 'published_to_public' => false]);
+        $this->assertDatabaseHas('listings', ['code' => 'UNPUB-ALL-2', 'published_to_public' => false]);
+    }
+
     protected function createSampleListingWithUnits(): Listing
     {
         $listing = $this->createSampleListing();
@@ -1498,6 +1620,8 @@ class PropertyListingsModuleTest extends TestCase
             '2026_07_06_600005_allow_nullable_import_conversion_fields',
             '2026_07_06_600006_change_lift_power_and_efficiency_fields_to_strings',
             '2026_07_06_600007_allow_nullable_listing_location',
+            '2026_07_07_600008_add_slug_to_listings',
+            '2026_07_07_600009_add_summary_and_description_to_listings',
         ];
     }
 
@@ -1509,6 +1633,9 @@ class PropertyListingsModuleTest extends TestCase
         $row = array_merge([
             'code' => 'HEADER-001',
             'name' => 'Header Tower',
+            'summary' => 'Prime office tower in the CBD.',
+            'description' => '<p>Spacious <strong>office</strong> spaces.</p>',
+            'slug' => '',
             'province' => 'Metro Manila',
             'city' => 'Makati',
             'brgy' => 'Legazpi Village',
@@ -1573,6 +1700,12 @@ class PropertyListingsModuleTest extends TestCase
     {
         $modulesPath = config('modules.path');
         $module = 'PropertyListings';
+
+        $webRoutes = "{$modulesPath}/{$module}/Routes/web.php";
+
+        if (file_exists($webRoutes)) {
+            Route::middleware('web')->group($webRoutes);
+        }
 
         $adminRoutes = "{$modulesPath}/{$module}/Routes/admin.php";
 

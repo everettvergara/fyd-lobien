@@ -283,8 +283,6 @@ class ListingDemoSeedService
             'code' => $code,
             'listing' => [
                 'name' => $name,
-                'summary' => "Premium {$grade}-grade office space in {$city}. Ideal for BPO, IT-BPM, and corporate headquarters.",
-                'description' => '<p><strong>'.$name.'</strong> offers modern office facilities with flexible floor plates and strong building services.</p><p>Located in '.$city.', '.$province.'.</p>',
                 'province' => $province,
                 'city' => $city,
                 'brgy' => $brgy,

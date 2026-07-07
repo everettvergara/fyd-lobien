@@ -9,6 +9,7 @@ use App\Modules\Address\Requests\StoreProvinceRequest;
 use App\Modules\Address\Requests\UpdateProvinceRequest;
 use App\Modules\Address\Services\ProvinceAdminListService;
 use App\Services\ActivityLogger;
+use App\Services\Media\MediaUsageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,6 +18,7 @@ class ProvinceController extends Controller
 {
     public function __construct(
         protected ProvinceAdminListService $provinceList,
+        protected MediaUsageService $usage,
     ) {}
 
     public function index(Request $request): View
@@ -38,6 +40,7 @@ class ProvinceController extends Controller
     public function store(StoreProvinceRequest $request): RedirectResponse
     {
         $province = Province::create($request->validated());
+        $this->syncMediaUsage($province);
 
         ActivityLogger::log('provinces', 'created', $province);
 
@@ -50,6 +53,7 @@ class ProvinceController extends Controller
         $this->authorize('view', $province);
 
         $province->loadCount('cities');
+        $province->load('image');
 
         return view('address::provinces.show', compact('province'));
     }
@@ -58,12 +62,15 @@ class ProvinceController extends Controller
     {
         $this->authorize('update', $province);
 
+        $province->load('image');
+
         return view('address::provinces.edit', compact('province'));
     }
 
     public function update(UpdateProvinceRequest $request, Province $province): RedirectResponse
     {
         $province->update($request->validated());
+        $this->syncMediaUsage($province->refresh());
 
         ActivityLogger::log('provinces', 'updated', $province);
 
@@ -84,9 +91,17 @@ class ProvinceController extends Controller
         }
 
         ActivityLogger::log('provinces', 'deleted', $province);
+        $this->usage->removeModel($province);
         $province->delete();
 
         return redirect()->route('admin.provinces.index')
             ->with('success', 'Province deleted successfully.');
+    }
+
+    protected function syncMediaUsage(Province $province): void
+    {
+        $this->usage->syncModel($province, 'address', [
+            'image_id' => 'Province Image',
+        ]);
     }
 }

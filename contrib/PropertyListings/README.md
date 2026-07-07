@@ -2,7 +2,14 @@
 
 Installable business module for property/building listings, units, fees, assets, and admin-managed dropdown lookups.
 
-**Scope:** MVP is **admin portal only**. Public website integration (Page Manager blocks + JSON API) is **post-MVP** — block specs will be provided separately.
+**Scope:** Admin portal plus **public website integration** via Page Manager pages, public blocks, and JSON API. See [docs/POST-MVP.md](docs/POST-MVP.md).
+
+## Public URLs
+
+- City hub: `/properties/{city-slug}`
+- Listing detail: `/properties/{city-slug}/{listing-slug}`
+
+Generate the public website in bulk from **Configuration → Generate Public Website** (requires `published_to_public`, city, and slug). This creates the `/properties` hub, `/properties/search`, city pages, listing pages, and the Properties footer menu. Use **Clear Public Website** to remove everything that was generated.
 
 ## Documentation in this folder
 
@@ -10,7 +17,7 @@ Installable business module for property/building listings, units, fees, assets,
 |----------|---------|
 | [docs/DATABASE.md](docs/DATABASE.md) | Tables, relationships, lookup groups, field reference |
 | [docs/ADMIN.md](docs/ADMIN.md) | Admin UI layout, filtering, comparator, import/export, assets |
-| [docs/POST-MVP.md](docs/POST-MVP.md) | Public blocks and API (deferred) |
+| [docs/POST-MVP.md](docs/POST-MVP.md) | Public pages, blocks, API, bulk generation |
 
 Repository-level docs:
 
@@ -30,11 +37,13 @@ Repository-level docs:
 | **Batch assets** | Select one asset type, then match files by `{code}__{whatever_text}.{ext}` |
 | **Image optimization** | Raster assets resized (max 1920px), JPEG 75% before Media storage |
 
-## Post-MVP (not in initial release)
+## Public website
 
-- Page Manager `publicBlocks()` for public website  
-- `api/property-listings/*` JSON API for block hydration  
-- Additional public blocks (search hero, links, agent consult, etc.) — TBD  
+- Page Manager pages under `/properties/{city-slug}` and `/properties/{city-slug}/{listing-slug}`
+- Blocks: `property-listing-detail`, `property-listings-city`
+- JSON API: `api/property-listings/...`
+- Bulk generation: **Configuration → Generate Public Website**
+- Bulk removal: **Configuration → Clear Public Website**
 
 ## Install
 

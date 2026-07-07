@@ -9,7 +9,7 @@
   "author": "FYD CMS",
   "license": "MIT",
   "fyd_cms": ">=1.0.0",
-  "requires_core": ["Address", "Media", "AuditLogs"],
+  "requires_core": ["Address", "Media", "AuditLogs", "PageManager", "SEO"],
   "autoload": "App\\Modules\\PropertyListings",
   "features": [
     { "label": "Listings", "permission": "listings.view", "route": "admin.listings.index", "icon": "bi-buildings", "sort": 10 },

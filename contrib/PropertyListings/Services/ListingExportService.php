@@ -27,6 +27,9 @@ class ListingExportService
             'header' => [
                 'code',
                 'name',
+                'summary',
+                'description',
+                'slug',
                 'province',
                 'city',
                 'brgy',
@@ -174,6 +177,9 @@ class ListingExportService
         return [
             $listing->code,
             $listing->name,
+            $listing->summary,
+            $listing->description,
+            $listing->slug,
             $listing->province,
             $listing->city,
             $listing->brgy,

@@ -18,6 +18,28 @@
     @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
 </div>
 
+<div class="mb-3">
+    <label for="summary" class="form-label">Summary</label>
+    <textarea class="form-control @error('summary') is-invalid @enderror" id="summary" name="summary"
+              rows="2" maxlength="500">{{ old('summary', $city?->summary) }}</textarea>
+    @error('summary')<div class="invalid-feedback">{{ $message }}</div>@enderror
+</div>
+
+<div class="mb-3">
+    <x-admin.form.rich-text
+        label="Description"
+        name="description"
+        :value="old('description', $city?->description)"
+    />
+</div>
+
+@include('media::partials.media-picker', [
+    'name' => 'image_id',
+    'label' => 'Image',
+    'value' => old('image_id', $city?->image_id),
+    'previewUrl' => $city?->image?->url(),
+])
+
 <div class="mb-4 form-check">
     <input type="hidden" name="is_active" value="0">
     <input type="checkbox" class="form-check-input @error('is_active') is-invalid @enderror" id="is_active" name="is_active" value="1"

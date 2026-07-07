@@ -6,6 +6,7 @@ use App\Models\Media;
 use App\Modules\PropertyListings\Services\ListingAssetValidator;
 use App\Modules\PropertyListings\Support\ListingLookupGroups;
 use App\Modules\PropertyListings\Support\ListingLookupRegistry;
+use App\Modules\PropertyListings\Support\ListingSlugHelper;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -14,13 +15,33 @@ trait ValidatesListingFields
     /**
      * @return array<string, mixed>
      */
-    protected function listingFieldRules(): array
+    protected function listingFieldRules(?int $ignoreListingId = null): array
     {
         $registry = app(ListingLookupRegistry::class);
+        $city = $this->input('city');
 
         return [
             'code' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
+            'summary' => ['nullable', 'string', 'max:500'],
+            'description' => ['nullable', 'string'],
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                'alpha_dash',
+                Rule::unique('listings', 'slug')
+                    ->where(function ($query) use ($city) {
+                        if ($city === null || $city === '') {
+                            $query->where(function ($inner) {
+                                $inner->whereNull('city')->orWhere('city', '');
+                            });
+                        } else {
+                            $query->where('city', $city);
+                        }
+                    })
+                    ->ignore($ignoreListingId),
+            ],
             'province' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
             'brgy' => ['nullable', 'string', 'max:255'],
@@ -92,6 +113,16 @@ trait ValidatesListingFields
 
     protected function prepareListingFieldsForValidation(): void
     {
+        if (! $this->filled('slug') && $this->filled('name')) {
+            $helper = app(ListingSlugHelper::class);
+            $ignoreId = $this->route('listing')?->id;
+            $city = $this->input('city');
+            $base = $helper->generateFromName((string) $this->input('name'), $this->input('code'));
+            $this->merge([
+                'slug' => $helper->ensureUnique($base, is_string($city) ? $city : null, $ignoreId),
+            ]);
+        }
+
         $this->merge([
             'office_rental_rate' => $this->filled('office_rental_rate') ? $this->input('office_rental_rate') : null,
             'total_area_size' => $this->filled('total_area_size') ? $this->input('total_area_size') : null,
@@ -122,6 +153,22 @@ trait ValidatesListingFields
     {
         $validator->after(function (Validator $validator) {
             $this->validateAssetMediaExtensions($validator);
+
+            $published = filter_var(
+                $this->input('published_to_public', false),
+                FILTER_VALIDATE_BOOLEAN,
+                FILTER_NULL_ON_FAILURE,
+            ) ?? false;
+
+            if ($published) {
+                if (! filled($this->input('city'))) {
+                    $validator->errors()->add('city', 'City is required when publishing to the public website.');
+                }
+
+                if (! filled($this->input('slug'))) {
+                    $validator->errors()->add('slug', 'Slug is required when publishing to the public website.');
+                }
+            }
         });
     }
 

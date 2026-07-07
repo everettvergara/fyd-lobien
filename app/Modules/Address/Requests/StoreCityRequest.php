@@ -22,6 +22,9 @@ class StoreCityRequest extends FormRequest
                 'max:255',
                 Rule::unique('cities', 'name')->where('province_id', $this->input('province_id')),
             ],
+            'summary' => ['nullable', 'string', 'max:500'],
+            'description' => ['nullable', 'string'],
+            'image_id' => ['nullable', 'integer', 'exists:media,id'],
             'is_active' => ['nullable', 'boolean'],
         ];
     }

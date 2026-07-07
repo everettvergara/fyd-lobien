@@ -30,7 +30,7 @@ class UpdateListingRequest extends FormRequest
         /** @var Listing $listing */
         $listing = $this->route('listing');
 
-        return array_merge($this->listingFieldRules(), [
+        return array_merge($this->listingFieldRules($listing->id), [
             'code' => ['required', 'string', 'max:255', Rule::unique('listings', 'code')->ignore($listing->id)],
         ]);
     }

@@ -8,6 +8,7 @@ use App\Modules\PropertyListings\Models\Listing;
 use App\Modules\PropertyListings\Models\ListingFee;
 use App\Modules\PropertyListings\Models\ListingUnit;
 use App\Modules\PropertyListings\Support\ListingLookupGroups;
+use App\Modules\PropertyListings\Support\ListingSlugHelper;
 use App\Modules\PropertyListings\Support\ListingLookupRegistry;
 use App\Services\ActivityLogger;
 use Illuminate\Http\UploadedFile;
@@ -543,11 +544,25 @@ class ListingImportService
      */
     protected function listingPayloadFromRow(array $row): array
     {
+        $city = $this->nullableString($row['city'] ?? null);
+        $name = trim((string) $row['name']);
+        $code = trim((string) $row['code']);
+        $slugInput = $this->nullableString($row['slug'] ?? null);
+
+        if ($slugInput === null || $slugInput === '') {
+            $helper = app(ListingSlugHelper::class);
+            $base = $helper->generateFromName($name, $code);
+            $slugInput = $helper->ensureUnique($base, $city);
+        }
+
         return [
-            'code' => trim((string) $row['code']),
-            'name' => trim((string) $row['name']),
+            'code' => $code,
+            'name' => $name,
+            'summary' => $this->nullableString($row['summary'] ?? null),
+            'description' => $this->nullableString($row['description'] ?? null),
+            'slug' => $slugInput,
             'province' => $this->nullableString($row['province'] ?? null),
-            'city' => $this->nullableString($row['city'] ?? null),
+            'city' => $city,
             'brgy' => $this->nullableString($row['brgy'] ?? null),
             'address' => $this->nullableString($row['address'] ?? null),
             'office_rental_rate' => $this->nullableDecimal($row['office_rental_rate'] ?? null),
