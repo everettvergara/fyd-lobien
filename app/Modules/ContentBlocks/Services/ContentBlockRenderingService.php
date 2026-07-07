@@ -135,6 +135,8 @@ class ContentBlockRenderingService
             'published_at' => $content->published_at?->format('M j, Y'),
             'author.name' => $content->author?->name,
             'featured_image' => PublicContent::media($content->featuredImage),
+            'url_link' => $content->url_link,
+            'attachment' => PublicContent::file($content->attachment),
             default => null,
         };
     }

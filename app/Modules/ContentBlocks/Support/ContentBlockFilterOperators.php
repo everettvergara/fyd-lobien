@@ -15,6 +15,8 @@ class ContentBlockFilterOperators
             'content_type' => ['in', 'not_in'],
             'date' => ['before', 'after', 'on', 'is_empty'],
             'media' => ['is_empty', 'is_not_empty'],
+            'url' => ['equals', 'not_equals', 'contains', 'starts_with', 'is_empty', 'is_not_empty'],
+            'file' => ['is_empty', 'is_not_empty'],
         ];
     }
 

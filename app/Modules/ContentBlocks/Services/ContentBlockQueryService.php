@@ -116,6 +116,12 @@ class ContentBlockQueryService
             return;
         }
 
+        if ($field === 'attachment') {
+            $this->applyAttachmentFilter($query, $operator);
+
+            return;
+        }
+
         $meta = $this->fields->meta($field);
         $column = $meta['column'] ?? null;
 
@@ -157,6 +163,15 @@ class ContentBlockQueryService
         match ($operator) {
             'is_empty' => $query->whereNull('featured_image_id'),
             'is_not_empty' => $query->whereNotNull('featured_image_id'),
+            default => null,
+        };
+    }
+
+    protected function applyAttachmentFilter(Builder $query, string $operator): void
+    {
+        match ($operator) {
+            'is_empty' => $query->whereNull('attachment_id'),
+            'is_not_empty' => $query->whereNotNull('attachment_id'),
             default => null,
         };
     }

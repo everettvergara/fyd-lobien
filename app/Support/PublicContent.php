@@ -13,7 +13,7 @@ class PublicContent
 {
     public static function entry(Content $content): array
     {
-        $content->loadMissing(['featuredImage', 'seoMeta', 'author']);
+        $content->loadMissing(['featuredImage', 'attachment', 'seoMeta', 'author']);
         $registry = app(ContentTypeRegistry::class);
         $path = app(ContentUrlService::class)->pathFor($content);
 
@@ -24,11 +24,13 @@ class PublicContent
             'path' => $path,
             'summary' => $content->summary,
             'body' => HtmlSanitizer::clean($content->body),
+            'urlLink' => $content->url_link,
             'contentType' => [
                 'key' => $content->content_type,
                 'label' => $registry->label($content->content_type),
             ],
             'featuredImage' => self::media($content->featuredImage),
+            'attachment' => self::file($content->attachment),
             'author' => $content->author?->name,
             'publishedAt' => $content->published_at?->toIso8601String(),
             'seo' => PublicSeo::fromModel($content),
@@ -47,6 +49,8 @@ class PublicContent
                 'label' => app(ContentTypeRegistry::class)->label($content->content_type),
             ],
             'featuredImage' => self::media($content->featuredImage),
+            'urlLink' => $content->url_link,
+            'attachment' => self::file($content->attachment),
             'publishedAt' => $content->published_at?->format('M j, Y'),
         ];
     }
@@ -81,6 +85,19 @@ class PublicContent
         return [
             'url' => $media->url(),
             'alt' => $media->alt_text ?? '',
+        ];
+    }
+
+    public static function file($media): ?array
+    {
+        if (! $media) {
+            return null;
+        }
+
+        return [
+            'url' => $media->url(),
+            'label' => $media->displayName(),
+            'mimeType' => $media->mime_type,
         ];
     }
 }

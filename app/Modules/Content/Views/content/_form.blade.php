@@ -4,6 +4,7 @@
     $contentTypeDefinitions = $contentTypeDefinitions ?? app(\App\Support\ContentTypeRegistry::class)->all();
     $hasPublishingErrors = $errors->hasAny(['content_type', 'status']);
     $hasFeaturedImageErrors = $errors->hasAny(['featured_image_id', 'gallery_media_ids', 'gallery_media_ids.*']);
+    $hasAttachmentErrors = $errors->hasAny(['attachment_id', 'url_link']);
 @endphp
 
 <div class="alert alert-info small">
@@ -28,6 +29,13 @@
         <div class="mb-3">
             <label for="summary" class="form-label">Summary</label>
             <textarea class="form-control" id="summary" name="summary" rows="2">{{ old('summary', $content?->summary) }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="url_link" class="form-label">URL Link</label>
+            <input type="url" class="form-control @error('url_link') is-invalid @enderror" id="url_link" name="url_link" value="{{ old('url_link', $content?->url_link) }}" placeholder="https://example.com/reference">
+            <div class="form-text">External reference URL rendered by the theme.</div>
+            @error('url_link')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 
         <div class="mb-3">
@@ -119,6 +127,37 @@
                                     'values' => $content?->galleryImages?->pluck('id')->all() ?? [],
                                 ])
                                 <div class="form-text">The first image is used as the featured image.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="contentAttachmentsHeading">
+                            <button
+                                class="accordion-button py-2 {{ $hasAttachmentErrors ? '' : 'collapsed' }}"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#contentAttachmentsPanel"
+                                aria-expanded="{{ $hasAttachmentErrors ? 'true' : 'false' }}"
+                                aria-controls="contentAttachmentsPanel"
+                            >
+                                Attachments
+                            </button>
+                        </h2>
+                        <div
+                            id="contentAttachmentsPanel"
+                            class="accordion-collapse collapse {{ $hasAttachmentErrors ? 'show' : '' }}"
+                            aria-labelledby="contentAttachmentsHeading"
+                        >
+                            <div class="accordion-body">
+                                @include('media::partials.media-picker', [
+                                    'name' => 'attachment_id',
+                                    'label' => 'PDF Attachment',
+                                    'mode' => 'single',
+                                    'value' => $content?->attachment_id,
+                                    'type' => 'pdf',
+                                ])
+                                @error('attachment_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                             </div>
                         </div>
                     </div>

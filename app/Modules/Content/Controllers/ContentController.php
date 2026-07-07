@@ -79,7 +79,7 @@ class ContentController extends Controller
     public function show(Content $content): View
     {
         $this->authorize('view', $content);
-        $content->load(['author', 'featuredImage']);
+        $content->load(['author', 'featuredImage', 'attachment']);
 
         return view('content::content.show', compact('content'));
     }
@@ -87,7 +87,7 @@ class ContentController extends Controller
     public function edit(Content $content): View
     {
         $this->authorize('update', $content);
-        $content->load(['featuredImage', 'galleryImages']);
+        $content->load(['featuredImage', 'galleryImages', 'attachment']);
         $statuses = \App\Enums\ContentStatus::cases();
         $contentTypeOptions = $this->contentTypes->options();
         $contentTypeDefinitions = $this->contentTypes->all();
@@ -157,7 +157,7 @@ class ContentController extends Controller
     public function preview(Content $content): View
     {
         $this->authorize('view', $content);
-        $content->load(['featuredImage']);
+        $content->load(['featuredImage', 'attachment']);
 
         return view('content::content.preview', compact('content'));
     }
@@ -186,6 +186,7 @@ class ContentController extends Controller
 
         $this->usage->syncModel($content, 'content', [
             'featured_image_id' => 'Featured Image',
+            'attachment_id' => 'PDF Attachment',
         ]);
 
         $this->usage->syncRelatedMedia(

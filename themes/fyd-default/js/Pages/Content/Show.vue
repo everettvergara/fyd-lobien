@@ -42,6 +42,18 @@ defineProps({
 
                 <div v-if="content.body" class="mb-5 content-body" v-html="content.body" />
 
+                <div v-if="content.urlLink" class="mb-4">
+                    <a :href="content.urlLink" target="_blank" rel="noopener noreferrer" class="content-url-link">
+                        {{ content.urlLink }}
+                    </a>
+                </div>
+
+                <div v-if="content.attachment" class="mb-4">
+                    <a :href="content.attachment.url" target="_blank" rel="noopener noreferrer" class="content-attachment">
+                        {{ content.attachment.label }}
+                    </a>
+                </div>
+
                 <CareersListingRenderer v-if="careersListing" class="mb-5" />
 
                 <WebformRenderer v-if="webform" :slug="webform.slug" class="mt-2" />

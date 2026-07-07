@@ -27,7 +27,7 @@ class ContentTypeListingService
         $page = max(1, $page);
 
         $paginator = Content::query()
-            ->with('featuredImage')
+            ->with(['featuredImage', 'attachment'])
             ->published()
             ->where('content_type', $type->key)
             ->orderByDesc('published_at')

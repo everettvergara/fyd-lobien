@@ -18,6 +18,8 @@ class ContentBlockFieldRegistry
             'published_at' => ['label' => 'Published Date', 'type' => 'date', 'column' => 'published_at'],
             'author.name' => ['label' => 'Author', 'type' => 'text', 'relation' => 'author.name'],
             'featured_image' => ['label' => 'Featured Image', 'type' => 'media', 'relation' => 'featuredImage'],
+            'url_link' => ['label' => 'URL Link', 'type' => 'url', 'column' => 'url_link'],
+            'attachment' => ['label' => 'PDF Attachment', 'type' => 'file', 'relation' => 'attachment'],
         ];
     }
 
@@ -91,6 +93,10 @@ class ContentBlockFieldRegistry
 
             if ($key === 'featured_image') {
                 $relations[] = 'featuredImage';
+            }
+
+            if ($key === 'attachment') {
+                $relations[] = 'attachment';
             }
         }
 

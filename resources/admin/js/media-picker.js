@@ -28,12 +28,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activePicker = null;
     let pickerMode = 'single';
+    let pickerType = 'image';
     let multiCallback = null;
     let selectedItems = new Map();
 
     const itemPreviewUrl = (item) => item.thumbnail_url || item.thumbnailUrl || item.url || item.preview_url;
     const itemFullUrl = (item) => item.preview_url || item.url || item.thumbnail_url || item.thumbnailUrl;
     const itemAlt = (item) => item.alt_text || item.alt || item.title || item.filename || 'Selected media';
+    const itemFilename = (item) => item.filename || item.title || itemAlt(item);
+    const isPdfItem = (item) => item.type === 'pdf' || item.mime_type === 'application/pdf' || pickerType === 'pdf';
+
+    const renderPreviewHtml = (item) => {
+        if (isPdfItem(item)) {
+            return `<span class="text-muted small px-2 text-center media-picker-file"><i class="bi bi-file-earmark-pdf fs-2 d-block mb-1" aria-hidden="true"></i>${itemFilename(item)}</span>`;
+        }
+
+        const url = itemFullUrl(item);
+
+        return `<img src="${url}" alt="${itemAlt(item)}" class="img-fluid media-picker-image">`;
+    };
+
+    const renderChoiceHtml = (item) => {
+        if (isPdfItem(item)) {
+            return `
+                <button type="button" class="btn p-0 border w-100 media-picker-choice d-flex flex-column align-items-center justify-content-center" data-id="${item.id}" data-url="${itemFullUrl(item)}" data-alt="${itemAlt(item)}" data-filename="${itemFilename(item)}" style="height:100px;">
+                    <i class="bi bi-file-earmark-pdf fs-2 text-danger" aria-hidden="true"></i>
+                    <span class="small text-truncate w-100 px-1">${itemFilename(item)}</span>
+                </button>`;
+        }
+
+        return `
+                <button type="button" class="btn p-0 border w-100 media-picker-choice" data-id="${item.id}" data-url="${itemFullUrl(item)}" data-alt="${itemAlt(item)}">
+                    <img src="${itemPreviewUrl(item)}" alt="${itemAlt(item)}" class="img-fluid rounded" style="height:100px;width:100%;object-fit:cover;">
+                </button>`;
+    };
 
     const appendUploadFiles = (formData, files) => {
         const fileList = Array.from(files);
@@ -70,10 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = activePicker.querySelector('.media-picker-input');
         const preview = activePicker.querySelector('.media-picker-preview');
         const clearBtn = activePicker.querySelector('.media-picker-clear');
-        const url = itemFullUrl(item);
 
         input.value = item.id;
-        preview.innerHTML = `<img src="${url}" alt="${itemAlt(item)}" class="img-fluid media-picker-image">`;
+        preview.innerHTML = renderPreviewHtml(item);
         clearBtn.classList.remove('d-none');
         modal.hide();
     };
@@ -118,16 +145,24 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.hide();
     };
 
-    const configureModal = (mode) => {
+    const configureModal = (mode, type = 'image') => {
         pickerMode = mode;
+        pickerType = type;
         const isMulti = mode === 'multi';
+        const isPdf = type === 'pdf';
 
-        modalTitle.textContent = isMulti ? 'Select Images' : 'Select Image';
+        modalTitle.textContent = isMulti
+            ? (isPdf ? 'Select PDFs' : 'Select Images')
+            : (isPdf ? 'Select PDF' : 'Select Image');
         multiFooter?.classList.toggle('d-none', !isMulti);
         uploadBtn.textContent = isMulti ? 'Upload & Add' : 'Upload';
         uploadHelp.textContent = isMulti
-            ? 'Select one or more images to upload, then choose from the library or insert selected images into the editor.'
-            : 'Select one or more images to upload. A single image is chosen for this field; multiple uploads are added to the library.';
+            ? (isPdf
+                ? 'Select one or more PDFs to upload, then choose from the library or insert selected files into the editor.'
+                : 'Select one or more images to upload, then choose from the library or insert selected images into the editor.')
+            : (isPdf
+                ? 'Select one or more PDFs to upload. A single PDF is chosen for this field; multiple uploads are added to the library.'
+                : 'Select one or more images to upload. A single image is chosen for this field; multiple uploads are added to the library.');
 
         selectedItems = new Map();
         updateMultiUi();
@@ -178,6 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (search) {
             url.searchParams.set('search', search);
         }
+        if (pickerType) {
+            url.searchParams.set('type', pickerType);
+        }
 
         const response = await fetch(url.toString(), {
             headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -200,20 +238,17 @@ document.addEventListener('DOMContentLoaded', () => {
         data.items.forEach((item) => {
             const col = document.createElement('div');
             col.className = 'col-md-3 col-sm-4 col-6';
-            col.innerHTML = `
-                <button type="button" class="btn p-0 border w-100 media-picker-choice" data-id="${item.id}" data-url="${itemFullUrl(item)}" data-alt="${itemAlt(item)}">
-                    <img src="${itemPreviewUrl(item)}" alt="${itemAlt(item)}" class="img-fluid rounded" style="height:100px;width:100%;object-fit:cover;">
-                </button>`;
+            col.innerHTML = renderChoiceHtml(item);
             grid.appendChild(col);
         });
 
         updateMultiUi();
     };
 
-    window.openMediaPicker = ({ mode = 'single', onSelect = null } = {}) => {
+    window.openMediaPicker = ({ mode = 'single', type = 'image', onSelect = null } = {}) => {
         activePicker = null;
         multiCallback = onSelect;
-        configureModal(mode);
+        configureModal(mode, type);
         searchInput.value = '';
         uploadForm?.reset();
         uploadError?.classList.add('d-none');
@@ -225,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', () => {
             activePicker = button.closest('.media-picker');
             multiCallback = null;
-            configureModal(activePicker.dataset.pickerMode || 'single');
+            configureModal(activePicker.dataset.pickerMode || 'single', activePicker.dataset.pickerType || 'image');
             searchInput.value = '';
             uploadForm?.reset();
             uploadError?.classList.add('d-none');
@@ -263,6 +298,9 @@ document.addEventListener('DOMContentLoaded', () => {
             id: choice.dataset.id,
             url: choice.dataset.url,
             alt: choice.dataset.alt,
+            filename: choice.dataset.filename,
+            type: pickerType,
+            mime_type: pickerType === 'pdf' ? 'application/pdf' : null,
         };
 
         if (pickerMode === 'multi') {
@@ -347,7 +385,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             picker.querySelector('.media-picker-input').value = '';
-            picker.querySelector('.media-picker-preview').innerHTML = '<span class="text-muted small px-2 text-center media-picker-placeholder">No image selected</span>';
+            const placeholder = picker.dataset.pickerType === 'pdf' ? 'No PDF selected' : 'No image selected';
+            picker.querySelector('.media-picker-preview').innerHTML = `<span class="text-muted small px-2 text-center media-picker-placeholder">${placeholder}</span>`;
             button.classList.add('d-none');
         });
     });

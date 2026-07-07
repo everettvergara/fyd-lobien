@@ -3,6 +3,7 @@
 namespace App\Modules\Content\Requests;
 
 use App\Enums\ContentStatus;
+use App\Rules\PdfMedia;
 use App\Support\ContentTypeRegistry;
 use App\Support\HtmlSanitizer;
 use App\Support\SlugValidation;
@@ -31,6 +32,8 @@ class StoreContentRequest extends FormRequest
             'slug' => SlugValidation::rules('unique:contents,slug'),
             'summary' => ['nullable', 'string'],
             'body' => ['nullable', 'string'],
+            'url_link' => ['nullable', 'url', 'max:2048'],
+            'attachment_id' => ['nullable', 'exists:media,id', new PdfMedia],
             'featured_image_id' => ['nullable', 'exists:media,id'],
             'gallery_media_ids' => ['nullable', 'array'],
             'gallery_media_ids.*' => ['exists:media,id'],

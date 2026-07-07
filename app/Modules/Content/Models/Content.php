@@ -17,8 +17,8 @@ class Content extends Model
     use HasSeo, Publishable, SoftDeletes;
 
     protected $fillable = [
-        'content_type', 'title', 'slug', 'summary', 'body',
-        'featured_image_id', 'status', 'published_at', 'author_id',
+        'content_type', 'title', 'slug', 'summary', 'body', 'url_link',
+        'featured_image_id', 'attachment_id', 'status', 'published_at', 'author_id',
     ];
 
     protected function casts(): array
@@ -37,6 +37,11 @@ class Content extends Model
     public function featuredImage(): BelongsTo
     {
         return $this->belongsTo(Media::class, 'featured_image_id');
+    }
+
+    public function attachment(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'attachment_id');
     }
 
     public function galleryImages(): BelongsToMany

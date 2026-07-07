@@ -5,12 +5,16 @@ namespace Tests\Feature;
 use App\Enums\ContentStatus;
 use App\Models\Media;
 use App\Models\User;
+use App\Modules\ContentBlocks\Enums\ContentBlockFormatter;
+use App\Modules\ContentBlocks\Models\ContentBlock;
+use App\Modules\ContentBlocks\Services\ContentBlockRenderingService;
 use App\Services\Media\MediaLibraryService;
 use App\Services\Media\MediaUsageService;
 use App\Modules\Media\Services\MediaService;
 use App\Modules\Content\Models\Content;
 use App\Services\ContentSearchService;
 use App\Services\PublishingService;
+use App\Support\PublicContent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -288,5 +292,140 @@ class ContentFrameworkTest extends TestCase
         $this->expectException(\RuntimeException::class);
 
         $library->deletion->softDelete($media);
+    }
+
+    public function test_admin_can_store_content_with_url_link_and_pdf_attachment(): void
+    {
+        Storage::fake('public');
+        $this->seed();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $pdf = app(MediaLibraryService::class)->upload(
+            UploadedFile::fake()->create('report.pdf', 64, 'application/pdf'),
+            ['title' => 'Annual Report'],
+            $admin->id,
+        );
+
+        $response = $this->actingAs($admin)->post('/admin/content', [
+            'content_type' => 'article',
+            'title' => 'Content With Attachment',
+            'slug' => 'content-with-attachment',
+            'status' => ContentStatus::Draft->value,
+            'url_link' => 'https://example.com/reference',
+            'attachment_id' => $pdf->id,
+        ]);
+
+        $response->assertRedirect('/admin/content');
+
+        $this->assertDatabaseHas('contents', [
+            'slug' => 'content-with-attachment',
+            'url_link' => 'https://example.com/reference',
+            'attachment_id' => $pdf->id,
+        ]);
+    }
+
+    public function test_admin_rejects_non_pdf_attachment(): void
+    {
+        Storage::fake('public');
+        $this->seed();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $image = app(MediaLibraryService::class)->upload(
+            UploadedFile::fake()->create('photo.jpg', 64, 'image/jpeg'),
+            [],
+            $admin->id,
+        );
+
+        $response = $this->actingAs($admin)->post('/admin/content', [
+            'content_type' => 'article',
+            'title' => 'Invalid Attachment Content',
+            'slug' => 'invalid-attachment-content',
+            'status' => ContentStatus::Draft->value,
+            'attachment_id' => $image->id,
+        ]);
+
+        $response->assertSessionHasErrors('attachment_id');
+        $this->assertDatabaseMissing('contents', ['slug' => 'invalid-attachment-content']);
+    }
+
+    public function test_public_content_entry_includes_url_link_and_attachment(): void
+    {
+        Storage::fake('public');
+        $this->seed();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $pdf = app(MediaLibraryService::class)->upload(
+            UploadedFile::fake()->create('guide.pdf', 64, 'application/pdf'),
+            ['title' => 'User Guide'],
+            $admin->id,
+        );
+
+        $content = Content::create([
+            'content_type' => 'article',
+            'title' => 'Public Entry Content',
+            'slug' => 'public-entry-content',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $admin->id,
+            'url_link' => 'https://example.com/guide',
+            'attachment_id' => $pdf->id,
+        ]);
+
+        $entry = PublicContent::entry($content);
+
+        $this->assertSame('https://example.com/guide', $entry['urlLink']);
+        $this->assertSame('User Guide', $entry['attachment']['label']);
+        $this->assertSame('application/pdf', $entry['attachment']['mimeType']);
+        $this->assertNotEmpty($entry['attachment']['url']);
+    }
+
+    public function test_content_block_renders_url_link_and_attachment_fields(): void
+    {
+        Storage::fake('public');
+        $this->seed();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $pdf = app(MediaLibraryService::class)->upload(
+            UploadedFile::fake()->create('resource.pdf', 64, 'application/pdf'),
+            ['title' => 'Resource PDF'],
+            $admin->id,
+        );
+
+        Content::create([
+            'content_type' => 'article',
+            'title' => 'Block Field Content',
+            'slug' => 'block-field-content',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $admin->id,
+            'url_link' => 'https://example.com/resource',
+            'attachment_id' => $pdf->id,
+        ]);
+
+        $block = ContentBlock::create([
+            'name' => 'Attachment Fields Block',
+            'key' => 'attachment-fields-block',
+            'status' => ContentStatus::Published,
+            'content_types' => ['article'],
+            'fields' => [
+                ['field' => 'url_link', 'label' => 'URL', 'class' => 'content-block__url-link', 'id' => 'content-block-attachment-fields-block-url-link', 'sort_order' => 0],
+                ['field' => 'attachment', 'label' => 'PDF', 'class' => 'content-block__attachment', 'id' => 'content-block-attachment-fields-block-attachment', 'sort_order' => 1],
+            ],
+            'filters' => [
+                ['field' => 'title', 'operator' => 'contains', 'value' => 'Block Field Content', 'group' => 'and'],
+            ],
+            'sort_field' => 'published_at',
+            'sort_direction' => 'desc',
+            'items_per_page' => 10,
+            'pagination_enabled' => false,
+            'formatter' => ContentBlockFormatter::Unformatted,
+        ]);
+
+        $dto = app(ContentBlockRenderingService::class)->dto($block);
+
+        $this->assertCount(1, $dto['rows']);
+        $this->assertSame('https://example.com/resource', $dto['rows'][0][0]['value']);
+        $this->assertSame('Resource PDF', $dto['rows'][0][1]['value']['label']);
+        $this->assertSame('application/pdf', $dto['rows'][0][1]['value']['mimeType']);
     }
 }

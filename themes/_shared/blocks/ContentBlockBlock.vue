@@ -13,6 +13,14 @@ function fieldComponent(field) {
         return 'image';
     }
 
+    if (field.field === 'attachment' && field.value && typeof field.value === 'object') {
+        return 'file';
+    }
+
+    if (field.field === 'url_link' && field.value) {
+        return 'link';
+    }
+
     if (field.field === 'body') {
         return 'html';
     }
@@ -66,6 +74,20 @@ function pageUrl(pageNumber) {
                                 :alt="cell.value.alt"
                                 class="content-block__image"
                             >
+                            <a
+                                v-else-if="fieldComponent(cell) === 'link'"
+                                :href="cell.value"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="content-block__link"
+                            >{{ cell.value }}</a>
+                            <a
+                                v-else-if="fieldComponent(cell) === 'file'"
+                                :href="cell.value.url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="content-block__file"
+                            >{{ cell.value.label }}</a>
                             <span v-else-if="fieldComponent(cell) === 'html'" v-html="cell.value" />
                             <span v-else>{{ cell.value }}</span>
                         </td>
@@ -92,6 +114,20 @@ function pageUrl(pageNumber) {
                             :alt="cell.value.alt"
                             class="content-block__image"
                         >
+                        <a
+                            v-else-if="fieldComponent(cell) === 'link'"
+                            :href="cell.value"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="content-block__link"
+                        >{{ cell.value }}</a>
+                        <a
+                            v-else-if="fieldComponent(cell) === 'file'"
+                            :href="cell.value.url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="content-block__file"
+                        >{{ cell.value.label }}</a>
                         <span v-else-if="fieldComponent(cell) === 'html'" v-html="cell.value" />
                         <span v-else>{{ cell.value }}</span>
                     </div>
@@ -112,6 +148,20 @@ function pageUrl(pageNumber) {
                             :alt="cell.value.alt"
                             class="content-block__image"
                         >
+                        <a
+                            v-else-if="fieldComponent(cell) === 'link'"
+                            :href="cell.value"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="content-block__link"
+                        >{{ cell.value }}</a>
+                        <a
+                            v-else-if="fieldComponent(cell) === 'file'"
+                            :href="cell.value.url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="content-block__file"
+                        >{{ cell.value.label }}</a>
                         <div v-else-if="fieldComponent(cell) === 'html'" v-html="cell.value" />
                         <div v-else>{{ cell.value }}</div>
                     </div>
