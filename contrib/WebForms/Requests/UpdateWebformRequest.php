@@ -2,13 +2,17 @@
 
 namespace App\Modules\WebForms\Requests;
 
+use App\Modules\PageManager\Models\Page;
 use App\Modules\WebForms\Models\Webform;
+use App\Modules\WebForms\Requests\Concerns\ValidatesWebformPagePath;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class UpdateWebformRequest extends FormRequest
 {
+    use ValidatesWebformPagePath;
+
     public function authorize(): bool
     {
         $webform = $this->route('webform');
@@ -27,6 +31,7 @@ class UpdateWebformRequest extends FormRequest
             'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('webforms', 'slug')->ignore($webform->id)],
             'description' => ['nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
+            '_public_page_path' => $this->publicPagePathRules(),
         ];
     }
 
@@ -39,5 +44,24 @@ class UpdateWebformRequest extends FormRequest
         $this->merge([
             'is_active' => $this->boolean('is_active'),
         ]);
+
+        $this->mergePublicPagePathForValidation();
+    }
+
+    protected function syncedPageIdToIgnore(): ?int
+    {
+        $webform = $this->route('webform');
+
+        if (! $webform instanceof Webform) {
+            return null;
+        }
+
+        $path = $webform->public_page_path;
+
+        if (! is_string($path) || $path === '') {
+            return null;
+        }
+
+        return Page::findByPath($path)?->id;
     }
 }

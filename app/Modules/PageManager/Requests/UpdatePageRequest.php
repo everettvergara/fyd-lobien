@@ -26,7 +26,9 @@ class UpdatePageRequest extends FormRequest
         if ($page?->is_system) {
             $this->merge(['path' => '/']);
         } elseif ($this->has('path')) {
-            $this->merge(['path' => \App\Modules\PageManager\Models\Page::normalizePath((string) $this->input('path'))]);
+            $normalizedPath = \App\Modules\PageManager\Models\Page::normalizePath((string) $this->input('path'));
+            \App\Modules\PageManager\Models\Page::purgeSoftDeletedAtPath($normalizedPath);
+            $this->merge(['path' => $normalizedPath]);
         }
     }
 

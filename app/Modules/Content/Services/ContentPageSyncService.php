@@ -8,6 +8,7 @@ use App\Modules\Content\Models\ContentType;
 use App\Modules\PageManager\Models\Page;
 use App\Modules\PageManager\Models\PageBlock;
 use App\Support\ContentTypeRegistry;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 class ContentPageSyncService
@@ -75,7 +76,8 @@ class ContentPageSyncService
                 $page = $this->movePagePath($content, $oldPath, $path);
                 $stats['moved'] = 1;
             } else {
-                $existing = Page::query()->where('path', $path)->first();
+                Page::purgeSoftDeletedAtPath($path);
+                $existing = Page::liveOccupantAtPath($path);
                 $created = $existing === null;
 
                 $page = Page::updateOrCreate(
@@ -96,6 +98,8 @@ class ContentPageSyncService
             $this->updatePublicPagePath($content, $path);
         } catch (ContentPageSyncException $exception) {
             $stats['error'] = $exception->getMessage();
+        } catch (UniqueConstraintViolationException $exception) {
+            $stats['error'] = "Cannot sync page to {$path}: path is already in use.";
         }
 
         return $stats;
@@ -180,17 +184,15 @@ class ContentPageSyncService
         $page = Page::query()->where('path', $oldPath)->first();
 
         if ($page === null) {
+            $this->assertPathAvailable($newPath);
+
             return Page::updateOrCreate(
                 ['path' => $newPath],
                 $this->pageAttributes($content, $newPath),
             );
         }
 
-        $occupant = Page::query()->where('path', $newPath)->first();
-
-        if ($occupant !== null && $occupant->id !== $page->id) {
-            throw new ContentPageSyncException("Cannot move page to {$newPath}: path is already in use.");
-        }
+        $this->assertPathAvailable($newPath, $page->id);
 
         $page->update([
             'path' => $newPath,
@@ -289,6 +291,23 @@ class ContentPageSyncService
             ->update(['public_page_path' => $path]);
 
         $content->public_page_path = $path;
+    }
+
+    protected function assertPathAvailable(string $path, ?int $exceptPageId = null): void
+    {
+        Page::purgeSoftDeletedAtPath($path);
+
+        $occupant = Page::liveOccupantAtPath($path, $exceptPageId);
+
+        if ($occupant === null) {
+            return;
+        }
+
+        if ($occupant->is_system) {
+            throw new ContentPageSyncException("Cannot move page to {$path}: path is reserved by a system page.");
+        }
+
+        throw new ContentPageSyncException("Cannot move page to {$path}: path is already in use.");
     }
 
     /**

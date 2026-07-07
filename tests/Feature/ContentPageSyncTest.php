@@ -265,6 +265,112 @@ class ContentPageSyncTest extends TestCase
                 ->where('page.title', 'Custom Override Page'));
     }
 
+    public function test_content_slug_change_purges_soft_deleted_page_at_target_path(): void
+    {
+        $content = Content::create([
+            'content_type' => 'page',
+            'title' => 'Reach Us',
+            'slug' => 'reach-us',
+            'body' => '<p>Reach us body</p>',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $this->author->id,
+        ]);
+
+        app(ContentPageSyncService::class)->syncContentPage($content);
+
+        $page = Page::query()->where('path', '/reach-us')->firstOrFail();
+
+        $trashed = Page::create([
+            'path' => '/reclaim-me',
+            'slug' => 'reclaim-me',
+            'title' => 'Old Reclaim Page',
+            'body' => '',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $this->author->id,
+        ]);
+        $trashed->delete();
+
+        $content->update(['slug' => 'reclaim-me']);
+        $result = app(ContentPageSyncService::class)->syncContentPage($content->fresh());
+
+        $this->assertNull($result['error']);
+        $page->refresh();
+        $this->assertSame('/reclaim-me', $page->path);
+        $this->assertSame('reclaim-me', $page->slug);
+        $this->assertSame('/reclaim-me', $content->fresh()->public_page_path);
+        $this->assertNull(Page::withTrashed()->where('path', '/reclaim-me')->where('id', '!=', $page->id)->first());
+    }
+
+    public function test_content_slug_change_blocked_when_live_page_occupies_target_path(): void
+    {
+        Page::create([
+            'path' => '/blocked-path',
+            'slug' => 'blocked-path',
+            'title' => 'Blocked Path Page',
+            'body' => '',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $this->author->id,
+        ]);
+
+        $content = Content::create([
+            'content_type' => 'page',
+            'title' => 'Reach Us',
+            'slug' => 'reach-us',
+            'body' => '<p>Reach us body</p>',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $this->author->id,
+            'public_page_path' => '/reach-us',
+        ]);
+
+        app(ContentPageSyncService::class)->syncContentPage($content);
+
+        $this->actingAs($this->author)
+            ->put("/admin/content/{$content->id}", [
+                'content_type' => 'page',
+                'title' => 'Reach Us',
+                'slug' => 'blocked-path',
+                'status' => ContentStatus::Published->value,
+                'published_at' => now()->toDateTimeString(),
+            ])
+            ->assertSessionHasErrors('_public_page_path');
+    }
+
+    public function test_sync_content_page_returns_error_instead_of_crashing_on_live_conflict(): void
+    {
+        Page::create([
+            'path' => '/blocked-path',
+            'slug' => 'blocked-path',
+            'title' => 'Blocked Path Page',
+            'body' => '',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $this->author->id,
+        ]);
+
+        $content = Content::create([
+            'content_type' => 'page',
+            'title' => 'Reach Us',
+            'slug' => 'reach-us',
+            'body' => '<p>Reach us body</p>',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $this->author->id,
+        ]);
+
+        app(ContentPageSyncService::class)->syncContentPage($content);
+        $content->update(['slug' => 'blocked-path', 'public_page_path' => '/reach-us']);
+
+        $result = app(ContentPageSyncService::class)->syncContentPage($content->fresh());
+
+        $this->assertNotNull($result['error']);
+        $this->assertStringContainsString('/blocked-path', $result['error']);
+        $this->assertDatabaseHas('pages', ['path' => '/reach-us']);
+    }
+
     protected function ensureArticleSlug(): void
     {
         ContentType::where('key', 'article')->update(['slug' => 'articles']);

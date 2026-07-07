@@ -6,6 +6,7 @@ use App\Enums\ContentStatus;
 use App\Modules\PageManager\Models\Page;
 use App\Modules\PageManager\Models\PageBlock;
 use App\Modules\WebForms\Models\Webform;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 class WebformPageSyncService
@@ -65,7 +66,8 @@ class WebformPageSyncService
                 $page = $this->movePagePath($webform, $oldPath, $path);
                 $stats['moved'] = 1;
             } else {
-                $existing = Page::query()->where('path', $path)->first();
+                Page::purgeSoftDeletedAtPath($path);
+                $existing = Page::liveOccupantAtPath($path);
                 $created = $existing === null;
 
                 $page = Page::updateOrCreate(
@@ -85,6 +87,8 @@ class WebformPageSyncService
             $this->updatePublicPagePath($webform, $path);
         } catch (WebformPageSyncException $exception) {
             $stats['error'] = $exception->getMessage();
+        } catch (UniqueConstraintViolationException $exception) {
+            $stats['error'] = "Cannot sync page to {$path}: path is already in use.";
         }
 
         return $stats;
@@ -149,17 +153,15 @@ class WebformPageSyncService
         $page = Page::query()->where('path', $oldPath)->first();
 
         if ($page === null) {
+            $this->assertPathAvailable($newPath);
+
             return Page::updateOrCreate(
                 ['path' => $newPath],
                 $this->pageAttributes($webform, $newPath),
             );
         }
 
-        $occupant = Page::query()->where('path', $newPath)->first();
-
-        if ($occupant !== null && $occupant->id !== $page->id) {
-            throw new WebformPageSyncException("Cannot move page to {$newPath}: path is already in use.");
-        }
+        $this->assertPathAvailable($newPath, $page->id);
 
         $page->update([
             'path' => $newPath,
@@ -240,5 +242,22 @@ class WebformPageSyncService
             ->update(['public_page_path' => $path]);
 
         $webform->public_page_path = $path;
+    }
+
+    protected function assertPathAvailable(string $path, ?int $exceptPageId = null): void
+    {
+        Page::purgeSoftDeletedAtPath($path);
+
+        $occupant = Page::liveOccupantAtPath($path, $exceptPageId);
+
+        if ($occupant === null) {
+            return;
+        }
+
+        if ($occupant->is_system) {
+            throw new WebformPageSyncException("Cannot move page to {$path}: path is reserved by a system page.");
+        }
+
+        throw new WebformPageSyncException("Cannot move page to {$path}: path is already in use.");
     }
 }

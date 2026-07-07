@@ -78,7 +78,13 @@ class PageController extends Controller
 
     public function update(UpdatePageRequest $request, Page $page): RedirectResponse
     {
-        $page->update($request->safe()->except([...$this->seo->fieldKeys(), 'blocks']));
+        $attributes = $request->safe()->except([...$this->seo->fieldKeys(), 'blocks']);
+
+        if ($request->has('path')) {
+            $attributes['slug'] = Page::slugFromPath($request->input('path'));
+        }
+
+        $page->update($attributes);
         $page->saveSeo($this->seo->extract($request->validated()));
         $this->blockSync->syncPageBlocks($page, $request->input('blocks', []));
         $this->syncMediaUsage($page);

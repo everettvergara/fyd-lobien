@@ -3,6 +3,9 @@
 namespace App\Modules\Content\Requests;
 
 use App\Enums\ContentStatus;
+use App\Modules\Content\Models\Content;
+use App\Modules\Content\Requests\Concerns\ValidatesContentPagePath;
+use App\Modules\PageManager\Models\Page;
 use App\Rules\PdfMedia;
 use App\Support\ContentTypeRegistry;
 use App\Support\HtmlSanitizer;
@@ -12,6 +15,8 @@ use Illuminate\Validation\Rule;
 
 class UpdateContentRequest extends FormRequest
 {
+    use ValidatesContentPagePath;
+
     public function authorize(): bool
     {
         return $this->user()->can('update', $this->route('content'));
@@ -22,6 +27,8 @@ class UpdateContentRequest extends FormRequest
         if ($this->has('body')) {
             $this->merge(['body' => HtmlSanitizer::clean($this->input('body'))]);
         }
+
+        $this->mergePublicPagePathForValidation();
     }
 
     public function rules(): array
@@ -39,6 +46,24 @@ class UpdateContentRequest extends FormRequest
             'gallery_media_ids.*' => ['exists:media,id'],
             'status' => ['required', Rule::enum(ContentStatus::class)],
             'published_at' => ['nullable', 'date'],
+            '_public_page_path' => $this->publicPagePathRules(),
         ];
+    }
+
+    protected function syncedPageIdToIgnore(): ?int
+    {
+        $content = $this->route('content');
+
+        if (! $content instanceof Content) {
+            return null;
+        }
+
+        $path = $content->public_page_path;
+
+        if (! is_string($path) || $path === '') {
+            return null;
+        }
+
+        return Page::findByPath($path)?->id;
     }
 }

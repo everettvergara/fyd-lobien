@@ -213,6 +213,68 @@ class WebFormsModuleTest extends TestCase
         $this->assertSame('/get-in-touch', $webform->fresh()->public_page_path);
     }
 
+    public function test_webform_slug_change_purges_soft_deleted_page_at_target_path(): void
+    {
+        $this->installWebForms();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $webform = Webform::where('slug', 'contact-form')->first();
+
+        $this->actingAs($admin)->put('/admin/webforms/'.$webform->id, [
+            'name' => 'Contact Us',
+            'slug' => 'contact-form',
+            'is_active' => 1,
+        ]);
+
+        $page = Page::where('path', '/contact-form')->firstOrFail();
+
+        $trashed = Page::create([
+            'path' => '/reclaim-me',
+            'slug' => 'reclaim-me',
+            'title' => 'Old Reclaim Page',
+            'body' => '',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $admin->id,
+        ]);
+        $trashed->delete();
+
+        $this->actingAs($admin)->put('/admin/webforms/'.$webform->id, [
+            'name' => 'Contact Us',
+            'slug' => 'reclaim-me',
+            'is_active' => 1,
+        ])->assertRedirect();
+
+        $page->refresh();
+        $this->assertSame('/reclaim-me', $page->path);
+        $this->assertSame('/reclaim-me', $webform->fresh()->public_page_path);
+        $this->assertNull(Page::withTrashed()->where('path', '/reclaim-me')->where('id', '!=', $page->id)->first());
+    }
+
+    public function test_webform_slug_change_blocked_when_live_page_occupies_target_path(): void
+    {
+        $this->installWebForms();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $webform = Webform::where('slug', 'contact-form')->first();
+
+        Page::create([
+            'path' => '/blocked-path',
+            'slug' => 'blocked-path',
+            'title' => 'Blocked Path Page',
+            'body' => '',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)->put('/admin/webforms/'.$webform->id, [
+            'name' => 'Contact Us',
+            'slug' => 'blocked-path',
+            'is_active' => 1,
+        ])->assertSessionHasErrors('_public_page_path');
+    }
+
     public function test_deactivating_webform_removes_public_page(): void
     {
         $this->installWebForms();
