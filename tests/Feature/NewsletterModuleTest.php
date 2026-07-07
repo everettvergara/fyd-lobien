@@ -116,7 +116,144 @@ class NewsletterModuleTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('slug', 'site-updates')
             ->assertJsonPath('auth.logged_in', false)
-            ->assertJsonPath('auth.subscribed', false);
+            ->assertJsonPath('auth.subscribed', false)
+            ->assertJsonPath('settings.fields.name.enabled', false)
+            ->assertJsonPath('settings.fields.mobile_number.enabled', false);
+    }
+
+    public function test_public_api_returns_configured_field_settings(): void
+    {
+        $this->installNewsletter();
+
+        $list = NewsletterList::where('slug', 'site-updates')->firstOrFail();
+        $list->update([
+            'settings' => array_merge($list->settings(), [
+                'get_name' => true,
+                'require_name' => true,
+                'get_company' => true,
+                'require_company' => false,
+            ]),
+        ]);
+
+        $this->getJson('/api/newsletters/site-updates')
+            ->assertOk()
+            ->assertJsonPath('settings.fields.name.enabled', true)
+            ->assertJsonPath('settings.fields.name.required', true)
+            ->assertJsonPath('settings.fields.company.enabled', true)
+            ->assertJsonPath('settings.fields.company.required', false);
+    }
+
+    public function test_subscribe_persists_enabled_profile_fields(): void
+    {
+        $this->installNewsletter();
+        $this->disableRecaptcha();
+
+        $list = NewsletterList::where('slug', 'site-updates')->firstOrFail();
+        $list->update([
+            'settings' => array_merge($list->settings(), [
+                'get_name' => true,
+                'require_name' => true,
+                'get_mobile_number' => true,
+                'require_mobile_number' => false,
+                'get_company' => true,
+                'require_company' => true,
+            ]),
+        ]);
+
+        $this->postJson('/api/newsletters/site-updates/subscribe', [
+            'email' => 'jane@example.com',
+            'name' => 'Jane Doe',
+            'mobile_number' => '555-0100',
+            'company' => 'Acme Corp',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('newsletter_subscribers', [
+            'email' => 'jane@example.com',
+            'name' => 'Jane Doe',
+            'mobile_number' => '555-0100',
+            'company' => 'Acme Corp',
+            'status' => NewsletterSubscriber::STATUS_ACTIVE,
+        ]);
+    }
+
+    public function test_subscribe_rejects_missing_required_profile_field(): void
+    {
+        $this->installNewsletter();
+        $this->disableRecaptcha();
+
+        $list = NewsletterList::where('slug', 'site-updates')->firstOrFail();
+        $list->update([
+            'settings' => array_merge($list->settings(), [
+                'get_name' => true,
+                'require_name' => true,
+            ]),
+        ]);
+
+        $this->postJson('/api/newsletters/site-updates/subscribe', [
+            'email' => 'jane@example.com',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['name']);
+    }
+
+    public function test_list_settings_parse_checkbox_array_values(): void
+    {
+        $this->assertTrue(NewsletterList::parseSettingBoolean(['0', '1']));
+        $this->assertFalse(NewsletterList::parseSettingBoolean(['0']));
+        $this->assertFalse(NewsletterList::parseSettingBoolean('0'));
+        $this->assertTrue(NewsletterList::parseSettingBoolean('1'));
+    }
+
+    public function test_normalize_settings_input_enables_all_collect_fields(): void
+    {
+        $normalized = NewsletterList::normalizeSettingsInput([
+            'get_name' => ['0', '1'],
+            'require_name' => ['0', '1'],
+            'get_mobile_number' => ['0', '1'],
+            'require_mobile_number' => ['0', '1'],
+            'get_designation' => ['0', '1'],
+            'require_designation' => ['0', '1'],
+            'get_company' => ['0', '1'],
+            'require_company' => ['0', '1'],
+        ]);
+
+        $this->assertTrue($normalized['get_name']);
+        $this->assertTrue($normalized['get_mobile_number']);
+        $this->assertTrue($normalized['get_designation']);
+        $this->assertTrue($normalized['get_company']);
+    }
+
+    public function test_admin_export_includes_profile_columns(): void
+    {
+        $this->installNewsletter();
+        $this->disableRecaptcha();
+
+        $list = NewsletterList::where('slug', 'site-updates')->firstOrFail();
+        $list->update([
+            'settings' => array_merge($list->settings(), [
+                'get_name' => true,
+                'require_name' => true,
+                'get_designation' => true,
+                'require_designation' => true,
+            ]),
+        ]);
+
+        $this->postJson('/api/newsletters/site-updates/subscribe', [
+            'email' => 'jane@example.com',
+            'name' => 'Jane Doe',
+            'designation' => 'Director',
+        ]);
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+
+        $response = $this->actingAs($admin)->get('/admin/newsletter-subscribers/export');
+
+        $response->assertOk();
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('Mobile Number', $content);
+        $this->assertStringContainsString('Designation', $content);
+        $this->assertStringContainsString('Jane Doe', $content);
+        $this->assertStringContainsString('Director', $content);
     }
 
     public function test_guest_subscribe_creates_subscriber_row(): void

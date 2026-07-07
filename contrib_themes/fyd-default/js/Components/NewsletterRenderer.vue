@@ -9,6 +9,13 @@ const props = defineProps({
 
 const { execute } = useRecaptcha();
 
+const fieldLabels = {
+    name: 'Name',
+    mobile_number: 'Mobile number',
+    designation: 'Designation',
+    company: 'Company',
+};
+
 const loading = ref(true);
 const submitting = ref(false);
 const loadError = ref('');
@@ -17,12 +24,44 @@ const fieldErrors = ref({});
 const successMessage = ref('');
 const newsletter = ref(null);
 const guestEmail = ref('');
-const guestName = ref('');
+const profile = ref({
+    name: '',
+    mobile_number: '',
+    designation: '',
+    company: '',
+});
+
+const profileFieldOrder = ['name', 'mobile_number', 'designation', 'company'];
 
 const settings = computed(() => newsletter.value?.settings ?? {});
-const auth = computed(() => newsletter.value?.auth ?? { logged_in: false, email: null, subscribed: false });
+const auth = computed(() => newsletter.value?.auth ?? { logged_in: false, email: null, name: null, subscribed: false });
 const isSubscribed = computed(() => auth.value.subscribed === true);
 const isLoggedIn = computed(() => auth.value.logged_in === true);
+const enabledProfileFields = computed(() => {
+    const fields = settings.value.fields ?? {};
+
+    return profileFieldOrder
+        .filter((key) => Boolean(fields[key]?.enabled))
+        .map((key) => ({
+            key,
+            required: Boolean(fields[key]?.required),
+            label: fieldLabels[key] ?? key,
+        }));
+});
+const showProfileFields = computed(() => !isSubscribed.value && enabledProfileFields.value.length > 0);
+
+function resetProfile(authData = {}) {
+    profile.value = {
+        name: authData.name ?? '',
+        mobile_number: '',
+        designation: '',
+        company: '',
+    };
+}
+
+function fieldLabel(field) {
+    return field.required ? field.label : `${field.label} (optional)`;
+}
 
 async function loadNewsletter() {
     loading.value = true;
@@ -42,6 +81,8 @@ async function loadNewsletter() {
         if (newsletter.value.auth?.email) {
             guestEmail.value = newsletter.value.auth.email;
         }
+
+        resetProfile(newsletter.value.auth ?? {});
     } catch (error) {
         loadError.value = error instanceof Error ? error.message : 'Unable to load newsletter.';
     } finally {
@@ -66,9 +107,12 @@ async function postAction(action) {
 
         if (!isLoggedIn.value) {
             body.email = guestEmail.value;
-            if (guestName.value) {
-                body.name = guestName.value;
-            }
+        }
+
+        if (action === 'subscribe') {
+            enabledProfileFields.value.forEach(({ key }) => {
+                body[key] = profile.value[key] ?? '';
+            });
         }
 
         const response = await fetch(`/api/newsletters/${encodeURIComponent(props.slug)}/${action}`, {
@@ -146,20 +190,6 @@ onMounted(loadNewsletter);
                             {{ fieldError('email') }}
                         </div>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label" :for="`newsletter-${slug}-name`">Name (optional)</label>
-                        <input
-                            :id="`newsletter-${slug}-name`"
-                            v-model="guestName"
-                            type="text"
-                            class="form-control"
-                            :class="{ 'is-invalid': fieldError('name') }"
-                        >
-                        <div v-if="fieldError('name')" class="invalid-feedback d-block">
-                            {{ fieldError('name') }}
-                        </div>
-                    </div>
                 </template>
 
                 <template v-else-if="isLoggedIn">
@@ -168,6 +198,26 @@ onMounted(loadNewsletter);
                         <span v-else>Subscribe as </span>
                         <strong>{{ auth.email }}</strong>
                     </p>
+                </template>
+
+                <template v-if="showProfileFields">
+                    <div v-for="field in enabledProfileFields" :key="field.key" class="mb-3">
+                        <label class="form-label" :for="`newsletter-${slug}-${field.key}`">
+                            {{ fieldLabel(field) }}
+                        </label>
+                        <input
+                            :id="`newsletter-${slug}-${field.key}`"
+                            :value="profile[field.key]"
+                            type="text"
+                            class="form-control"
+                            :class="{ 'is-invalid': fieldError(field.key) }"
+                            :required="field.required"
+                            @input="profile[field.key] = $event.target.value"
+                        >
+                        <div v-if="fieldError(field.key)" class="invalid-feedback d-block">
+                            {{ fieldError(field.key) }}
+                        </div>
+                    </div>
                 </template>
 
                 <div v-if="submitError" class="alert alert-danger">{{ submitError }}</div>
