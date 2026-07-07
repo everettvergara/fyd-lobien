@@ -103,6 +103,7 @@ class ContentBlockService
                 'class' => (string) ($field['class'] ?? $this->fields->defaultClass($fieldKey)),
                 'id' => (string) ($field['id'] ?? $this->fields->defaultId($blockKey, $fieldKey)),
                 'sort_order' => (int) ($field['sort_order'] ?? $index),
+                'link_to_content' => (bool) ($field['link_to_content'] ?? false),
             ];
         }
 

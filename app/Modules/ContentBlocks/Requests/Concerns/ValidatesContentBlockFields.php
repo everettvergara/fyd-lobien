@@ -37,6 +37,7 @@ trait ValidatesContentBlockFields
             'fields.*.class' => ['nullable', 'string', 'max:255'],
             'fields.*.id' => ['nullable', 'string', 'max:255'],
             'fields.*.sort_order' => ['nullable', 'integer', 'min:0'],
+            'fields.*.link_to_content' => ['nullable', 'boolean'],
             'filters' => ['nullable', 'array'],
             'filters.*.field' => ['nullable', 'string'],
             'filters.*.operator' => ['nullable', 'string'],

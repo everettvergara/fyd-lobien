@@ -3,6 +3,7 @@
 namespace App\Modules\ContentBlocks\Services;
 
 use App\Modules\Content\Models\Content;
+use App\Modules\Content\Services\ContentUrlService;
 use App\Modules\ContentBlocks\Models\ContentBlock;
 use App\Modules\ContentBlocks\Support\ContentBlockFieldRegistry;
 use App\Support\ContentTypeRegistry;
@@ -17,6 +18,7 @@ class ContentBlockRenderingService
     public function __construct(
         protected ContentBlockQueryService $query,
         protected ContentBlockFieldRegistry $fields,
+        protected ContentUrlService $urls,
     ) {}
 
     public function contentBlockByKey(string $key, int $page = 1): ?array
@@ -84,7 +86,7 @@ class ContentBlockRenderingService
     }
 
     /**
-     * @return list<array{field: string, label: string, class: string, id: string, sort_order: int}>
+     * @return list<array{field: string, label: string, class: string, id: string, sort_order: int, link_to_content: bool}>
      */
     protected function normalizedFieldConfigs(ContentBlock $block): array
     {
@@ -103,23 +105,30 @@ class ContentBlockRenderingService
                 'class' => (string) ($field['class'] ?: $this->fields->defaultClass($fieldKey)),
                 'id' => (string) ($field['id'] ?: $this->fields->defaultId($block->key, $fieldKey)),
                 'sort_order' => (int) ($field['sort_order'] ?? 0),
+                'link_to_content' => (bool) ($field['link_to_content'] ?? false),
             ];
         }, $fields);
     }
 
     /**
-     * @param  list<array{field: string, label: string, class: string, id: string, sort_order: int}>  $fieldConfigs
-     * @return list<array{field: string, value: mixed, class: string, id: string, label: string}>
+     * @param  list<array{field: string, label: string, class: string, id: string, sort_order: int, link_to_content: bool}>  $fieldConfigs
+     * @return list<array{field: string, value: mixed, class: string, id: string, label: string, linkToContent: bool, contentPath: ?string}>
      */
     protected function mapRow(Content $content, array $fieldConfigs): array
     {
-        return collect($fieldConfigs)->map(function (array $field) use ($content) {
+        $contentPath = $this->urls->pathFor($content);
+
+        return collect($fieldConfigs)->map(function (array $field) use ($content, $contentPath) {
+            $linkToContent = (bool) ($field['link_to_content'] ?? false);
+
             return [
                 'field' => $field['field'],
                 'label' => $field['label'],
                 'value' => $this->fieldValue($content, $field['field']),
                 'class' => $field['class'],
                 'id' => $field['id'],
+                'linkToContent' => $linkToContent,
+                'contentPath' => $linkToContent && $contentPath ? $contentPath : null,
             ];
         })->values()->all();
     }

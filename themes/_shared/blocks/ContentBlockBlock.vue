@@ -1,32 +1,13 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import ContentBlockCell from './ContentBlockCell.vue';
 
 const props = defineProps({
     contentBlock: { type: Object, default: null },
 });
 
 const block = computed(() => props.contentBlock);
-
-function fieldComponent(field) {
-    if (field.field === 'featured_image' && field.value && typeof field.value === 'object') {
-        return 'image';
-    }
-
-    if (field.field === 'attachment' && field.value && typeof field.value === 'object') {
-        return 'file';
-    }
-
-    if (field.field === 'url_link' && field.value) {
-        return 'link';
-    }
-
-    if (field.field === 'body') {
-        return 'html';
-    }
-
-    return 'text';
-}
 
 function pageUrl(pageNumber) {
     if (! block.value?.pagination) {
@@ -68,28 +49,7 @@ function pageUrl(pageNumber) {
                             :class="cell.class"
                             :id="cell.id"
                         >
-                            <img
-                                v-if="fieldComponent(cell) === 'image'"
-                                :src="cell.value.url"
-                                :alt="cell.value.alt"
-                                class="content-block__image"
-                            >
-                            <a
-                                v-else-if="fieldComponent(cell) === 'link'"
-                                :href="cell.value"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="content-block__link"
-                            >{{ cell.value }}</a>
-                            <a
-                                v-else-if="fieldComponent(cell) === 'file'"
-                                :href="cell.value.url"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="content-block__file"
-                            >{{ cell.value.label }}</a>
-                            <span v-else-if="fieldComponent(cell) === 'html'" v-html="cell.value" />
-                            <span v-else>{{ cell.value }}</span>
+                            <ContentBlockCell :cell="cell" />
                         </td>
                     </tr>
                 </tbody>
@@ -107,29 +67,7 @@ function pageUrl(pageNumber) {
                         :class="['content-block__field', cell.class]"
                         :id="cell.id"
                     >
-                        <span v-if="block.formatter !== 'unformatted'" class="content-block__field-label">{{ cell.label }}: </span>
-                        <img
-                            v-if="fieldComponent(cell) === 'image'"
-                            :src="cell.value.url"
-                            :alt="cell.value.alt"
-                            class="content-block__image"
-                        >
-                        <a
-                            v-else-if="fieldComponent(cell) === 'link'"
-                            :href="cell.value"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="content-block__link"
-                        >{{ cell.value }}</a>
-                        <a
-                            v-else-if="fieldComponent(cell) === 'file'"
-                            :href="cell.value.url"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="content-block__file"
-                        >{{ cell.value.label }}</a>
-                        <span v-else-if="fieldComponent(cell) === 'html'" v-html="cell.value" />
-                        <span v-else>{{ cell.value }}</span>
+                        <ContentBlockCell :cell="cell" :show-label="block.formatter !== 'unformatted'" />
                     </div>
                 </li>
             </component>
@@ -142,28 +80,7 @@ function pageUrl(pageNumber) {
                         :class="['content-block__field', cell.class]"
                         :id="cell.id"
                     >
-                        <img
-                            v-if="fieldComponent(cell) === 'image'"
-                            :src="cell.value.url"
-                            :alt="cell.value.alt"
-                            class="content-block__image"
-                        >
-                        <a
-                            v-else-if="fieldComponent(cell) === 'link'"
-                            :href="cell.value"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="content-block__link"
-                        >{{ cell.value }}</a>
-                        <a
-                            v-else-if="fieldComponent(cell) === 'file'"
-                            :href="cell.value.url"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="content-block__file"
-                        >{{ cell.value.label }}</a>
-                        <div v-else-if="fieldComponent(cell) === 'html'" v-html="cell.value" />
-                        <div v-else>{{ cell.value }}</div>
+                        <ContentBlockCell :cell="cell" />
                     </div>
                 </div>
             </div>

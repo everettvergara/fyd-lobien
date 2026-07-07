@@ -24,5 +24,17 @@
             <input type="hidden" name="fields[{{ $index }}][sort_order]" value="{{ $field['sort_order'] ?? $index }}">
             <button type="button" class="btn btn-outline-danger btn-sm remove-field-row">&times;</button>
         </div>
+        <div class="col-12">
+            <div class="form-check mt-1">
+                <input
+                    type="checkbox"
+                    name="fields[{{ $index }}][link_to_content]"
+                    value="1"
+                    class="form-check-input"
+                    @checked(!empty($field['link_to_content']))
+                >
+                <label class="form-check-label small">Link to content</label>
+            </div>
+        </div>
     </div>
 </div>

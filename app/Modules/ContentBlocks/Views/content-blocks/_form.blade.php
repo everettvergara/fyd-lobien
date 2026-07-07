@@ -419,6 +419,7 @@
         }
 
         const formData = new FormData(form);
+        formData.delete('_method');
         formData.append('preview_page', String(page));
 
         try {
@@ -434,7 +435,15 @@
 
             if (! response.ok) {
                 const payload = await response.json().catch(() => ({}));
-                const message = payload.message || 'Unable to retrieve preview.';
+                let message = payload.message || 'Unable to retrieve preview.';
+
+                if (response.status === 422 && payload.errors) {
+                    const firstError = Object.values(payload.errors).flat()[0];
+                    if (firstError) {
+                        message = firstError;
+                    }
+                }
+
                 previewMeta.textContent = message;
                 if (previewSql) {
                     previewSql.innerHTML = '<span class="text-muted">Unable to generate SQL.</span>';

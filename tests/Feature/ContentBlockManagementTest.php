@@ -286,4 +286,115 @@ class ContentBlockManagementTest extends TestCase
 
         $this->assertSame(['content_block_key' => 'featured-pages'], $block->config);
     }
+
+    public function test_content_block_field_can_link_to_content(): void
+    {
+        $admin = $this->admin();
+
+        Content::create([
+            'content_type' => 'article',
+            'title' => 'Linked Article Title',
+            'slug' => 'linked-article-title',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $admin->id,
+        ]);
+
+        $response = $this->actingAs($admin)->post('/admin/content-blocks', [
+            'name' => 'Linked Title Block',
+            'key' => 'linked-title-block',
+            'icon' => 'bi-link',
+            'status' => ContentStatus::Published->value,
+            'content_types' => ['article'],
+            'fields' => [
+                [
+                    'field' => 'title',
+                    'label' => 'Title',
+                    'class' => 'content-block__title',
+                    'id' => 'content-block-linked-title-block-title',
+                    'sort_order' => 0,
+                    'link_to_content' => '1',
+                ],
+                [
+                    'field' => 'summary',
+                    'label' => 'Summary',
+                    'class' => 'content-block__summary',
+                    'id' => 'content-block-linked-title-block-summary',
+                    'sort_order' => 1,
+                ],
+            ],
+            'filters' => [
+                ['field' => 'title', 'operator' => 'contains', 'value' => 'Linked Article Title', 'group' => 'and'],
+            ],
+            'sort_field' => 'published_at',
+            'sort_direction' => 'desc',
+            'items_per_page' => 10,
+            'pagination_enabled' => false,
+            'formatter' => ContentBlockFormatter::Unformatted->value,
+        ]);
+
+        $block = ContentBlock::where('key', 'linked-title-block')->firstOrFail();
+
+        $response->assertRedirect(route('admin.content-blocks.edit', $block));
+
+        $this->assertTrue($block->fields[0]['link_to_content']);
+        $this->assertFalse($block->fields[1]['link_to_content'] ?? false);
+
+        $dto = app(ContentBlockRenderingService::class)->dto($block);
+
+        $this->assertCount(1, $dto['rows']);
+        $this->assertTrue($dto['rows'][0][0]['linkToContent']);
+        $this->assertSame('articles/linked-article-title', $dto['rows'][0][0]['contentPath']);
+        $this->assertFalse($dto['rows'][0][1]['linkToContent']);
+        $this->assertNull($dto['rows'][0][1]['contentPath']);
+    }
+
+    public function test_create_page_includes_link_to_content_checkbox(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.content-blocks.create'))
+            ->assertOk()
+            ->assertSee('Link to content', false);
+    }
+
+    public function test_edit_preview_retrieves_via_preview_existing_route(): void
+    {
+        $admin = $this->admin();
+        $block = ContentBlock::where('key', 'latest-articles')->firstOrFail();
+
+        $response = $this->actingAs($admin)->post(
+            route('admin.content-blocks.preview-existing', $block),
+            [
+                'key' => $block->key,
+                'name' => $block->name,
+                'icon' => $block->icon,
+                'status' => $block->status->value,
+                'content_types' => $block->content_types,
+                'fields' => $block->fields,
+                'filters' => $block->filters ?? [],
+                'sort_field' => $block->sort_field,
+                'sort_direction' => $block->sort_direction,
+                'items_per_page' => $block->items_per_page,
+                'pagination_enabled' => $block->pagination_enabled,
+                'formatter' => $block->formatter->value,
+                'wrapper_class' => $block->wrapper_class,
+                'wrapper_id' => $block->wrapper_id,
+            ],
+        );
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'meta',
+                'metaHtml',
+                'html',
+                'sql' => ['countSql', 'dataSql'],
+                'sqlHtml',
+            ])
+            ->assertJsonPath('meta.formatter', ContentBlockFormatter::Unformatted->value);
+
+        $this->assertStringContainsString('contents', $response->json('sql.countSql'));
+        $this->assertStringContainsString('contents', $response->json('sql.dataSql'));
+    }
 }
