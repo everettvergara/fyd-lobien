@@ -92,7 +92,7 @@ class ContentBlockFieldRegistry
             }
 
             if ($key === 'featured_image') {
-                $relations[] = 'featuredImage';
+                $relations[] = 'featuredImage.variants';
             }
 
             if ($key === 'attachment') {

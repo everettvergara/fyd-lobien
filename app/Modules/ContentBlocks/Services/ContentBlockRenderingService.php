@@ -4,6 +4,7 @@ namespace App\Modules\ContentBlocks\Services;
 
 use App\Modules\Content\Models\Content;
 use App\Modules\Content\Services\ContentUrlService;
+use App\Modules\ContentBlocks\Enums\ContentBlockFormatter;
 use App\Modules\ContentBlocks\Models\ContentBlock;
 use App\Modules\ContentBlocks\Support\ContentBlockFieldRegistry;
 use App\Support\ContentTypeRegistry;
@@ -41,7 +42,7 @@ class ContentBlockRenderingService
         $fieldConfigs = $this->normalizedFieldConfigs($block);
 
         $rows = ($results instanceof LengthAwarePaginator ? $results->getCollection() : $results)
-            ->map(fn (Content $content) => $this->mapRow($content, $fieldConfigs))
+            ->map(fn (Content $content) => $this->mapRow($content, $fieldConfigs, $block))
             ->values()
             ->all();
 
@@ -114,17 +115,17 @@ class ContentBlockRenderingService
      * @param  list<array{field: string, label: string, class: string, id: string, sort_order: int, link_to_content: bool}>  $fieldConfigs
      * @return list<array{field: string, value: mixed, class: string, id: string, label: string, linkToContent: bool, contentPath: ?string}>
      */
-    protected function mapRow(Content $content, array $fieldConfigs): array
+    protected function mapRow(Content $content, array $fieldConfigs, ContentBlock $block): array
     {
         $contentPath = $this->urls->pathFor($content);
 
-        return collect($fieldConfigs)->map(function (array $field) use ($content, $contentPath) {
+        return collect($fieldConfigs)->map(function (array $field) use ($content, $contentPath, $block) {
             $linkToContent = (bool) ($field['link_to_content'] ?? false);
 
             return [
                 'field' => $field['field'],
                 'label' => $field['label'],
-                'value' => $this->fieldValue($content, $field['field']),
+                'value' => $this->fieldValue($content, $field['field'], $block),
                 'class' => $field['class'],
                 'id' => $field['id'],
                 'linkToContent' => $linkToContent,
@@ -133,7 +134,16 @@ class ContentBlockRenderingService
         })->values()->all();
     }
 
-    protected function fieldValue(Content $content, string $fieldKey): mixed
+    protected function imageSizesFor(ContentBlock $block): string
+    {
+        return match ($block->formatter) {
+            ContentBlockFormatter::Table => '(max-width: 768px) 100vw, 200px',
+            ContentBlockFormatter::Ol, ContentBlockFormatter::Ul => '(max-width: 768px) 100vw, 640px',
+            default => '(max-width: 768px) 100vw, 100vw',
+        };
+    }
+
+    protected function fieldValue(Content $content, string $fieldKey, ContentBlock $block): mixed
     {
         return match ($fieldKey) {
             'title' => $content->title,
@@ -143,7 +153,7 @@ class ContentBlockRenderingService
             'content_type' => app(ContentTypeRegistry::class)->label($content->content_type),
             'published_at' => $content->published_at?->format('M j, Y'),
             'author.name' => $content->author?->name,
-            'featured_image' => PublicContent::media($content->featuredImage),
+            'featured_image' => PublicContent::responsiveMedia($content->featuredImage, $this->imageSizesFor($block)),
             'url_link' => $content->url_link,
             'attachment' => PublicContent::file($content->attachment),
             default => null,

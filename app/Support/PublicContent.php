@@ -8,6 +8,7 @@ use App\Modules\Content\Models\Content;
 use App\Modules\Content\Models\ContentType;
 use App\Modules\Content\Services\ContentTypeListingService;
 use App\Modules\Content\Services\ContentUrlService;
+use App\Models\Media;
 
 class PublicContent
 {
@@ -85,6 +86,75 @@ class PublicContent
         return [
             'url' => $media->url(),
             'alt' => $media->alt_text ?? '',
+        ];
+    }
+
+    /**
+     * @return array{url: string, alt: string, srcset: string, sizes: string, previewUrl: string, width: ?int, height: ?int}|null
+     */
+    public static function responsiveMedia(?Media $media, string $sizes = '(max-width: 768px) 100vw, 100vw'): ?array
+    {
+        if (! $media) {
+            return null;
+        }
+
+        $media->loadMissing('variants');
+
+        $srcsetVariants = ['thumbnail', 'small', 'medium', 'large', 'original'];
+        $fallbackVariants = ['medium', 'large', 'small', 'thumbnail', 'original'];
+        $defaultWidths = [
+            'thumbnail' => 300,
+            'small' => 640,
+            'medium' => 1024,
+            'large' => 1600,
+        ];
+
+        $srcsetParts = [];
+
+        foreach ($srcsetVariants as $variant) {
+            $url = $media->variantUrl($variant);
+
+            if ($url === null) {
+                continue;
+            }
+
+            $record = $media->variants->firstWhere('variant', $variant);
+            $width = $record?->width ?? ($variant === 'original' ? $media->width : ($defaultWidths[$variant] ?? null));
+
+            if ($width) {
+                $srcsetParts[$width.'w:'.$url] = $url.' '.$width.'w';
+            }
+        }
+
+        $fallbackUrl = null;
+        $fallbackRecord = null;
+
+        foreach ($fallbackVariants as $variant) {
+            $url = $media->variantUrl($variant);
+
+            if ($url === null) {
+                continue;
+            }
+
+            $fallbackUrl = $url;
+            $fallbackRecord = $media->variants->firstWhere('variant', $variant);
+
+            break;
+        }
+
+        $fallbackUrl ??= $media->url();
+        $previewUrl = $media->variantUrl('thumbnail')
+            ?? $media->variantUrl('small')
+            ?? $fallbackUrl;
+
+        return [
+            'url' => $fallbackUrl,
+            'alt' => $media->alt_text ?? '',
+            'srcset' => implode(', ', array_values($srcsetParts)),
+            'sizes' => $sizes,
+            'previewUrl' => $previewUrl,
+            'width' => $fallbackRecord?->width ?? $media->width,
+            'height' => $fallbackRecord?->height ?? $media->height,
         ];
     }
 

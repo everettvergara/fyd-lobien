@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\ContentStatus;
+use App\Models\Media;
+use App\Models\MediaVariant;
 use App\Models\User;
 use App\Modules\Content\Models\Content;
 use App\Modules\ContentBlocks\Database\Seeders\ContentBlockSeeder;
@@ -14,6 +16,7 @@ use App\Modules\PageManager\Models\Page;
 use App\Modules\PageManager\Models\PageBlock;
 use App\Services\Public\PublicBlockRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ContentBlockManagementTest extends TestCase
@@ -396,5 +399,97 @@ class ContentBlockManagementTest extends TestCase
 
         $this->assertStringContainsString('contents', $response->json('sql.countSql'));
         $this->assertStringContainsString('contents', $response->json('sql.dataSql'));
+    }
+
+    public function test_content_block_featured_image_includes_responsive_srcset(): void
+    {
+        Storage::fake('public');
+
+        $admin = $this->admin();
+
+        $paths = [
+            'original' => 'media/hero-original.jpg',
+            'thumbnail' => 'media/variants/hero-thumbnail.jpg',
+            'medium' => 'media/variants/hero-medium.jpg',
+        ];
+
+        foreach ($paths as $path) {
+            Storage::disk('public')->put($path, 'image-bytes');
+        }
+
+        $media = Media::create([
+            'filename' => 'hero-original.jpg',
+            'original_filename' => 'hero-original.jpg',
+            'mime_type' => 'image/jpeg',
+            'extension' => 'jpg',
+            'size' => 1200,
+            'width' => 2000,
+            'height' => 1200,
+            'disk' => 'public',
+            'path' => $paths['original'],
+            'uploaded_by' => $admin->id,
+            'alt_text' => 'Hero image',
+        ]);
+
+        foreach ([
+            ['variant' => 'original', 'path' => $paths['original'], 'width' => 2000, 'height' => 1200],
+            ['variant' => 'thumbnail', 'path' => $paths['thumbnail'], 'width' => 300, 'height' => 180],
+            ['variant' => 'medium', 'path' => $paths['medium'], 'width' => 1024, 'height' => 614],
+        ] as $variant) {
+            MediaVariant::create([
+                'media_id' => $media->id,
+                'variant' => $variant['variant'],
+                'disk' => 'public',
+                'storage_provider' => 'local',
+                'path' => $variant['path'],
+                'mime_type' => 'image/jpeg',
+                'extension' => 'jpg',
+                'size' => 512,
+                'width' => $variant['width'],
+                'height' => $variant['height'],
+            ]);
+        }
+
+        Content::create([
+            'content_type' => 'article',
+            'title' => 'Responsive Image Article',
+            'slug' => 'responsive-image-article',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $admin->id,
+            'featured_image_id' => $media->id,
+        ]);
+
+        $block = ContentBlock::create([
+            'name' => 'Responsive Image Block',
+            'key' => 'responsive-image-block',
+            'status' => ContentStatus::Published,
+            'content_types' => ['article'],
+            'fields' => [
+                ['field' => 'featured_image', 'label' => 'Image', 'class' => 'content-block__featured-image', 'id' => 'content-block-responsive-image-block-featured-image', 'sort_order' => 0],
+            ],
+            'filters' => [
+                ['field' => 'title', 'operator' => 'contains', 'value' => 'Responsive Image Article', 'group' => 'and'],
+            ],
+            'sort_field' => 'published_at',
+            'sort_direction' => 'desc',
+            'items_per_page' => 10,
+            'pagination_enabled' => false,
+            'formatter' => ContentBlockFormatter::Table,
+        ]);
+
+        $dto = app(ContentBlockRenderingService::class)->dto($block);
+
+        $this->assertCount(1, $dto['rows']);
+
+        $image = $dto['rows'][0][0]['value'];
+
+        $this->assertSame(Storage::disk('public')->url($paths['medium']), $image['url']);
+        $this->assertSame(Storage::disk('public')->url($paths['thumbnail']), $image['previewUrl']);
+        $this->assertSame('Hero image', $image['alt']);
+        $this->assertSame('(max-width: 768px) 100vw, 200px', $image['sizes']);
+        $this->assertStringContainsString(Storage::disk('public')->url($paths['thumbnail']).' 300w', $image['srcset']);
+        $this->assertStringContainsString(Storage::disk('public')->url($paths['medium']).' 1024w', $image['srcset']);
+        $this->assertStringContainsString(Storage::disk('public')->url($paths['original']).' 2000w', $image['srcset']);
     }
 }

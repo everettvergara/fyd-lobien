@@ -56,8 +56,13 @@ const contentHref = () => `/${props.cell.contentPath}`;
     >
         <img
             :src="cell.value.url"
+            :srcset="cell.value.srcset || undefined"
+            :sizes="cell.value.sizes || undefined"
             :alt="cell.value.alt"
+            :width="cell.value.width || undefined"
+            :height="cell.value.height || undefined"
             class="content-block__image"
+            loading="lazy"
         >
     </Link>
     <Link
@@ -81,8 +86,13 @@ const contentHref = () => `/${props.cell.contentPath}`;
     <img
         v-else-if="component() === 'image'"
         :src="cell.value.url"
+        :srcset="cell.value.srcset || undefined"
+        :sizes="cell.value.sizes || undefined"
         :alt="cell.value.alt"
+        :width="cell.value.width || undefined"
+        :height="cell.value.height || undefined"
         class="content-block__image"
+        loading="lazy"
     >
     <a
         v-else-if="component() === 'link'"
