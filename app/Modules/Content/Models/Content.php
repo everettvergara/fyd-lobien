@@ -5,6 +5,7 @@ namespace App\Modules\Content\Models;
 use App\Enums\ContentStatus;
 use App\Models\Media;
 use App\Models\User;
+use App\Traits\HasSeo;
 use App\Traits\Publishable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Content extends Model
 {
-    use Publishable, SoftDeletes;
+    use HasSeo, Publishable, SoftDeletes;
 
     protected $fillable = [
         'content_type', 'title', 'slug', 'summary', 'body',

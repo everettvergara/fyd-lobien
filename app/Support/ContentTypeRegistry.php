@@ -27,6 +27,7 @@ class ContentTypeRegistry
                             'label' => $type->label,
                             'description' => $type->description,
                             'icon' => $type->icon,
+                            'slug' => $type->slug,
                         ],
                     ])
                     ->all();
@@ -62,6 +63,13 @@ class ContentTypeRegistry
     public function icon(string $key): string
     {
         return $this->all()[$key]['icon'] ?? 'bi-file-earmark';
+    }
+
+    public function slug(string $key): ?string
+    {
+        $slug = $this->all()[$key]['slug'] ?? null;
+
+        return is_string($slug) && $slug !== '' ? $slug : null;
     }
 
     public function badgeHtml(string $key): string

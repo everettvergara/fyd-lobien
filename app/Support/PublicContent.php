@@ -5,6 +5,9 @@ namespace App\Support;
 use App\Modules\Banners\Models\Banner;
 use App\Modules\Banners\Services\BannerRenderingService;
 use App\Modules\Content\Models\Content;
+use App\Modules\Content\Models\ContentType;
+use App\Modules\Content\Services\ContentTypeListingService;
+use App\Modules\Content\Services\ContentUrlService;
 
 class PublicContent
 {
@@ -12,11 +15,13 @@ class PublicContent
     {
         $content->loadMissing(['featuredImage', 'seoMeta', 'author']);
         $registry = app(ContentTypeRegistry::class);
+        $path = app(ContentUrlService::class)->pathFor($content);
 
         return [
             'id' => $content->id,
             'title' => $content->title,
             'slug' => $content->slug,
+            'path' => $path,
             'summary' => $content->summary,
             'body' => HtmlSanitizer::clean($content->body),
             'contentType' => [
@@ -35,6 +40,7 @@ class PublicContent
         return [
             'title' => $content->title,
             'slug' => $content->slug,
+            'path' => app(ContentUrlService::class)->pathFor($content),
             'summary' => $content->summary,
             'contentType' => [
                 'key' => $content->content_type,
@@ -59,6 +65,11 @@ class PublicContent
     {
         return app(\App\Modules\ContentBlocks\Services\ContentBlockRenderingService::class)
             ->contentBlockByKey($key, $page);
+    }
+
+    public static function contentTypeListing(ContentType $type, int $page = 1, ?string $queryParam = null): ?array
+    {
+        return app(ContentTypeListingService::class)->dto($type, $page, $queryParam);
     }
 
     public static function media($media): ?array

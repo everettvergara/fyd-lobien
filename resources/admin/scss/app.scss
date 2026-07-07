@@ -1042,6 +1042,23 @@ $pagination-active-border-color: $fyd-admin-link-color;
         padding: 0.2rem 0.45rem;
         line-height: 1.35;
         text-align: left;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.25rem;
+        background-color: #fff;
+        color: #334155;
+        font-size: $fyd-admin-font-size-input;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+
+        &:hover {
+            background-color: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        &:active {
+            cursor: grabbing;
+        }
     }
 
     .page-block-regions {
@@ -1103,12 +1120,35 @@ $pagination-active-border-color: $fyd-admin-link-color;
         border: 1px solid #e2e8f0;
         border-radius: 0.3rem;
         background-color: #fff;
+
+        &.is-dragging {
+            opacity: 0.6;
+        }
+    }
+
+    .page-block-row-handle {
+        cursor: grab;
+        display: inline-flex;
+        align-items: center;
+        user-select: none;
+        touch-action: none;
+
+        &:active {
+            cursor: grabbing;
+        }
     }
 
     .page-block-row-title {
         flex: 0 0 auto;
         font-size: $fyd-admin-font-size-label;
         white-space: nowrap;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+
+        &:active {
+            cursor: grabbing;
+        }
     }
 
     .page-block-row-fields {
@@ -1157,6 +1197,16 @@ $pagination-active-border-color: $fyd-admin-link-color;
         line-height: 1;
         margin-left: auto;
     }
+}
+
+.page-block-drag-ghost {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1080;
+    pointer-events: none;
+    opacity: 0.85;
+    box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.18);
 }
 
 .content-form-sidebar {

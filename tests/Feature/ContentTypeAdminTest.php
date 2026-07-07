@@ -20,6 +20,69 @@ class ContentTypeAdminTest extends TestCase
         return User::where('email', 'admin@fyd.local')->first();
     }
 
+    public function test_content_type_edit_form_shows_optional_slug_field(): void
+    {
+        $admin = $this->admin();
+
+        $pageResponse = $this->actingAs($admin)->get('/admin/content-types/page/edit');
+        $pageResponse->assertOk();
+        $pageResponse->assertSee('name="slug"', false);
+        $pageResponse->assertSee('id="slug"', false);
+        $pageResponse->assertDontSee('value="page"', false);
+
+        $articleResponse = $this->actingAs($admin)->get('/admin/content-types/article/edit');
+        $articleResponse->assertOk();
+        $articleResponse->assertSee('value="articles"', false);
+    }
+
+    public function test_admin_can_update_content_type_slug_and_clear_it(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->put('/admin/content-types/article', [
+            'slug' => 'company-news',
+            'label' => 'Article',
+            'description' => 'Blog post / news article',
+            'icon' => 'bi-journal-text',
+            'sort_order' => 1,
+            'is_active' => 1,
+        ])->assertRedirect(route('admin.content-types.index'));
+
+        $this->assertDatabaseHas('content_types', [
+            'key' => 'article',
+            'slug' => 'company-news',
+        ]);
+
+        $this->actingAs($admin)->put('/admin/content-types/article', [
+            'slug' => '',
+            'label' => 'Article',
+            'description' => 'Blog post / news article',
+            'icon' => 'bi-journal-text',
+            'sort_order' => 1,
+            'is_active' => 1,
+        ])->assertRedirect(route('admin.content-types.index'));
+
+        $this->assertDatabaseHas('content_types', [
+            'key' => 'article',
+            'slug' => null,
+        ]);
+    }
+
+    public function test_content_type_slug_must_be_unique(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->post('/admin/content-types', [
+            'key' => 'news',
+            'slug' => 'articles',
+            'label' => 'News',
+            'description' => 'Company news items',
+            'icon' => 'bi-newspaper',
+            'sort_order' => 10,
+            'is_active' => 1,
+        ])->assertSessionHasErrors('slug');
+    }
+
     public function test_content_types_list_renders_master_entries(): void
     {
         $admin = $this->admin();

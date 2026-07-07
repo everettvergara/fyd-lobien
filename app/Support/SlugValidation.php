@@ -19,4 +19,18 @@ class SlugValidation
             $uniqueRule,
         ];
     }
+
+    /**
+     * @return array<int, mixed>
+     */
+    public static function nullableRules(string $uniqueRule): array
+    {
+        return [
+            'nullable',
+            'string',
+            'max:100',
+            'regex:'.self::PATTERN,
+            $uniqueRule,
+        ];
+    }
 }

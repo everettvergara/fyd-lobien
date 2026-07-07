@@ -6,7 +6,7 @@
 <div class="page-block-editor border rounded p-3" data-block-editor data-input-prefix="{{ $inputPrefix }}">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="h6 mb-0">Region Layout</h2>
-        <span class="text-muted small">Drag blocks from the left into a region</span>
+        <span class="text-muted small">Drag blocks from the left into a region. Reorder rows using the grip handle.</span>
     </div>
 
     <div class="page-block-editor-layout">
@@ -14,16 +14,14 @@
             <div class="page-block-palette-header">Available blocks</div>
             <div class="block-palette">
                 @foreach ($blockPalette as $block)
-                    <button
-                        type="button"
-                        class="btn btn-outline-secondary btn-sm block-palette-item"
-                        draggable="true"
+                    <div
+                        class="block-palette-item"
                         data-block-type="{{ $block['key'] }}"
                         data-block-label="{{ $block['label'] ?? $block['key'] }}"
                         title="{{ ($block['module'] ?? '') !== '' ? ($block['module'] ?? '').' · '.($block['label'] ?? $block['key']) : ($block['label'] ?? $block['key']) }}"
                     >
                         <i class="bi {{ $block['icon'] ?? 'bi-box' }} me-1"></i>{{ $block['label'] ?? $block['key'] }}
-                    </button>
+                    </div>
                 @endforeach
             </div>
         </aside>
@@ -51,9 +49,9 @@
     <script type="application/json" data-block-palette-json>@json($blockPalette)</script>
 </div>
 
-@once
-    @push('scripts')
-        <script>
+@pushOnce('scripts', 'page-block-editor')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('[data-block-editor]').forEach((editor) => {
                 const prefix = editor.dataset.inputPrefix || 'blocks';
                 const inputsHost = editor.querySelector('[data-block-inputs]');
@@ -61,12 +59,170 @@
                 const palette = JSON.parse(editor.querySelector('[data-block-palette-json]')?.textContent || '[]');
                 const paletteByType = Object.fromEntries(palette.map((block) => [block.key, block]));
                 const state = [];
+                let draggedRow = null;
+                let pointerDrag = null;
 
                 editor.querySelectorAll('.block-palette-item[data-block-type]').forEach((item) => {
+                    item.addEventListener('pointerdown', (event) => {
+                        if (event.button !== 0) {
+                            return;
+                        }
+
+                        startPointerDrag(event, {
+                            type: 'palette',
+                            blockType: item.dataset.blockType,
+                            label: item.dataset.blockLabel || item.dataset.blockType,
+                        }, item);
+                    });
+
                     item.addEventListener('dragstart', (event) => {
+                        draggedRow = null;
+                        event.dataTransfer.effectAllowed = 'copy';
+                        event.dataTransfer.setData('text/plain', item.dataset.blockType);
                         event.dataTransfer.setData('block/type', item.dataset.blockType);
                         event.dataTransfer.setData('block/label', item.dataset.blockLabel || item.dataset.blockType);
                     });
+                });
+
+                function bindRowDrag(source, row) {
+                    source.addEventListener('pointerdown', (event) => {
+                        if (event.button !== 0) {
+                            return;
+                        }
+
+                        startPointerDrag(event, {
+                            type: 'row',
+                            row,
+                        }, source);
+                    });
+
+                    source.addEventListener('dragstart', (event) => {
+                        draggedRow = row;
+                        row.classList.add('is-dragging');
+                        event.dataTransfer.effectAllowed = 'move';
+                        event.dataTransfer.setData('text/plain', 'row');
+                    });
+                }
+
+                function startPointerDrag(event, payload, source) {
+                    event.preventDefault();
+
+                    const ghost = source.cloneNode(true);
+                    ghost.classList.add('page-block-drag-ghost');
+                    ghost.style.width = `${source.offsetWidth}px`;
+                    document.body.appendChild(ghost);
+
+                    pointerDrag = {
+                        payload,
+                        source,
+                        ghost,
+                        pointerId: event.pointerId,
+                    };
+
+                    if (payload.type === 'row') {
+                        payload.row.classList.add('is-dragging');
+                    }
+
+                    try {
+                        source.setPointerCapture?.(event.pointerId);
+                    } catch (e) {
+                        // Pointer capture is a nicety; dragging works without it.
+                    }
+
+                    movePointerGhost(event);
+                    window.addEventListener('pointermove', handlePointerMove);
+                    window.addEventListener('pointerup', handlePointerUp, { once: true });
+                    window.addEventListener('pointercancel', cancelPointerDrag, { once: true });
+                }
+
+                function movePointerGhost(event) {
+                    if (!pointerDrag) {
+                        return;
+                    }
+
+                    pointerDrag.ghost.style.transform = `translate(${event.clientX + 12}px, ${event.clientY + 12}px)`;
+                }
+
+                function handlePointerMove(event) {
+                    if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    movePointerGhost(event);
+                    editor.querySelectorAll('.region-dropzone.is-drag-over').forEach((dropzone) => {
+                        dropzone.classList.remove('is-drag-over');
+                    });
+
+                    const target = document.elementFromPoint(event.clientX, event.clientY);
+                    const zone = target?.closest?.('[data-region-blocks]');
+                    zone?.closest('.region-dropzone')?.classList.add('is-drag-over');
+
+                    if (pointerDrag.payload.type !== 'row' || !zone || !zone.contains(pointerDrag.payload.row)) {
+                        return;
+                    }
+
+                    const targetRow = target.closest('.page-block-row');
+                    if (!targetRow || targetRow === pointerDrag.payload.row) {
+                        return;
+                    }
+
+                    const rect = targetRow.getBoundingClientRect();
+                    const after = event.clientY > rect.top + rect.height / 2;
+                    zone.insertBefore(pointerDrag.payload.row, after ? targetRow.nextSibling : targetRow);
+                }
+
+                function handlePointerUp(event) {
+                    if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) {
+                        return;
+                    }
+
+                    const payload = pointerDrag.payload;
+                    const target = document.elementFromPoint(event.clientX, event.clientY);
+                    const zone = target?.closest?.('[data-region-blocks]');
+
+                    if (payload.type === 'palette' && zone) {
+                        addBlock(zone.dataset.regionBlocks, payload.blockType, payload.label);
+                    } else if (payload.type === 'row') {
+                        const rowZone = payload.row.closest('[data-region-blocks]');
+                        if (rowZone) {
+                            updateRegionSortOrders(rowZone);
+                        }
+                    }
+
+                    cleanupPointerDrag();
+                }
+
+                function cancelPointerDrag() {
+                    cleanupPointerDrag();
+                    render();
+                }
+
+                function cleanupPointerDrag() {
+                    if (!pointerDrag) {
+                        return;
+                    }
+
+                    pointerDrag.payload.row?.classList.remove('is-dragging');
+                    pointerDrag.ghost.remove();
+                    editor.querySelectorAll('.region-dropzone.is-drag-over').forEach((dropzone) => {
+                        dropzone.classList.remove('is-drag-over');
+                    });
+                    window.removeEventListener('pointermove', handlePointerMove);
+                    pointerDrag = null;
+                }
+
+                editor.addEventListener('dragend', () => {
+                    if (!draggedRow) {
+                        return;
+                    }
+
+                    draggedRow.classList.remove('is-dragging');
+                    const zone = draggedRow.closest('[data-region-blocks]');
+                    if (zone) {
+                        updateRegionSortOrders(zone);
+                    }
+                    draggedRow = null;
                 });
 
                 editor.querySelectorAll('[data-region-blocks]').forEach((zone) => {
@@ -74,6 +230,19 @@
 
                     zone.addEventListener('dragover', (event) => {
                         event.preventDefault();
+
+                        if (draggedRow && zone.contains(draggedRow)) {
+                            const targetRow = event.target.closest('.page-block-row');
+                            if (!targetRow || targetRow === draggedRow) {
+                                return;
+                            }
+
+                            const rect = targetRow.getBoundingClientRect();
+                            const after = event.clientY > rect.top + rect.height / 2;
+                            zone.insertBefore(draggedRow, after ? targetRow.nextSibling : targetRow);
+                            return;
+                        }
+
                         dropzone?.classList.add('is-drag-over');
                     });
 
@@ -86,9 +255,18 @@
                     zone.addEventListener('drop', (event) => {
                         event.preventDefault();
                         dropzone?.classList.remove('is-drag-over');
-                        const type = event.dataTransfer.getData('block/type');
+
+                        if (draggedRow) {
+                            return;
+                        }
+
+                        const type = event.dataTransfer.getData('block/type')
+                            || event.dataTransfer.getData('text/plain');
                         const label = event.dataTransfer.getData('block/label') || type;
-                        if (!type) return;
+                        if (!type || type === 'row') {
+                            return;
+                        }
+
                         addBlock(zone.dataset.regionBlocks, type, label);
                     });
                 });
@@ -209,10 +387,21 @@
                         regionBlocks.forEach((block) => {
                             const row = document.createElement('div');
                             row.className = 'page-block-row';
+                            row.dataset.stateIndex = String(state.indexOf(block));
 
                             const title = document.createElement('span');
                             title.className = 'page-block-row-title';
-                            title.innerHTML = `<i class="bi bi-grip-vertical text-muted me-1"></i><strong>${block.label}</strong>`;
+
+                            const handle = document.createElement('span');
+                            handle.className = 'page-block-row-handle';
+                            handle.setAttribute('aria-label', 'Drag to reorder');
+                            handle.innerHTML = '<i class="bi bi-grip-vertical text-muted me-1"></i>';
+                            title.appendChild(handle);
+
+                            const label = document.createElement('strong');
+                            label.textContent = block.label;
+                            title.appendChild(label);
+                            bindRowDrag(title, row);
                             row.appendChild(title);
 
                             const schema = schemaFor(block.block_type);
@@ -256,6 +445,30 @@
                     render();
                 }
 
+                function updateRegionSortOrders(zone) {
+                    const regionKey = zone.dataset.regionBlocks;
+                    const newRegionBlocks = Array.from(zone.querySelectorAll('.page-block-row'))
+                        .map((row) => state[parseInt(row.dataset.stateIndex, 10)])
+                        .filter(Boolean);
+
+                    newRegionBlocks.forEach((block, index) => {
+                        block.sort_order = index;
+                    });
+
+                    let queueIndex = 0;
+                    const rebuilt = state.map((block) => {
+                        if (block.region_key !== regionKey) {
+                            return block;
+                        }
+
+                        return newRegionBlocks[queueIndex++];
+                    });
+
+                    state.length = 0;
+                    state.push(...rebuilt);
+                    render();
+                }
+
                 function syncInputs() {
                     inputsHost.innerHTML = '';
 
@@ -294,6 +507,6 @@
 
                 render();
             });
-        </script>
-    @endpush
-@endonce
+        });
+    </script>
+@endPushOnce

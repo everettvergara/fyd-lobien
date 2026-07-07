@@ -20,8 +20,8 @@ defineProps({
              :class="{ 'bg-dark': !background_image_url }">
         <div class="property-search-banner__overlay position-absolute top-0 start-0 w-100 h-100"
              style="background: rgba(0, 0, 0, 0.5);"></div>
-        <div class="container position-relative py-5">
-            <div class="py-4">
+        <div class="container position-relative property-search-banner__content">
+            <div class="property-search-banner__inner">
                 <h1 class="display-6 fw-bold mb-4">{{ heading }}</h1>
                 <div class="bg-white rounded-3 shadow p-3 text-body">
                     <PropertySearchFilterForm
@@ -35,3 +35,39 @@ defineProps({
         </div>
     </section>
 </template>
+
+<style scoped>
+.property-search-banner {
+    min-height: 40rem;
+    display: flex;
+    align-items: center;
+    background-size: cover;
+    background-position: center;
+}
+
+.property-search-banner__content {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+}
+
+.property-search-banner__inner {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+@media (max-width: 767.98px) {
+    .property-search-banner {
+        min-height: 32rem;
+    }
+
+    .property-search-banner__content {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+    }
+
+    .property-search-banner__inner {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+}
+</style>

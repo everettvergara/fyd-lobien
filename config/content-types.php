@@ -10,5 +10,6 @@ return [
         'label' => 'Article',
         'description' => 'Blog post / news article',
         'icon' => 'bi-journal-text',
+        'slug' => 'articles',
     ],
 ];

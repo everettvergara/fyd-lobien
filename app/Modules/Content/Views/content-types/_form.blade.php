@@ -17,6 +17,17 @@
 @endif
 
 <div class="mb-3">
+    <label for="slug" class="form-label">Slug</label>
+    <input type="text" class="form-control @error('slug') is-invalid @enderror" id="slug" name="slug" value="{{ old('slug', $contentType?->slug) }}" placeholder="articles">
+    <div class="form-text">
+        Optional public URL segment, separate from the key. When set, published entries list at <code>/{slug}</code> with pagination
+        (e.g. <code>articles</code> → <code>/articles</code>). Leave blank to disable type listing (default for <code>page</code> and new types).
+        The built-in <code>article</code> type defaults to <code>articles</code>.
+    </div>
+    @error('slug')<div class="invalid-feedback">{{ $message }}</div>@enderror
+</div>
+
+<div class="mb-3">
     <label for="label" class="form-label">Label</label>
     <input type="text" class="form-control @error('label') is-invalid @enderror" id="label" name="label" value="{{ old('label', $contentType?->label) }}" required>
     @error('label')<div class="invalid-feedback">{{ $message }}</div>@enderror

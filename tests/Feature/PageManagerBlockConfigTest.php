@@ -140,6 +140,53 @@ class PageManagerBlockConfigTest extends TestCase
             ->assertSee('data-block-palette-json', false)
             ->assertSee('promo-banner', false)
             ->assertSee('Content Block', false)
-            ->assertSee('featured-pages', false);
+            ->assertSee('featured-pages', false)
+            ->assertSee('Reorder rows using the grip handle', false)
+            ->assertSee('page-block-row-handle', false)
+            ->assertSee('updateRegionSortOrders', false);
+    }
+
+    public function test_admin_page_update_persists_block_sort_order(): void
+    {
+        $admin = User::where('email', 'admin@fyd.local')->firstOrFail();
+        $page = Page::query()->where('path', '/about')->firstOrFail();
+
+        $response = $this->actingAs($admin)->put(route('admin.pages.update', $page), [
+            'path' => $page->path,
+            'title' => $page->title,
+            'summary' => $page->summary,
+            'body' => $page->body,
+            'status' => $page->status->value,
+            'blocks' => [
+                [
+                    'region_key' => 'main',
+                    'block_type' => 'page-header',
+                    'sort_order' => 1,
+                    'config' => [],
+                ],
+                [
+                    'region_key' => 'main',
+                    'block_type' => 'content-block',
+                    'sort_order' => 0,
+                    'config' => [
+                        'content_block_key' => 'featured-pages',
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.pages.index'));
+
+        $blocks = PageBlock::query()
+            ->where('page_id', $page->id)
+            ->where('region_key', 'main')
+            ->orderBy('sort_order')
+            ->get();
+
+        $this->assertCount(2, $blocks);
+        $this->assertSame('content-block', $blocks[0]->block_type);
+        $this->assertSame(0, $blocks[0]->sort_order);
+        $this->assertSame('page-header', $blocks[1]->block_type);
+        $this->assertSame(1, $blocks[1]->sort_order);
     }
 }

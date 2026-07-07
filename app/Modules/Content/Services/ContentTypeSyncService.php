@@ -20,6 +20,7 @@ class ContentTypeSyncService
                 ['key' => $key],
                 [
                     'label' => $type['label'] ?? $key,
+                    'slug' => $type['slug'] ?? null,
                     'description' => $type['description'] ?? null,
                     'icon' => $type['icon'] ?? 'bi-file-earmark',
                     'sort_order' => $sort++,

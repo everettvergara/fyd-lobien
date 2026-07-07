@@ -19,6 +19,7 @@ class StoreContentTypeRequest extends FormRequest
                 SlugValidation::rules('unique:content_types,key'),
                 ['max:100'],
             ),
+            'slug' => SlugValidation::nullableRules('unique:content_types,slug'),
             'label' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'icon' => ['required', 'string', 'max:100'],
@@ -32,6 +33,7 @@ class StoreContentTypeRequest extends FormRequest
         $this->merge([
             'is_active' => $this->boolean('is_active'),
             'sort_order' => $this->input('sort_order', 0),
+            'slug' => $this->filled('slug') ? $this->input('slug') : null,
         ]);
     }
 }

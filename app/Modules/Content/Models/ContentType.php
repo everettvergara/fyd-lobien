@@ -9,6 +9,7 @@ class ContentType extends Model
 {
     protected $fillable = [
         'key',
+        'slug',
         'label',
         'description',
         'icon',

@@ -2,10 +2,13 @@
 
 namespace App\Modules\Content;
 
+use App\Framework\PublicBlock;
+use App\Modules\Content\Blocks\ContentTypeListingBlockResolver;
 use App\Modules\Content\Models\Content;
 use App\Modules\Content\Models\ContentType;
 use App\Modules\Content\Policies\ContentPolicy;
 use App\Modules\Content\Policies\ContentTypePolicy;
+use App\Modules\Content\Support\ContentTypeKeyOptionsProvider;
 
 class Module extends \App\Framework\Module
 {
@@ -58,6 +61,27 @@ class Module extends \App\Framework\Module
                 routePattern: 'admin.content-types.*',
                 sort: 21,
             ),
+        ];
+    }
+
+    public function publicBlocks(): array
+    {
+        return [
+            PublicBlock::make('content-type-listing')
+                ->label('Content Type Listing')
+                ->icon('bi-collection')
+                ->module($this->name())
+                ->resolver(ContentTypeListingBlockResolver::class)
+                ->component('ContentTypeListingBlock')
+                ->configSchema([
+                    [
+                        'key' => 'content_type_key',
+                        'label' => 'Content Type',
+                        'type' => 'select',
+                        'required' => true,
+                        'optionsProvider' => ContentTypeKeyOptionsProvider::class,
+                    ],
+                ]),
         ];
     }
 }
