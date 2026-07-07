@@ -8,7 +8,9 @@ use App\Modules\PropertyListings\Requests\StoreListingLookupRequest;
 use App\Modules\PropertyListings\Requests\UpdateListingLookupRequest;
 use App\Modules\PropertyListings\Services\ListingLookupAdminService;
 use App\Modules\PropertyListings\Services\ListingLookupPersistenceService;
+use App\Modules\PropertyListings\Support\ListingLookupGroups;
 use App\Services\ActivityLogger;
+use App\Services\Media\MediaUsageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -19,6 +21,7 @@ class ListingLookupController extends Controller
     public function __construct(
         protected ListingLookupAdminService $admin,
         protected ListingLookupPersistenceService $persistence,
+        protected MediaUsageService $usage,
     ) {}
 
     public function index(): View
@@ -72,6 +75,7 @@ class ListingLookupController extends Controller
         $groupKey = $this->resolveGroupOrFail($group);
 
         $lookup = $this->persistence->create($groupKey, $request->validated());
+        $this->syncMediaUsage($lookup);
 
         ActivityLogger::log('listing_lookups', 'created', $lookup);
 
@@ -87,6 +91,8 @@ class ListingLookupController extends Controller
         $groupKey = $this->resolveGroupOrFail($group);
 
         abort_unless($listingLookup->group === $groupKey, 404);
+
+        $listingLookup->load('image');
 
         return view('propertylistings::listing-lookups.edit', [
             'lookup' => $listingLookup,
@@ -104,6 +110,7 @@ class ListingLookupController extends Controller
         abort_unless($listingLookup->group === $groupKey, 404);
 
         $lookup = $this->persistence->update($listingLookup, $request->validated());
+        $this->syncMediaUsage($lookup->refresh());
 
         ActivityLogger::log('listing_lookups', 'updated', $lookup);
 
@@ -121,6 +128,10 @@ class ListingLookupController extends Controller
         abort_unless($listingLookup->group === $groupKey, 404);
 
         try {
+            if (ListingLookupGroups::usesPropertyTypeProfile($listingLookup->group)) {
+                $this->usage->removeModel($listingLookup);
+            }
+
             $this->persistence->delete($listingLookup);
         } catch (ValidationException $exception) {
             return redirect()
@@ -144,5 +155,16 @@ class ListingLookupController extends Controller
         }
 
         return $groupKey;
+    }
+
+    protected function syncMediaUsage(ListingLookup $lookup): void
+    {
+        if (! ListingLookupGroups::usesPropertyTypeProfile($lookup->group)) {
+            return;
+        }
+
+        $this->usage->syncModel($lookup, 'property-listings', [
+            'image_id' => 'Property Type Image',
+        ]);
     }
 }

@@ -9,6 +9,7 @@ use App\Modules\PropertyListings\Controllers\ListingExportController;
 use App\Modules\PropertyListings\Controllers\ListingImportController;
 use App\Modules\PropertyListings\Controllers\ListingLookupController;
 use App\Modules\PropertyListings\Controllers\ListingRemarkController;
+use App\Modules\PropertyListings\Controllers\PropertySearchBannerController;
 use App\Modules\PropertyListings\Controllers\PropertyUploaderController;
 use Illuminate\Support\Facades\Route;
 
@@ -73,6 +74,8 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::post('listings/unpublish-all', [ListingController::class, 'unpublishAll'])->name('listings.unpublish-all');
 
     Route::resource('listings', ListingController::class)->except(['show']);
+
+    Route::resource('property-search-banners', PropertySearchBannerController::class)->except(['show']);
 
     Route::get('listing-lookups', [ListingLookupController::class, 'index'])->name('listing-lookups.index');
     Route::get('listing-lookups/{group}', [ListingLookupController::class, 'groupIndex'])->name('listing-lookups.group');

@@ -162,8 +162,18 @@ class PropertyListingsPublicPagesTest extends TestCase
         $this->assertDatabaseHas('pages', ['path' => '/properties']);
         $this->assertDatabaseHas('pages', ['path' => '/properties/search']);
         $this->assertDatabaseHas('page_blocks', ['block_type' => 'property-search-banner']);
+
+        $hubPage = Page::query()->where('path', '/properties')->first();
+        $this->assertNotNull($hubPage);
+        $bannerBlock = $hubPage->blocks()->where('block_type', 'property-search-banner')->first();
+        $this->assertSame('default', $bannerBlock->config['banner_key'] ?? null);
         $this->assertDatabaseHas('page_blocks', ['block_type' => 'property-listings-cities']);
+        $this->assertDatabaseHas('page_blocks', ['block_type' => 'property-listings-property-types']);
         $this->assertDatabaseHas('page_blocks', ['block_type' => 'property-search-results']);
+
+        $propertyTypesBlock = $hubPage->blocks()->where('block_type', 'property-listings-property-types')->first();
+        $this->assertNotNull($propertyTypesBlock);
+        $this->assertSame(2, $propertyTypesBlock->sort_order);
 
         $footer = Menu::query()->where('location', MenuLocation::Footer)->first();
         $this->assertNotNull($footer);
@@ -235,6 +245,20 @@ class PropertyListingsPublicPagesTest extends TestCase
                 ->where('regions.main.0.props.filters.name', 'Pacific')
                 ->has('regions.main.0.props.listings', 1)
                 ->where('regions.main.0.props.listings.0.slug', 'pacific-star'));
+    }
+
+    public function test_search_page_preselects_property_type_from_query(): void
+    {
+        $this->installPropertyListings();
+
+        app(PropertyListingPageGenerationService::class)->syncAll();
+
+        $this->get('/properties/search?property_type=commercial-office')
+            ->assertOk()
+            ->assertInertia(fn ($inertia) => $inertia
+                ->component('Page/Show')
+                ->where('regions.main.0.type', 'property-search-results')
+                ->where('regions.main.0.props.filters.property_type', 'commercial-office'));
     }
 
     public function test_city_page_exposes_city_profile_and_filtered_listings(): void

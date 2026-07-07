@@ -7,7 +7,7 @@ Authoritative schema for the Property Listings business module. Dropdown values 
 | Group key | Used on | Notes |
 |-----------|---------|-------|
 | `image_type` | `listing_assets.asset_type` | `meta.file_kind`: `image` or `pdf` |
-| `property_type` | `listing_units.property_type` | |
+| `property_type` | `listing_units.property_type` | Optional summary, description, image for public cards |
 | `completion_status` | `listings.completion_status` | Existing, Pipeline |
 | `property_use` | Filters / future use | |
 | `handover_condition` | `listing_units.handover_condition` | Fit-out options |

@@ -76,7 +76,7 @@
 </div></div></div></div>
 <div class="tab-pane fade" id="social">
 <div class="card"><div class="card-body">
-@foreach(['facebook','twitter','instagram','linkedin','youtube'] as $network)
+@foreach (['facebook', 'instagram', 'linkedin', 'tiktok', 'youtube'] as $network)
 <div class="mb-3"><label class="form-label text-capitalize">{{ $network }}</label><input type="url" class="form-control" name="settings[social][{{ $network }}]" value="{{ $settings['social'][$network] ?? '' }}"></div>
 @endforeach
 </div></div></div>

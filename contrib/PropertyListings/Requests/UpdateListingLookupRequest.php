@@ -36,7 +36,7 @@ class UpdateListingLookupRequest extends FormRequest
             'label' => ['required', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
-        ], $this->metaRules($lookup->group));
+        ], $this->metaRules($lookup->group), $this->propertyTypeProfileRules($lookup->group));
     }
 
     /**
@@ -51,6 +51,22 @@ class UpdateListingLookupRequest extends FormRequest
         return [
             'meta' => ['nullable', 'array'],
             'meta.file_kind' => ['nullable', 'string', Rule::in(['image', 'pdf'])],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function propertyTypeProfileRules(string $group): array
+    {
+        if (! ListingLookupGroups::usesPropertyTypeProfile($group)) {
+            return [];
+        }
+
+        return [
+            'summary' => ['nullable', 'string', 'max:500'],
+            'description' => ['nullable', 'string'],
+            'image_id' => ['nullable', 'integer', 'exists:media,id'],
         ];
     }
 }

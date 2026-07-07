@@ -6,16 +6,20 @@ use App\Framework\PublicBlock;
 use App\Modules\PropertyListings\Blocks\PropertyListingDetailBlockResolver;
 use App\Modules\PropertyListings\Blocks\PropertyListingsCitiesBlockResolver;
 use App\Modules\PropertyListings\Blocks\PropertyListingsCityBlockResolver;
+use App\Modules\PropertyListings\Blocks\PropertyListingsPropertyTypesBlockResolver;
 use App\Modules\PropertyListings\Blocks\PropertySearchBannerBlockResolver;
 use App\Modules\PropertyListings\Blocks\PropertySearchResultsBlockResolver;
-use App\Modules\PropertyListings\Support\PropertyBannerImageOptionsProvider;
 use App\Modules\PropertyListings\Database\Seeders\ListingLookupSeeder;
+use App\Modules\PropertyListings\Database\Seeders\PropertySearchBannerSeeder;
 use App\Modules\PropertyListings\Models\Listing;
 use App\Modules\PropertyListings\Models\ListingConfiguration;
 use App\Modules\PropertyListings\Models\ListingLookup;
+use App\Modules\PropertyListings\Models\PropertySearchBanner;
 use App\Modules\PropertyListings\Policies\ListingConfigurationPolicy;
 use App\Modules\PropertyListings\Policies\ListingLookupPolicy;
 use App\Modules\PropertyListings\Policies\ListingPolicy;
+use App\Modules\PropertyListings\Policies\PropertySearchBannerPolicy;
+use App\Modules\PropertyListings\Support\PropertySearchBannerKeyOptionsProvider;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -37,6 +41,7 @@ class Module extends \App\Framework\Module
             Listing::class => ListingPolicy::class,
             ListingLookup::class => ListingLookupPolicy::class,
             ListingConfiguration::class => ListingConfigurationPolicy::class,
+            PropertySearchBanner::class => PropertySearchBannerPolicy::class,
         ];
     }
 
@@ -55,6 +60,10 @@ class Module extends \App\Framework\Module
             $this->permissionEntry('listings.lookups', 'edit', 'Edit Listing Dropdown Values'),
             $this->permissionEntry('listings.lookups', 'delete', 'Delete Listing Dropdown Values'),
             $this->permissionEntry('listings.configuration', 'manage', 'Manage Property Listings Configuration'),
+            $this->permissionEntry('listings.search_banners', 'view', 'View Property Search Banners'),
+            $this->permissionEntry('listings.search_banners', 'create', 'Create Property Search Banners'),
+            $this->permissionEntry('listings.search_banners', 'edit', 'Edit Property Search Banners'),
+            $this->permissionEntry('listings.search_banners', 'delete', 'Delete Property Search Banners'),
         ];
     }
 
@@ -64,13 +73,14 @@ class Module extends \App\Framework\Module
             $this->menuItem('Listings', 'admin.listings.index', 'listings.view', 'bi-buildings', sort: 10),
             $this->menuItem('Property Uploaders', 'admin.property-uploaders.index', 'listings.import', 'bi-cloud-arrow-up', sort: 20),
             $this->menuItem('Dropdown Values', 'admin.listing-lookups.index', 'listings.lookups.view', 'bi-menu-button-wide', sort: 30),
+            $this->menuItem('Search Banners', 'admin.property-search-banners.index', 'listings.search_banners.view', 'bi-image', sort: 35),
             $this->menuItem('Configuration', 'admin.listings.configuration.index', 'listings.configuration.manage', 'bi-sliders', sort: 40),
         ];
     }
 
     public function seeders(): array
     {
-        return [ListingLookupSeeder::class];
+        return [ListingLookupSeeder::class, PropertySearchBannerSeeder::class];
     }
 
     public function uninstall(): void
@@ -79,6 +89,7 @@ class Module extends \App\Framework\Module
             app(\App\Modules\PropertyListings\Services\PropertyListingMenuService::class)->removeFooterMenu();
         }
 
+        Schema::dropIfExists('property_search_banners');
         Schema::dropIfExists('listing_assets');
         Schema::dropIfExists('listing_fees');
         Schema::dropIfExists('listing_remarks');
@@ -101,6 +112,8 @@ class Module extends \App\Framework\Module
                     '2026_07_06_600007_allow_nullable_listing_location',
                     '2026_07_07_600008_add_slug_to_listings',
                     '2026_07_07_600009_add_summary_and_description_to_listings',
+                    '2026_07_07_600010_create_property_search_banners_table',
+                    '2026_07_07_600011_add_summary_description_image_to_listing_lookups',
                 ])
                 ->delete();
         }
@@ -147,6 +160,22 @@ class Module extends \App\Framework\Module
                         'max' => 48,
                     ],
                 ]),
+            PublicBlock::make('property-listings-property-types')
+                ->label('Property Types')
+                ->icon('bi-grid-3x3-gap')
+                ->module($this->name())
+                ->resolver(PropertyListingsPropertyTypesBlockResolver::class)
+                ->component('PropertyListingsPropertyTypesBlock')
+                ->configSchema([
+                    [
+                        'key' => 'per_page',
+                        'label' => 'Types per page',
+                        'type' => 'number',
+                        'default' => 9,
+                        'min' => 1,
+                        'max' => 48,
+                    ],
+                ]),
             PublicBlock::make('property-search-banner')
                 ->label('Property Search Banner')
                 ->icon('bi-search')
@@ -155,17 +184,11 @@ class Module extends \App\Framework\Module
                 ->component('PropertySearchBannerBlock')
                 ->configSchema([
                     [
-                        'key' => 'heading',
-                        'label' => 'Heading',
-                        'type' => 'text',
-                        'default' => 'Find your property',
-                    ],
-                    [
-                        'key' => 'background_image_id',
-                        'label' => 'Background Image',
+                        'key' => 'banner_key',
+                        'label' => 'Search Banner',
                         'type' => 'select',
-                        'optionsProvider' => PropertyBannerImageOptionsProvider::class,
-                        'help' => 'Full-width background image from the media library.',
+                        'required' => true,
+                        'optionsProvider' => PropertySearchBannerKeyOptionsProvider::class,
                     ],
                 ]),
             PublicBlock::make('property-search-results')

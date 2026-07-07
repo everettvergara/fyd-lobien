@@ -71,10 +71,11 @@ const footerAbout = 'Lobien Realty Group is the No. 1 Realty Property Provider i
                     <div class="col-md-3 col-lg-2">
                         <h6>Connect</h6>
                         <div class="d-flex gap-2 mb-3">
-                            <a v-if="app.social?.facebook" :href="app.social.facebook" class="text-dark"><i class="bi bi-facebook"></i></a>
-                            <a v-if="app.social?.twitter" :href="app.social.twitter" class="text-dark"><i class="bi bi-twitter-x"></i></a>
-                            <a v-if="app.social?.instagram" :href="app.social.instagram" class="text-dark"><i class="bi bi-instagram"></i></a>
-                            <a v-if="app.social?.linkedin" :href="app.social.linkedin" class="text-dark"><i class="bi bi-linkedin"></i></a>
+                            <a v-if="app.social?.facebook" :href="app.social.facebook" class="text-dark" target="_blank" rel="noopener noreferrer"><i class="bi bi-facebook"></i></a>
+                            <a v-if="app.social?.instagram" :href="app.social.instagram" class="text-dark" target="_blank" rel="noopener noreferrer"><i class="bi bi-instagram"></i></a>
+                            <a v-if="app.social?.linkedin" :href="app.social.linkedin" class="text-dark" target="_blank" rel="noopener noreferrer"><i class="bi bi-linkedin"></i></a>
+                            <a v-if="app.social?.tiktok" :href="app.social.tiktok" class="text-dark" target="_blank" rel="noopener noreferrer"><i class="bi bi-tiktok"></i></a>
+                            <a v-if="app.social?.youtube" :href="app.social.youtube" class="text-dark" target="_blank" rel="noopener noreferrer"><i class="bi bi-youtube"></i></a>
                         </div>
                         <p v-if="app.contact?.phone" class="small mb-1">
                             <a :href="`tel:${app.contact.phone}`">{{ app.contact.phone }}</a>

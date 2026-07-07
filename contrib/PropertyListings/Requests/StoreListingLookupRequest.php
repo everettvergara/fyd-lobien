@@ -39,7 +39,7 @@ class StoreListingLookupRequest extends FormRequest
             'label' => ['required', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
-        ], $this->metaRules($group));
+        ], $this->metaRules($group), $this->propertyTypeProfileRules($group));
     }
 
     public function withValidator(Validator $validator): void
@@ -68,6 +68,22 @@ class StoreListingLookupRequest extends FormRequest
         return [
             'meta' => ['nullable', 'array'],
             'meta.file_kind' => ['nullable', 'string', Rule::in(['image', 'pdf'])],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function propertyTypeProfileRules(string $group): array
+    {
+        if (! ListingLookupGroups::usesPropertyTypeProfile($group)) {
+            return [];
+        }
+
+        return [
+            'summary' => ['nullable', 'string', 'max:500'],
+            'description' => ['nullable', 'string'],
+            'image_id' => ['nullable', 'integer', 'exists:media,id'],
         ];
     }
 }

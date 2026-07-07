@@ -65,4 +65,9 @@ class ListingLookupGroups
     {
         return $group === self::IMAGE_TYPE;
     }
+
+    public static function usesPropertyTypeProfile(string $group): bool
+    {
+        return $group === self::PROPERTY_TYPE;
+    }
 }

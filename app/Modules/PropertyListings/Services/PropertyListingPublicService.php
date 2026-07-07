@@ -6,6 +6,7 @@ use App\Modules\Address\Models\City;
 use App\Modules\PropertyListings\Models\Listing;
 use App\Modules\PropertyListings\Models\ListingAsset;
 use App\Modules\PropertyListings\Models\ListingFee;
+use App\Modules\PropertyListings\Models\ListingLookup;
 use App\Modules\PropertyListings\Models\ListingRemark;
 use App\Modules\PropertyListings\Models\ListingUnit;
 use App\Modules\PropertyListings\Support\ListingLookupGroups;
@@ -389,6 +390,32 @@ class PropertyListingPublicService
     {
         return collect($this->lookups->options(ListingLookupGroups::PROPERTY_TYPE))
             ->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Property type cards for the public property types block.
+     *
+     * @return array<int, array{value: string, label: string, summary: ?string, image_url: ?string, image_alt: string, search_url: string}>
+     */
+    public function propertyTypeCards(): array
+    {
+        return ListingLookup::query()
+            ->where('group', ListingLookupGroups::PROPERTY_TYPE)
+            ->active()
+            ->with('image')
+            ->orderBy('sort_order')
+            ->orderBy('label')
+            ->get()
+            ->map(fn (ListingLookup $lookup) => [
+                'value' => (string) $lookup->value,
+                'label' => (string) $lookup->label,
+                'summary' => $lookup->summary,
+                'image_url' => $lookup->image?->url(),
+                'image_alt' => $lookup->image?->alt_text ?? $lookup->label,
+                'search_url' => url(ListingPathHelper::searchPath().'?property_type='.$lookup->value),
+            ])
             ->values()
             ->all();
     }

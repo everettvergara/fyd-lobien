@@ -8,7 +8,8 @@ All features below are **admin portal** unless noted. The public website uses ge
 |-----------|--------------|---------|
 | **Listings** | `admin/listings` | CRUD, list views, filters, comparator |
 | **Property Uploaders** | `admin/property-uploaders` | CSV templates/import/export for headers, units, fees; bulk assets |
-| **Dropdown Values** | `admin/listing-lookups` | Manage `listing_lookups` option sets |
+| **Dropdown Values** | `admin/listing-lookups` | Manage `listing_lookups` option sets (property types include summary, description, image) |
+| **Search Banners** | `admin/property-search-banners` | Full-width property search banner configs (heading + background image) |
 | **Configuration** | `admin/listings/configuration` | Module settings; sample seed; **bulk public page generation** |
 
 ## Configuration
@@ -19,6 +20,38 @@ All features below are **admin portal** unless noted. The public website uses ge
 - Use **Generate Public Website** to create/update the `/properties` hub page (city cards + search banner), the `/properties/search` results page, city hub pages, listing pages for all listings with **Publish to PUBLIC** enabled (requires city + slug), and the **Properties** footer menu. Shows a progress bar while the queue job runs.
 - Use **Clear Public Website** to remove all generated pages, their blocks, and the Properties footer menu entries.
 - Requires `listings.configuration.manage` permission.
+
+## Search Banners
+
+Manage property search banner content at **Search Banners** (`admin/property-search-banners`):
+
+- **Name** — admin label
+- **Key** — unique identifier used when attaching the banner to a page (e.g. `default`)
+- **Heading** — headline text shown on the public banner
+- **Background Image** — full-width image via media picker
+- **Active** — inactive banners are hidden from the Page Manager picker
+
+**Page Manager:** the **Property Search Banner** block only lets admins pick a **Search Banner** by key. Image and heading cannot be changed on individual pages or Page Master — edit them here instead.
+
+On module install, a default banner (`key: default`) is seeded for **Generate Public Website**.
+
+Permissions: `listings.search_banners.view`, `.create`, `.edit`, `.delete`.
+
+## Property type profiles (Dropdown Values)
+
+For the **Property Types** group (`admin/listing-lookups/property-type`), each value supports:
+
+- **Summary** — plain text shown on public property type cards (max 500 chars)
+- **Description** — rich HTML with Visual/Source editor (admin only; not shown on cards)
+- **Image** — card thumbnail via media picker
+
+Other lookup groups keep the standard value/label/sort/active fields only.
+
+## Property Types public block
+
+The **Property Types** block (`property-listings-property-types`) renders a card grid of all **active** property types. Cards show image, name, and summary; clicking a card opens `/properties/search?property_type={value}` with the filter pre-selected.
+
+**Generate Public Website** adds this block to the `/properties` hub (sort order: search banner, city cards, property types). **Clear Public Website** removes it with other generated pages. The block can also be attached manually to other pages via Page Manager (`per_page` config).
 
 ## Listing slug (public URL)
 

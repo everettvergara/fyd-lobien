@@ -28,6 +28,9 @@ class ListingLookupPersistenceService
                 'group' => $group,
                 'value' => (string) $data['value'],
                 'label' => (string) $data['label'],
+                'summary' => $this->profileValue($group, $data, 'summary'),
+                'description' => $this->profileValue($group, $data, 'description'),
+                'image_id' => $this->profileValue($group, $data, 'image_id'),
                 'sort_order' => (int) ($data['sort_order'] ?? 0),
                 'is_active' => (bool) ($data['is_active'] ?? true),
                 'meta' => $this->normalizeMeta($group, $data['meta'] ?? null),
@@ -42,14 +45,22 @@ class ListingLookupPersistenceService
     public function update(ListingLookup $lookup, array $data): ListingLookup
     {
         DB::transaction(function () use ($lookup, $data) {
-            $lookup->update([
+            $payload = [
                 'label' => (string) ($data['label'] ?? $lookup->label),
                 'sort_order' => (int) ($data['sort_order'] ?? $lookup->sort_order),
                 'is_active' => (bool) ($data['is_active'] ?? $lookup->is_active),
                 'meta' => array_key_exists('meta', $data)
                     ? $this->normalizeMeta($lookup->group, $data['meta'])
                     : $lookup->meta,
-            ]);
+            ];
+
+            if (ListingLookupGroups::usesPropertyTypeProfile($lookup->group)) {
+                $payload['summary'] = $this->nullableString($data['summary'] ?? null);
+                $payload['description'] = $this->nullableString($data['description'] ?? null);
+                $payload['image_id'] = filled($data['image_id'] ?? null) ? (int) $data['image_id'] : null;
+            }
+
+            $lookup->update($payload);
         });
 
         $this->registry->forgetCache();
@@ -114,5 +125,29 @@ class ListingLookupPersistenceService
         return [
             'file_kind' => in_array($fileKind, ['image', 'pdf'], true) ? $fileKind : 'image',
         ];
+    }
+
+    protected function profileValue(string $group, array $data, string $key): mixed
+    {
+        if (! ListingLookupGroups::usesPropertyTypeProfile($group)) {
+            return null;
+        }
+
+        if ($key === 'image_id') {
+            return filled($data['image_id'] ?? null) ? (int) $data['image_id'] : null;
+        }
+
+        return $this->nullableString($data[$key] ?? null);
+    }
+
+    protected function nullableString(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
     }
 }

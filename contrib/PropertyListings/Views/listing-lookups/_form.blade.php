@@ -3,6 +3,7 @@
     $lookupModel = $lookup ?? null;
     $groupKey = old('group', $lookupModel?->group ?? $group ?? '');
     $showFileKind = ListingLookupGroups::usesFileKind($groupKey);
+    $showPropertyTypeProfile = ListingLookupGroups::usesPropertyTypeProfile($groupKey);
 @endphp
 
 @if ($errors->any())
@@ -79,6 +80,35 @@
                 @endforeach
             </select>
             @error('meta.file_kind')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+    @endif
+
+    @if ($showPropertyTypeProfile)
+        <div class="col-12">
+            <label for="lookup_summary" class="form-label">Summary</label>
+            <textarea class="form-control @error('summary') is-invalid @enderror"
+                      id="lookup_summary"
+                      name="summary"
+                      rows="2"
+                      maxlength="500">{{ old('summary', $lookupModel?->summary) }}</textarea>
+            @error('summary')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="col-12">
+            <x-admin.form.rich-text
+                label="Description"
+                name="description"
+                :value="old('description', $lookupModel?->description)"
+            />
+        </div>
+
+        <div class="col-12">
+            @include('media::partials.media-picker', [
+                'name' => 'image_id',
+                'label' => 'Image',
+                'value' => old('image_id', $lookupModel?->image_id),
+                'previewUrl' => $lookupModel?->image?->url(),
+            ])
         </div>
     @endif
 </div>

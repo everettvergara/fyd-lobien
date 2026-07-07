@@ -39,6 +39,13 @@ class SettingsSeeder extends Seeder
                 'phone' => ['', 'string'],
                 'address' => ['', 'string'],
             ],
+            'social' => [
+                'facebook' => ['', 'string'],
+                'instagram' => ['', 'string'],
+                'linkedin' => ['', 'string'],
+                'tiktok' => ['', 'string'],
+                'youtube' => ['', 'string'],
+            ],
             'auth' => [
                 'registration_enabled' => ['true', 'boolean'],
                 'password_min_length' => ['8', 'string'],

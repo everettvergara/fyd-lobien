@@ -22,6 +22,8 @@ class PropertyListingPageGenerationService
 
     public const BLOCK_SEARCH_RESULTS = 'property-search-results';
 
+    public const BLOCK_PROPERTY_TYPES = 'property-listings-property-types';
+
     /**
      * Block types owned by the generator; used to detect generated pages.
      *
@@ -33,6 +35,7 @@ class PropertyListingPageGenerationService
         self::BLOCK_CITIES,
         self::BLOCK_SEARCH_BANNER,
         self::BLOCK_SEARCH_RESULTS,
+        self::BLOCK_PROPERTY_TYPES,
     ];
 
     public function __construct(
@@ -150,7 +153,7 @@ class PropertyListingPageGenerationService
     }
 
     /**
-     * Generate the /properties hub page: search banner + paginated city cards.
+     * Generate the /properties hub page: search banner, city cards, and property type cards.
      *
      * @return array{created: int, updated: int}
      */
@@ -178,8 +181,9 @@ class PropertyListingPageGenerationService
         ]);
 
         $this->syncPageBlocks($page, [
-            ['type' => self::BLOCK_SEARCH_BANNER, 'sort' => 0, 'config' => []],
+            ['type' => self::BLOCK_SEARCH_BANNER, 'sort' => 0, 'config' => ['banner_key' => 'default']],
             ['type' => self::BLOCK_CITIES, 'sort' => 1, 'config' => []],
+            ['type' => self::BLOCK_PROPERTY_TYPES, 'sort' => 2, 'config' => []],
         ]);
 
         return ['created' => $created ? 1 : 0, 'updated' => $created ? 0 : 1];

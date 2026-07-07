@@ -38,6 +38,11 @@ class UpdateSettingsRequest extends FormRequest
                 'max:255',
                 new PublishedContentPageUrl,
             ],
+            'settings.social.facebook' => ['nullable', 'url', 'max:255'],
+            'settings.social.instagram' => ['nullable', 'url', 'max:255'],
+            'settings.social.linkedin' => ['nullable', 'url', 'max:255'],
+            'settings.social.tiktok' => ['nullable', 'url', 'max:255'],
+            'settings.social.youtube' => ['nullable', 'url', 'max:255'],
         ];
     }
 

@@ -2,7 +2,10 @@
 
 namespace App\Modules\PropertyListings\Models;
 
+use App\Models\Media;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ListingLookup extends Model
 {
@@ -10,6 +13,9 @@ class ListingLookup extends Model
         'group',
         'value',
         'label',
+        'summary',
+        'description',
+        'image_id',
         'sort_order',
         'is_active',
         'meta',
@@ -22,5 +28,15 @@ class ListingLookup extends Model
             'is_active' => 'boolean',
             'meta' => 'array',
         ];
+    }
+
+    public function image(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'image_id');
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
     }
 }

@@ -4,6 +4,7 @@
     use App\Modules\PropertyListings\Support\ListingLookupGroups;
     $groupLabel = ListingLookupGroups::label($group);
     $showFileKind = ListingLookupGroups::usesFileKind($group);
+    $showPropertyTypeProfile = ListingLookupGroups::usesPropertyTypeProfile($group);
 @endphp
 
 @section('title', $groupLabel)
@@ -31,6 +32,9 @@
                     <tr>
                         <th>Value</th>
                         <th>Label</th>
+                        @if ($showPropertyTypeProfile)
+                            <th>Summary</th>
+                        @endif
                         @if ($showFileKind)
                             <th>File Kind</th>
                         @endif
@@ -44,6 +48,9 @@
                         <tr>
                             <td><code>{{ $lookup->value }}</code></td>
                             <td>{{ $lookup->label }}</td>
+                            @if ($showPropertyTypeProfile)
+                                <td class="small text-muted">{{ $lookup->summary ?: '—' }}</td>
+                            @endif
                             @if ($showFileKind)
                                 <td>{{ $lookup->meta['file_kind'] ?? '—' }}</td>
                             @endif
@@ -82,7 +89,7 @@
                             </td>
                         </tr>
                     @empty
-                        <x-admin.empty-state :colspan="$showFileKind ? 6 : 5" message="No values in this group yet." />
+                        <x-admin.empty-state :colspan="($showFileKind ? 1 : 0) + ($showPropertyTypeProfile ? 1 : 0) + 5" message="No values in this group yet." />
                     @endforelse
                 </tbody>
             </table>

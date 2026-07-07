@@ -62,10 +62,11 @@ const navigation = page.props.navigation ?? {};
                     <div class="col-md-3">
                         <h6 class="text-white mb-3">Connect</h6>
                         <div class="d-flex gap-2">
-                            <a v-if="app.social?.facebook" :href="app.social.facebook" class="text-white"><i class="bi bi-facebook"></i></a>
-                            <a v-if="app.social?.twitter" :href="app.social.twitter" class="text-white"><i class="bi bi-twitter-x"></i></a>
-                            <a v-if="app.social?.instagram" :href="app.social.instagram" class="text-white"><i class="bi bi-instagram"></i></a>
-                            <a v-if="app.social?.linkedin" :href="app.social.linkedin" class="text-white"><i class="bi bi-linkedin"></i></a>
+                            <a v-if="app.social?.facebook" :href="app.social.facebook" class="text-white" target="_blank" rel="noopener noreferrer"><i class="bi bi-facebook"></i></a>
+                            <a v-if="app.social?.instagram" :href="app.social.instagram" class="text-white" target="_blank" rel="noopener noreferrer"><i class="bi bi-instagram"></i></a>
+                            <a v-if="app.social?.linkedin" :href="app.social.linkedin" class="text-white" target="_blank" rel="noopener noreferrer"><i class="bi bi-linkedin"></i></a>
+                            <a v-if="app.social?.tiktok" :href="app.social.tiktok" class="text-white" target="_blank" rel="noopener noreferrer"><i class="bi bi-tiktok"></i></a>
+                            <a v-if="app.social?.youtube" :href="app.social.youtube" class="text-white" target="_blank" rel="noopener noreferrer"><i class="bi bi-youtube"></i></a>
                         </div>
                     </div>
                 </div>

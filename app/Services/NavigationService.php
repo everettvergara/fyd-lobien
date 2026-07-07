@@ -86,9 +86,10 @@ class NavigationService
             ],
             'social' => [
                 'facebook' => $this->settings->get('social', 'facebook', ''),
-                'twitter' => $this->settings->get('social', 'twitter', ''),
                 'instagram' => $this->settings->get('social', 'instagram', ''),
                 'linkedin' => $this->settings->get('social', 'linkedin', ''),
+                'tiktok' => $this->settings->get('social', 'tiktok', ''),
+                'youtube' => $this->settings->get('social', 'youtube', ''),
             ],
         ];
     }

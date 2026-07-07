@@ -7,13 +7,19 @@ use App\Models\InstalledModule;
 use App\Models\Media;
 use App\Models\MediaVariant;
 use App\Models\User;
+use App\Modules\PropertyListings\Blocks\PropertyListingsPropertyTypesBlockResolver;
+use App\Modules\PropertyListings\Blocks\PropertySearchBannerBlockResolver;
 use App\Modules\PropertyListings\Models\Listing;
 use App\Modules\PropertyListings\Models\ListingAsset;
 use App\Modules\PropertyListings\Models\ListingLookup;
 use App\Modules\PropertyListings\Models\ListingFee;
 use App\Modules\PropertyListings\Models\ListingRemark;
 use App\Modules\PropertyListings\Models\ListingUnit;
+use App\Modules\PropertyListings\Models\PropertySearchBanner;
+use App\Modules\PropertyListings\Module as PropertyListingsModule;
 use App\Modules\PropertyListings\Services\ListingAssetImageProcessor;
+use App\Modules\PropertyListings\Support\PropertySearchBannerKeyOptionsProvider;
+use App\Modules\PageManager\Models\Page;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
@@ -50,7 +56,9 @@ class PropertyListingsModuleTest extends TestCase
         $this->assertTrue(Schema::hasTable('listing_units'));
         $this->assertDatabaseHas('permissions', ['name' => 'listings.view']);
         $this->assertDatabaseHas('permissions', ['name' => 'listings.lookups.view']);
+        $this->assertDatabaseHas('permissions', ['name' => 'listings.search_banners.view']);
         $this->assertDatabaseHas('listing_lookups', ['group' => 'completion_status', 'value' => 'existing']);
+        $this->assertDatabaseHas('property_search_banners', ['key' => 'default', 'heading' => 'Find your property']);
     }
 
     public function test_uninstall_drops_property_listing_tables(): void
@@ -1549,6 +1557,180 @@ class PropertyListingsModuleTest extends TestCase
         $this->assertDatabaseHas('listings', ['code' => 'UNPUB-ALL-2', 'published_to_public' => false]);
     }
 
+    public function test_admin_can_create_search_banner_with_background_image(): void
+    {
+        $this->installPropertyListings();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $media = Media::create([
+            'filename' => 'search-bg.jpg',
+            'original_filename' => 'search-bg.jpg',
+            'mime_type' => 'image/jpeg',
+            'extension' => 'jpg',
+            'size' => 1024,
+            'disk' => 'public',
+            'path' => 'banners/search-bg.jpg',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/property-search-banners', [
+                'name' => 'Homepage Search',
+                'key' => 'homepage',
+                'heading' => 'Search properties',
+                'background_image_id' => $media->id,
+                'is_active' => '1',
+            ])
+            ->assertRedirect(route('admin.property-search-banners.index'));
+
+        $this->assertDatabaseHas('property_search_banners', [
+            'key' => 'homepage',
+            'heading' => 'Search properties',
+            'background_image_id' => $media->id,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_search_banner_resolver_returns_banner_content(): void
+    {
+        $this->installPropertyListings();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $media = Media::create([
+            'filename' => 'resolver-bg.jpg',
+            'original_filename' => 'resolver-bg.jpg',
+            'mime_type' => 'image/jpeg',
+            'extension' => 'jpg',
+            'size' => 1024,
+            'disk' => 'public',
+            'path' => 'banners/resolver-bg.jpg',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        PropertySearchBanner::create([
+            'name' => 'Resolver Banner',
+            'key' => 'resolver-test',
+            'heading' => 'Browse listings',
+            'background_image_id' => $media->id,
+            'is_active' => true,
+        ]);
+
+        $page = new Page(['path' => '/properties']);
+        $props = app(PropertySearchBannerBlockResolver::class)->resolve(
+            ['banner_key' => 'resolver-test'],
+            $page,
+        );
+
+        $this->assertSame('Browse listings', $props['heading']);
+        $this->assertStringContainsString('resolver-bg.jpg', $props['background_image_url']);
+    }
+
+    public function test_search_banner_block_config_exposes_banner_key_only(): void
+    {
+        $blocks = (new PropertyListingsModule)->publicBlocks();
+        $bannerBlock = collect($blocks)->first(fn ($block) => $block->key() === 'property-search-banner');
+        $schema = $bannerBlock->toArray()['config_schema'] ?? [];
+
+        $this->assertCount(1, $schema);
+        $this->assertSame('banner_key', $schema[0]['key'] ?? null);
+        $this->assertSame(PropertySearchBannerKeyOptionsProvider::class, $schema[0]['optionsProvider'] ?? null);
+    }
+
+    public function test_search_banner_key_options_provider_lists_only_active_banners(): void
+    {
+        $this->installPropertyListings();
+
+        PropertySearchBanner::create([
+            'name' => 'Active Banner',
+            'key' => 'active-one',
+            'heading' => 'Active',
+            'is_active' => true,
+        ]);
+        PropertySearchBanner::create([
+            'name' => 'Inactive Banner',
+            'key' => 'inactive-one',
+            'heading' => 'Inactive',
+            'is_active' => false,
+        ]);
+
+        $options = app(PropertySearchBannerKeyOptionsProvider::class)->options();
+        $values = collect($options)->pluck('value')->all();
+
+        $this->assertContains('default', $values);
+        $this->assertContains('active-one', $values);
+        $this->assertNotContains('inactive-one', $values);
+    }
+
+    public function test_property_type_lookup_can_store_summary_description_and_image(): void
+    {
+        $this->installPropertyListings();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $media = Media::create([
+            'filename' => 'office-type.jpg',
+            'original_filename' => 'office-type.jpg',
+            'mime_type' => 'image/jpeg',
+            'extension' => 'jpg',
+            'size' => 1024,
+            'disk' => 'public',
+            'path' => 'property-types/office-type.jpg',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        $lookup = ListingLookup::query()
+            ->where('group', 'property_type')
+            ->where('value', 'commercial-office')
+            ->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put('/admin/listing-lookups/property-type/'.$lookup->id, [
+                'label' => 'Commercial - Office Use (Commercial)',
+                'summary' => 'Office spaces in prime locations',
+                'description' => '<p>Detailed office type copy.</p>',
+                'image_id' => $media->id,
+                'sort_order' => 0,
+                'is_active' => '1',
+            ])
+            ->assertRedirect(route('admin.listing-lookups.group', 'property-type'));
+
+        $this->assertDatabaseHas('listing_lookups', [
+            'group' => 'property_type',
+            'value' => 'commercial-office',
+            'summary' => 'Office spaces in prime locations',
+            'image_id' => $media->id,
+        ]);
+    }
+
+    public function test_property_types_block_resolver_returns_cards_with_search_url(): void
+    {
+        $this->installPropertyListings();
+
+        ListingLookup::query()
+            ->where('group', 'property_type')
+            ->where('value', 'commercial-office')
+            ->update([
+                'summary' => 'Office listings',
+            ]);
+
+        $page = new Page(['path' => '/properties']);
+        $props = app(PropertyListingsPropertyTypesBlockResolver::class)->resolve([], $page);
+
+        $office = collect($props['property_types'])->firstWhere('value', 'commercial-office');
+        $this->assertNotNull($office);
+        $this->assertSame('Office listings', $office['summary']);
+        $this->assertStringContainsString('property_type=commercial-office', $office['search_url']);
+    }
+
+    public function test_property_types_block_registered_in_module(): void
+    {
+        $blocks = (new PropertyListingsModule)->publicBlocks();
+        $typesBlock = collect($blocks)->first(fn ($block) => $block->key() === 'property-listings-property-types');
+        $schema = $typesBlock->toArray()['config_schema'] ?? [];
+
+        $this->assertNotNull($typesBlock);
+        $this->assertSame('per_page', $schema[0]['key'] ?? null);
+    }
+
     protected function createSampleListingWithUnits(): Listing
     {
         $listing = $this->createSampleListing();
@@ -1604,6 +1786,7 @@ class PropertyListingsModuleTest extends TestCase
             'listing_specs',
             'listings',
             'listing_lookups',
+            'property_search_banners',
         ];
     }
 
@@ -1622,6 +1805,8 @@ class PropertyListingsModuleTest extends TestCase
             '2026_07_06_600007_allow_nullable_listing_location',
             '2026_07_07_600008_add_slug_to_listings',
             '2026_07_07_600009_add_summary_and_description_to_listings',
+            '2026_07_07_600010_create_property_search_banners_table',
+            '2026_07_07_600011_add_summary_description_image_to_listing_lookups',
         ];
     }
 
