@@ -118,6 +118,46 @@ class ContentTypeListingTest extends TestCase
         $this->get('/articles')->assertNotFound();
     }
 
+    public function test_page_manager_content_type_listing_block_respects_per_page_config(): void
+    {
+        $this->ensureArticleSlug();
+        $this->clearArticles();
+
+        for ($index = 1; $index <= 5; $index++) {
+            $this->createPublishedArticle("Article {$index}", "article-{$index}");
+        }
+
+        $page = Page::create([
+            'path' => '/articles',
+            'slug' => 'articles',
+            'title' => 'Articles Listing',
+            'summary' => 'Custom listing page',
+            'body' => '',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $this->author->id,
+        ]);
+
+        PageBlock::create([
+            'page_id' => $page->id,
+            'region_key' => 'main',
+            'block_type' => 'content-type-listing',
+            'sort_order' => 0,
+            'config' => [
+                'content_type_key' => 'article',
+                'per_page' => 3,
+            ],
+        ]);
+
+        $this->get('/articles')
+            ->assertOk()
+            ->assertInertia(fn ($inertia) => $inertia
+                ->has('regions.main.0.props.listing.items', 3)
+                ->where('regions.main.0.props.listing.pagination.perPage', 3)
+                ->where('regions.main.0.props.listing.pagination.lastPage', 2)
+                ->where('regions.main.0.props.listing.pagination.total', 5));
+    }
+
     protected function ensureArticleSlug(): void
     {
         ContentType::where('key', 'article')->update(['slug' => 'articles']);

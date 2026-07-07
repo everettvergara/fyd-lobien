@@ -14,13 +14,19 @@ class ContentUrlService
 
     public function pathFor(Content $content): ?string
     {
-        $typeSlug = $this->typeSlugFor($content->content_type);
+        $slug = trim((string) $content->slug);
 
-        if ($typeSlug === null) {
+        if ($slug === '') {
             return null;
         }
 
-        return $typeSlug.'/'.$content->slug;
+        $typeSlug = $this->typeSlugFor($content->content_type);
+
+        if ($typeSlug === null) {
+            return $slug;
+        }
+
+        return $typeSlug.'/'.$slug;
     }
 
     public function listingPathFor(ContentType $type): ?string

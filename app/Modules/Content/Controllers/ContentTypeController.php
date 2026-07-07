@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Modules\Content\Models\ContentType;
 use App\Modules\Content\Requests\StoreContentTypeRequest;
 use App\Modules\Content\Requests\UpdateContentTypeRequest;
+use App\Modules\Content\Services\ContentPageSyncService;
 use App\Modules\Content\Services\ContentTypeAdminListService;
+use App\Modules\Cache\Services\PublicCacheService;
+use App\Modules\SEO\Services\SitemapService;
 use App\Services\ActivityLogger;
 use App\Support\ContentTypeRegistry;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +21,7 @@ class ContentTypeController extends Controller
     public function __construct(
         protected ContentTypeAdminListService $contentTypeList,
         protected ContentTypeRegistry $contentTypes,
+        protected ContentPageSyncService $pageSync,
     ) {}
 
     public function index(Request $request): View
@@ -55,9 +59,17 @@ class ContentTypeController extends Controller
 
     public function update(UpdateContentTypeRequest $request, ContentType $contentType): RedirectResponse
     {
+        $previousSlug = $contentType->slug;
+
         $contentType->update($request->validated());
         $this->contentTypes->forgetCache();
         ActivityLogger::log('content-types', 'updated', $contentType, ['label' => $contentType->label]);
+
+        if ($previousSlug !== $contentType->slug) {
+            $this->pageSync->syncAllForType($contentType->fresh());
+            SitemapService::forgetCache();
+            app(PublicCacheService::class)->clearAll();
+        }
 
         return redirect()->route('admin.content-types.index')
             ->with('success', 'Content type updated successfully.');

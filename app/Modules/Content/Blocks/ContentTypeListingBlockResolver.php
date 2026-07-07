@@ -4,6 +4,7 @@ namespace App\Modules\Content\Blocks;
 
 use App\Contracts\BlockResolver;
 use App\Modules\Content\Models\ContentType;
+use App\Modules\Content\Services\ContentTypeListingService;
 use App\Modules\Content\Services\ContentUrlService;
 use App\Modules\PageManager\Models\Page;
 use App\Support\PublicContent;
@@ -31,9 +32,10 @@ class ContentTypeListingBlockResolver implements BlockResolver
 
         $queryParam = app(ContentUrlService::class)->paginationQueryParam($typeKey);
         $pageNumber = max(1, (int) request()->query($queryParam, 1));
+        $perPage = max(1, (int) ($config['per_page'] ?? ContentTypeListingService::PER_PAGE));
 
         return [
-            'listing' => PublicContent::contentTypeListing($type, $pageNumber, $queryParam),
+            'listing' => PublicContent::contentTypeListing($type, $pageNumber, $queryParam, $perPage),
         ];
     }
 }

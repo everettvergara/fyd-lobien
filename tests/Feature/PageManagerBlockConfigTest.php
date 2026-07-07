@@ -73,6 +73,59 @@ class PageManagerBlockConfigTest extends TestCase
         $this->assertSame([], $defaults);
     }
 
+    public function test_palette_for_admin_exposes_content_type_listing_per_page_field(): void
+    {
+        $palette = app(PublicBlockRegistry::class)->paletteForAdmin();
+        $block = collect($palette)->firstWhere('key', 'content-type-listing');
+
+        $this->assertNotNull($block);
+
+        $field = collect($block['config_schema'])->firstWhere('key', 'per_page');
+
+        $this->assertNotNull($field);
+        $this->assertSame('number', $field['type']);
+        $this->assertSame(10, $field['default']);
+        $this->assertSame(1, $field['min']);
+        $this->assertSame(100, $field['max']);
+    }
+
+    public function test_admin_page_update_persists_content_type_listing_per_page_config(): void
+    {
+        $admin = User::where('email', 'admin@fyd.local')->firstOrFail();
+        $page = Page::query()->where('path', '/about')->firstOrFail();
+
+        $response = $this->actingAs($admin)->put(route('admin.pages.update', $page), [
+            'path' => $page->path,
+            'title' => $page->title,
+            'summary' => $page->summary,
+            'body' => $page->body,
+            'status' => $page->status->value,
+            'blocks' => [
+                [
+                    'region_key' => 'main',
+                    'block_type' => 'content-type-listing',
+                    'sort_order' => 0,
+                    'config' => [
+                        'content_type_key' => 'article',
+                        'per_page' => 5,
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.pages.index'));
+
+        $block = PageBlock::query()
+            ->where('page_id', $page->id)
+            ->where('block_type', 'content-type-listing')
+            ->firstOrFail();
+
+        $this->assertSame([
+            'content_type_key' => 'article',
+            'per_page' => 5,
+        ], $block->config);
+    }
+
     public function test_admin_page_update_persists_typed_block_config(): void
     {
         $admin = User::where('email', 'admin@fyd.local')->firstOrFail();

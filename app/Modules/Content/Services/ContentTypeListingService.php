@@ -15,7 +15,7 @@ class ContentTypeListingService
         protected ContentUrlService $urls,
     ) {}
 
-    public function dto(ContentType $type, int $page = 1, ?string $queryParam = null): ?array
+    public function dto(ContentType $type, int $page = 1, ?string $queryParam = null, ?int $perPage = null): ?array
     {
         $listingPath = $this->urls->listingPathFor($type);
 
@@ -25,6 +25,7 @@ class ContentTypeListingService
 
         $queryParam ??= 'page';
         $page = max(1, $page);
+        $perPage = $this->normalizePerPage($perPage);
 
         $paginator = Content::query()
             ->with(['featuredImage', 'attachment'])
@@ -32,7 +33,7 @@ class ContentTypeListingService
             ->where('content_type', $type->key)
             ->orderByDesc('published_at')
             ->orderByDesc('id')
-            ->paginate(self::PER_PAGE, ['*'], $queryParam, $page);
+            ->paginate($perPage, ['*'], $queryParam, $page);
 
         return [
             'contentType' => [
@@ -61,5 +62,12 @@ class ContentTypeListingService
             'total' => $paginator->total(),
             'queryParam' => $queryParam,
         ];
+    }
+
+    protected function normalizePerPage(?int $perPage): int
+    {
+        $perPage = $perPage ?? self::PER_PAGE;
+
+        return max(1, min($perPage, 100));
     }
 }

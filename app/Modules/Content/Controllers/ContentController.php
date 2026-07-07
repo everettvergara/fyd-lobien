@@ -8,6 +8,7 @@ use App\Modules\Content\Models\Content;
 use App\Modules\Content\Requests\StoreContentRequest;
 use App\Modules\Content\Requests\UpdateContentRequest;
 use App\Modules\Content\Services\ContentAdminListService;
+use App\Modules\Content\Services\ContentPageSyncService;
 use App\Modules\Cache\Services\PublicCacheService;
 use App\Modules\SEO\Services\SitemapService;
 use App\Services\ActivityLogger;
@@ -25,6 +26,7 @@ class ContentController extends Controller
         protected PublishingService $publishing,
         protected MediaUsageService $usage,
         protected ContentTypeRegistry $contentTypes,
+        protected ContentPageSyncService $pageSync,
     ) {}
 
     public function index(Request $request): View
@@ -70,10 +72,11 @@ class ContentController extends Controller
         $content->load('featuredImage');
         $this->syncGallery($content, $request->input('gallery_media_ids', []));
         $this->syncMediaUsage($content);
+        $syncMessage = $this->syncPublicPage($content);
         $this->forgetSitemapCache();
         ActivityLogger::log('content', 'created', $content, ['title' => $content->title]);
 
-        return redirect()->route('admin.content.index')->with('success', 'Content created successfully.');
+        return redirect()->route('admin.content.index')->with('success', 'Content created successfully.'.$syncMessage);
     }
 
     public function show(Content $content): View
@@ -101,10 +104,11 @@ class ContentController extends Controller
         $content->load('featuredImage');
         $this->syncGallery($content, $request->input('gallery_media_ids', []));
         $this->syncMediaUsage($content);
+        $syncMessage = $this->syncPublicPage($content);
         $this->forgetSitemapCache();
         ActivityLogger::log('content', 'updated', $content, ['title' => $content->title]);
 
-        return redirect()->route('admin.content.index')->with('success', 'Content updated successfully.');
+        return redirect()->route('admin.content.index')->with('success', 'Content updated successfully.'.$syncMessage);
     }
 
     public function destroy(Content $content): RedirectResponse
@@ -112,6 +116,7 @@ class ContentController extends Controller
         $this->authorize('delete', $content);
         ActivityLogger::log('content', 'deleted', $content, ['title' => $content->title]);
         $this->usage->removeModel($content);
+        $this->pageSync->removeContentPage($content);
         $content->delete();
         $this->forgetSitemapCache();
 
@@ -122,18 +127,20 @@ class ContentController extends Controller
     {
         $this->authorize('publish', $content);
         $this->publishing->publish($content, 'content');
+        $syncMessage = $this->syncPublicPage($content->fresh());
         $this->forgetSitemapCache();
 
-        return back()->with('success', 'Content published successfully.');
+        return back()->with('success', 'Content published successfully.'.$syncMessage);
     }
 
     public function archive(Content $content): RedirectResponse
     {
         $this->authorize('update', $content);
         $this->publishing->archive($content, 'content');
+        $syncMessage = $this->syncPublicPage($content->fresh());
         $this->forgetSitemapCache();
 
-        return back()->with('success', 'Content archived successfully.');
+        return back()->with('success', 'Content archived successfully.'.$syncMessage);
     }
 
     public function duplicate(Content $content): RedirectResponse
@@ -202,5 +209,16 @@ class ContentController extends Controller
     {
         SitemapService::forgetCache();
         app(PublicCacheService::class)->clearAll();
+    }
+
+    protected function syncPublicPage(Content $content): string
+    {
+        $result = $this->pageSync->syncContentPage($content->fresh());
+
+        if ($result['error'] !== null) {
+            return ' '.$result['error'];
+        }
+
+        return '';
     }
 }

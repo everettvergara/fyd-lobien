@@ -8,6 +8,7 @@ use App\Modules\Content\Models\Content;
 use App\Modules\Content\Models\ContentType;
 use App\Modules\Content\Policies\ContentPolicy;
 use App\Modules\Content\Policies\ContentTypePolicy;
+use App\Modules\Content\Services\ContentTypeListingService;
 use App\Modules\Content\Support\ContentTypeKeyOptionsProvider;
 
 class Module extends \App\Framework\Module
@@ -80,6 +81,15 @@ class Module extends \App\Framework\Module
                         'type' => 'select',
                         'required' => true,
                         'optionsProvider' => ContentTypeKeyOptionsProvider::class,
+                    ],
+                    [
+                        'key' => 'per_page',
+                        'label' => 'Items per page',
+                        'type' => 'number',
+                        'default' => ContentTypeListingService::PER_PAGE,
+                        'min' => 1,
+                        'max' => 100,
+                        'help' => 'Maximum number of published entries to retrieve per page.',
                     ],
                 ]),
         ];

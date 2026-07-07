@@ -10,8 +10,10 @@ use App\Framework\Admin\List\AdminListDefinition;
 use App\Framework\Admin\List\AdminListFilter;
 use App\Framework\Admin\List\AdminListResult;
 use App\Framework\Admin\List\AdminListService;
+use App\Modules\Cache\Services\PublicCacheService;
 use App\Modules\Content\Models\Content;
 use App\Modules\PageManager\Models\Page;
+use App\Modules\SEO\Services\SitemapService;
 use App\Services\ActivityLogger;
 use App\Services\PublishingService;
 use App\Support\ContentTypeRegistry;
@@ -26,6 +28,8 @@ class ContentAdminListService
         protected AdminListService $lists,
         protected PublishingService $publishing,
         protected ContentTypeRegistry $contentTypes,
+        protected ContentUrlService $urls,
+        protected ContentPageSyncService $pageSync,
     ) {}
 
     public function result(Request $request): AdminListResult
@@ -68,7 +72,7 @@ class ContentAdminListService
                 e($content->title),
             ), sortField: 'title', raw: true),
             AdminListColumn::make('content_type', 'Type', fn (Content $content) => $this->contentTypes->badgeHtml($content->content_type), sortField: 'content_type', class: 'small', raw: true),
-            AdminListColumn::make('slug', 'URI', fn (Content $content) => '/'.$content->slug, sortField: 'slug', class: 'text-muted small'),
+            AdminListColumn::make('slug', 'URI', fn (Content $content) => $this->uriFor($content), sortField: 'slug', class: 'text-muted small'),
             AdminListColumn::make('status', 'Status', fn (Content $content) => view('components.admin.status-badge', ['status' => $content->status])->render(), sortField: 'status', raw: true),
             AdminListColumn::make('author', 'Author', fn (Content $content) => $content->author?->name ?? 'Unknown', class: 'small'),
             AdminListColumn::make('published_at', 'Published', fn (Content $content) => $content->published_at?->format('M j, Y') ?? 'Not published', sortField: 'published_at', class: 'text-muted small'),
@@ -149,14 +153,24 @@ class ContentAdminListService
 
     protected function bulkPublish(Collection $items): int
     {
-        $items->each(fn (Content $content) => $this->publishing->publish($content, 'content'));
+        $items->each(function (Content $content) {
+            $this->publishing->publish($content, 'content');
+            $this->pageSync->syncContentPage($content->fresh());
+        });
+
+        $this->forgetPublicCache();
 
         return $items->count();
     }
 
     protected function bulkArchive(Collection $items): int
     {
-        $items->each(fn (Content $content) => $this->publishing->archive($content, 'content'));
+        $items->each(function (Content $content) {
+            $this->publishing->archive($content, 'content');
+            $this->pageSync->syncContentPage($content->fresh());
+        });
+
+        $this->forgetPublicCache();
 
         return $items->count();
     }
@@ -165,8 +179,11 @@ class ContentAdminListService
     {
         $items->each(function (Content $content) {
             ActivityLogger::log('content', 'deleted', $content, ['title' => $content->title]);
+            $this->pageSync->removeContentPage($content);
             $content->delete();
         });
+
+        $this->forgetPublicCache();
 
         return $items->count();
     }
@@ -184,10 +201,31 @@ class ContentAdminListService
 
     protected function pageForContent(Content $content): ?Page
     {
-        if ($content->content_type !== 'page') {
+        $path = $content->public_page_path;
+
+        if (is_string($path) && $path !== '') {
+            return Page::query()->where('path', $path)->first();
+        }
+
+        $computed = $this->urls->pathFor($content);
+
+        if ($computed === null) {
             return null;
         }
 
-        return Page::query()->where('path', '/'.$content->slug)->first();
+        return Page::query()->where('path', '/'.$computed)->first();
+    }
+
+    protected function uriFor(Content $content): string
+    {
+        $path = $this->urls->pathFor($content);
+
+        return $path !== null ? '/'.$path : '';
+    }
+
+    protected function forgetPublicCache(): void
+    {
+        SitemapService::forgetCache();
+        app(PublicCacheService::class)->clearAll();
     }
 }

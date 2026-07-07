@@ -18,7 +18,7 @@ class Content extends Model
 
     protected $fillable = [
         'content_type', 'title', 'slug', 'summary', 'body', 'url_link',
-        'featured_image_id', 'attachment_id', 'status', 'published_at', 'author_id',
+        'featured_image_id', 'attachment_id', 'status', 'published_at', 'author_id', 'public_page_path',
     ];
 
     protected function casts(): array

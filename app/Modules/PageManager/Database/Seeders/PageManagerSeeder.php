@@ -4,7 +4,7 @@ namespace App\Modules\PageManager\Database\Seeders;
 
 use App\Enums\ContentStatus;
 use App\Models\User;
-use App\Modules\Content\Models\Content;
+use App\Modules\Content\Services\ContentPageSyncService;
 use App\Modules\PageManager\Models\Page;
 use App\Modules\PageManager\Models\PageBlock;
 use App\Modules\PageManager\Models\PageMaster;
@@ -55,54 +55,7 @@ class PageManagerSeeder extends Seeder
         }
 
         if (Schema::hasTable('contents')) {
-            Content::query()->where('content_type', 'page')->each(function (Content $content) use ($admin) {
-                $path = '/'.$content->slug;
-                $page = Page::updateOrCreate(
-                    ['path' => $path],
-                    [
-                        'slug' => $content->slug,
-                        'title' => $content->title,
-                        'summary' => $content->summary,
-                        'body' => $content->body,
-                        'status' => $content->status,
-                        'published_at' => $content->published_at,
-                        'author_id' => $content->author_id ?? $admin?->id,
-                        'featured_image_id' => $content->featured_image_id,
-                    ],
-                );
-
-                if ($content->seoMeta) {
-                    $page->saveSeo($content->seoMeta->only([
-                        'seo_title', 'meta_description', 'meta_keywords', 'canonical_url',
-                        'robots', 'og_title', 'og_description', 'og_image_id',
-                        'sitemap_include', 'sitemap_changefreq', 'sitemap_priority',
-                    ]));
-                }
-
-                if ($page->blocks()->count() === 0) {
-                    PageBlock::create([
-                        'page_id' => $page->id,
-                        'region_key' => 'hero',
-                        'block_type' => 'banner',
-                        'sort_order' => 0,
-                        'config' => ['banner_key' => 'page-'.$content->slug],
-                    ]);
-                    PageBlock::create([
-                        'page_id' => $page->id,
-                        'region_key' => 'main',
-                        'block_type' => 'page-header',
-                        'sort_order' => 0,
-                        'config' => [],
-                    ]);
-                    PageBlock::create([
-                        'page_id' => $page->id,
-                        'region_key' => 'main',
-                        'block_type' => 'page-body',
-                        'sort_order' => 1,
-                        'config' => [],
-                    ]);
-                }
-            });
+            app(ContentPageSyncService::class)->syncAll();
         }
     }
 }

@@ -71,7 +71,7 @@ async function submitSearch() {
                     <Link
                         v-for="(result, i) in results"
                         :key="i"
-                        :href="`/${result.slug}`"
+                        :href="result.path ? `/${result.path}` : '#'"
                         class="list-group-item list-group-item-action"
                     >
                         <div class="d-flex justify-content-between align-items-center">

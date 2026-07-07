@@ -20,7 +20,7 @@ defineProps({
             <h5 class="card-title">{{ content.title }}</h5>
             <p v-if="content.summary" class="card-text text-muted small">{{ content.summary }}</p>
             <p v-if="content.publishedAt" class="card-text text-muted small mb-2">{{ content.publishedAt }}</p>
-            <Link :href="`/${content.slug}`" class="btn btn-sm btn-outline-primary">Read More</Link>
+            <Link :href="content.path ? `/${content.path}` : '#'" class="btn btn-sm btn-outline-primary">Read More</Link>
         </div>
     </div>
 </template>

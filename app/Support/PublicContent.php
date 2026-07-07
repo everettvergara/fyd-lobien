@@ -71,9 +71,9 @@ class PublicContent
             ->contentBlockByKey($key, $page);
     }
 
-    public static function contentTypeListing(ContentType $type, int $page = 1, ?string $queryParam = null): ?array
+    public static function contentTypeListing(ContentType $type, int $page = 1, ?string $queryParam = null, ?int $perPage = null): ?array
     {
-        return app(ContentTypeListingService::class)->dto($type, $page, $queryParam);
+        return app(ContentTypeListingService::class)->dto($type, $page, $queryParam, $perPage);
     }
 
     public static function media($media): ?array
