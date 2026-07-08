@@ -49,9 +49,17 @@ Other lookup groups keep the standard value/label/sort/active fields only.
 
 ## Property Types public block
 
-The **Property Types** block (`property-listings-property-types`) renders a card grid of all **active** property types. Cards show image, name, and summary; clicking a card opens `/properties/search?property_type={value}` with the filter pre-selected.
+The **Property Types** block (`property-listings-property-types`) renders a card grid of **active** property types (up to the configured count). Cards show image, name, and summary; clicking a card opens `/properties/search?property_type={value}` with the filter pre-selected.
 
-**Generate Public Website** adds this block to the `/properties` hub (sort order: search banner, city cards, property types). **Clear Public Website** removes it with other generated pages. The block can also be attached manually to other pages via Page Manager (`per_page` config).
+**Block settings** (Page Manager):
+
+| Field | Purpose |
+|-------|---------|
+| **Title** | Section heading above the card grid |
+| **Subtext** | Optional supporting text below the title |
+| **Number of types** | How many property types to show (`per_page`, default 9). Types are ordered by **Sort Order** on each Dropdown Value, then label. There is no pagination. |
+
+**Generate Public Website** adds this block to the `/properties` hub (sort order: search banner, city cards, property types) with the default title. **Clear Public Website** removes it with other generated pages. The block can also be attached manually to other pages via Page Manager.
 
 ## Listing slug (public URL)
 

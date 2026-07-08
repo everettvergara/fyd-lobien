@@ -168,8 +168,20 @@ class Module extends \App\Framework\Module
                 ->component('PropertyListingsPropertyTypesBlock')
                 ->configSchema([
                     [
+                        'key' => 'title',
+                        'label' => 'Title',
+                        'type' => 'text',
+                        'default' => 'Browse by property type',
+                    ],
+                    [
+                        'key' => 'subtext',
+                        'label' => 'Subtext',
+                        'type' => 'textarea',
+                        'default' => '',
+                    ],
+                    [
                         'key' => 'per_page',
-                        'label' => 'Types per page',
+                        'label' => 'Number of types',
                         'type' => 'number',
                         'default' => 9,
                         'min' => 1,

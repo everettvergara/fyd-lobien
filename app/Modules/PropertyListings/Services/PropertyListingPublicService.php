@@ -399,15 +399,20 @@ class PropertyListingPublicService
      *
      * @return array<int, array{value: string, label: string, summary: ?string, image_url: ?string, image_alt: string, search_url: string}>
      */
-    public function propertyTypeCards(): array
+    public function propertyTypeCards(?int $limit = null): array
     {
-        return ListingLookup::query()
+        $query = ListingLookup::query()
             ->where('group', ListingLookupGroups::PROPERTY_TYPE)
             ->active()
             ->with('image')
             ->orderBy('sort_order')
-            ->orderBy('label')
-            ->get()
+            ->orderBy('label');
+
+        if ($limit !== null) {
+            $query->limit(max(1, $limit));
+        }
+
+        return $query->get()
             ->map(fn (ListingLookup $lookup) => [
                 'value' => (string) $lookup->value,
                 'label' => (string) $lookup->label,
