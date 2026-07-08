@@ -54,7 +54,7 @@ class NewsletterModuleTest extends TestCase
         $this->assertDatabaseHas('newsletter_lists', ['slug' => 'site-updates']);
     }
 
-    public function test_page_with_newsletter_block_includes_list_slug(): void
+    public function test_page_with_newsletter_block_includes_list_metadata(): void
     {
         $this->installNewsletter();
 
@@ -82,7 +82,9 @@ class NewsletterModuleTest extends TestCase
             ->assertInertia(fn ($inertia) => $inertia
                 ->component('Page/Show')
                 ->where('regions.main.0.type', 'newsletter')
-                ->where('regions.main.0.props.slug', 'site-updates'));
+                ->where('regions.main.0.props.slug', 'site-updates')
+                ->where('regions.main.0.props.name', 'Site Updates')
+                ->where('regions.main.0.props.description', 'Subscribe to receive news and updates from our site.'));
     }
 
     public function test_homepage_footer_includes_newsletter_from_page_master(): void
@@ -104,7 +106,9 @@ class NewsletterModuleTest extends TestCase
             ->assertInertia(fn ($inertia) => $inertia
                 ->has('regions.footer')
                 ->where('regions.footer.0.type', 'newsletter')
-                ->where('regions.footer.0.props.slug', 'site-updates'));
+                ->where('regions.footer.0.props.slug', 'site-updates')
+                ->where('regions.footer.0.props.name', 'Site Updates')
+                ->where('regions.footer.0.props.description', 'Subscribe to receive news and updates from our site.'));
     }
 
     public function test_public_api_returns_active_list_definition(): void

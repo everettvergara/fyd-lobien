@@ -15,6 +15,36 @@ class NewsletterPublicService
     }
 
     /**
+     * @return array{slug: string, name: string, description: string}
+     */
+    public function blockProps(string $slug): array
+    {
+        if ($slug === '') {
+            return [
+                'slug' => '',
+                'name' => '',
+                'description' => '',
+            ];
+        }
+
+        $list = $this->findActiveBySlug($slug);
+
+        if ($list === null) {
+            return [
+                'slug' => $slug,
+                'name' => '',
+                'description' => '',
+            ];
+        }
+
+        return [
+            'slug' => $list->slug,
+            'name' => (string) $list->name,
+            'description' => (string) ($list->description ?? ''),
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toPublicDto(NewsletterList $list): array
