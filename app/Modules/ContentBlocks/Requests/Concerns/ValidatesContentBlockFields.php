@@ -26,6 +26,7 @@ trait ValidatesContentBlockFields
 
         return [
             'name' => ['required', 'string', 'max:255'],
+            'summary' => ['nullable', 'string', 'max:2000'],
             'icon' => ['required', 'string', 'max:100'],
             'key' => $keyRule,
             'status' => ['required', Rule::enum(\App\Enums\ContentStatus::class)],

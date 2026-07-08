@@ -62,10 +62,12 @@ class ContentBlockService
         $attributes['filters'] = $this->normalizeFilters(Arr::wrap($attributes['filters'] ?? []));
         $attributes['pagination_enabled'] = (bool) ($attributes['pagination_enabled'] ?? false);
         $attributes['items_per_page'] = max(1, (int) ($attributes['items_per_page'] ?? 10));
+        $attributes['summary'] = trim((string) ($attributes['summary'] ?? '')) ?: null;
 
         return Arr::only($attributes, [
             'key',
             'name',
+            'summary',
             'icon',
             'status',
             'content_types',

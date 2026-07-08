@@ -59,6 +59,11 @@
                             <input type="text" name="icon" class="form-control" value="{{ old('icon', $contentBlock?->icon ?? \App\Modules\ContentBlocks\Database\Seeders\ContentBlockSeeder::MENU_ICON) }}" required placeholder="bi-view-stacked">
                             <div class="form-text">Bootstrap Icons class for admin list and Page Manager palette.</div>
                         </div>
+                        <div class="col-12">
+                            <label class="form-label">Summary</label>
+                            <textarea name="summary" class="form-control" rows="3" maxlength="2000">{{ old('summary', $contentBlock?->summary) }}</textarea>
+                            <div class="form-text">Optional intro text for the block. Exposed to themes as <code>contentBlock.summary</code>.</div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -12,6 +12,7 @@ class ContentBlock extends Model
     protected $fillable = [
         'key',
         'name',
+        'summary',
         'icon',
         'status',
         'content_types',

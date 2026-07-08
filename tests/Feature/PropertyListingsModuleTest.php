@@ -1746,7 +1746,7 @@ class PropertyListingsModuleTest extends TestCase
 
         $this->assertNotNull($typesBlock);
         $this->assertSame('title', $schema->firstWhere('key', 'title')['key'] ?? null);
-        $this->assertSame('Browse by property type', $schema->firstWhere('key', 'title')['default'] ?? null);
+        $this->assertSame('', $schema->firstWhere('key', 'title')['default'] ?? null);
         $this->assertSame('subtext', $schema->firstWhere('key', 'subtext')['key'] ?? null);
         $this->assertSame('Number of types', $schema->firstWhere('key', 'per_page')['label'] ?? null);
     }

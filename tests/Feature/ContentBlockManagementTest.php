@@ -359,7 +359,43 @@ class ContentBlockManagementTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.content-blocks.create'))
             ->assertOk()
-            ->assertSee('Link to content', false);
+            ->assertSee('Link to content', false)
+            ->assertSee('Summary', false);
+    }
+
+    public function test_block_summary_is_persisted_and_exposed_in_dto(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->post('/admin/content-blocks', [
+            'name' => 'Summarized Block',
+            'key' => 'summarized-block',
+            'summary' => 'Latest news and updates from our team.',
+            'icon' => 'bi-newspaper',
+            'status' => ContentStatus::Published->value,
+            'content_types' => ['article'],
+            'fields' => [
+                [
+                    'field' => 'title',
+                    'label' => 'Title',
+                    'class' => 'content-block__title',
+                    'id' => 'content-block-summarized-block-title',
+                    'sort_order' => 0,
+                ],
+            ],
+            'filters' => [],
+            'sort_field' => 'published_at',
+            'sort_direction' => 'desc',
+            'items_per_page' => 5,
+            'pagination_enabled' => false,
+            'formatter' => ContentBlockFormatter::Unformatted->value,
+        ])->assertRedirect();
+
+        $block = ContentBlock::where('key', 'summarized-block')->firstOrFail();
+        $this->assertSame('Latest news and updates from our team.', $block->summary);
+
+        $dto = app(ContentBlockRenderingService::class)->dto($block);
+        $this->assertSame('Latest news and updates from our team.', $dto['summary']);
     }
 
     public function test_edit_preview_retrieves_via_preview_existing_route(): void
