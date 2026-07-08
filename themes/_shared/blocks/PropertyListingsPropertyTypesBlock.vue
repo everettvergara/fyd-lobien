@@ -1,17 +1,18 @@
 <script setup>
 import PageContentShell from '../Components/PageContentShell.vue';
-import SimplePager from '../Components/SimplePager.vue';
 
 defineProps({
+    title: { type: String, default: '' },
+    subtext: { type: String, default: '' },
     property_types: { type: Array, default: () => [] },
-    pagination: { type: Object, default: null },
 });
 </script>
 
 <template>
     <PageContentShell width="wide" spacing="section">
         <section class="property-listings-property-types">
-            <h2 class="h3 fw-bold mb-4">Browse by property type</h2>
+            <h2 v-if="title" class="h3 fw-bold mb-4">{{ title }}</h2>
+            <p v-if="subtext" class="text-muted mb-4">{{ subtext }}</p>
 
             <div v-if="property_types.length === 0" class="text-muted">
                 No property types configured yet.
@@ -43,8 +44,6 @@ defineProps({
                     </article>
                 </div>
             </div>
-
-            <SimplePager v-if="pagination" :pagination="pagination" />
         </section>
     </PageContentShell>
 </template>

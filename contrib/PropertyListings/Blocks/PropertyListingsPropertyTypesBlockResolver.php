@@ -16,17 +16,12 @@ class PropertyListingsPropertyTypesBlockResolver implements BlockResolver
 
     public function resolve(array $config, Page $page): array
     {
-        $perPage = max(1, (int) ($config['per_page'] ?? self::PER_PAGE));
-
-        $paginated = $this->publicService->paginateCollection(
-            collect($this->publicService->propertyTypeCards()),
-            (int) request()->query('page', 1),
-            $perPage,
-        );
+        $limit = max(1, (int) ($config['per_page'] ?? self::PER_PAGE));
 
         return [
-            'property_types' => $paginated['items'],
-            'pagination' => $paginated['pagination'],
+            'title' => (string) ($config['title'] ?? 'Browse by property type'),
+            'subtext' => (string) ($config['subtext'] ?? ''),
+            'property_types' => $this->publicService->propertyTypeCards($limit),
         ];
     }
 }

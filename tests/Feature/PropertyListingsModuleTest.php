@@ -1710,10 +1710,27 @@ class PropertyListingsModuleTest extends TestCase
             ->where('value', 'commercial-office')
             ->update([
                 'summary' => 'Office listings',
+                'sort_order' => 0,
             ]);
 
+        ListingLookup::query()
+            ->where('group', 'property_type')
+            ->where('value', 'commercial-retail')
+            ->update(['sort_order' => 1]);
+
         $page = new Page(['path' => '/properties']);
-        $props = app(PropertyListingsPropertyTypesBlockResolver::class)->resolve([], $page);
+        $props = app(PropertyListingsPropertyTypesBlockResolver::class)->resolve([
+            'title' => 'Custom title',
+            'subtext' => 'Custom subtext',
+            'per_page' => 2,
+        ], $page);
+
+        $this->assertSame('Custom title', $props['title']);
+        $this->assertSame('Custom subtext', $props['subtext']);
+        $this->assertArrayNotHasKey('pagination', $props);
+        $this->assertCount(2, $props['property_types']);
+        $this->assertSame('commercial-office', $props['property_types'][0]['value']);
+        $this->assertSame('commercial-retail', $props['property_types'][1]['value']);
 
         $office = collect($props['property_types'])->firstWhere('value', 'commercial-office');
         $this->assertNotNull($office);
@@ -1725,10 +1742,13 @@ class PropertyListingsModuleTest extends TestCase
     {
         $blocks = (new PropertyListingsModule)->publicBlocks();
         $typesBlock = collect($blocks)->first(fn ($block) => $block->key() === 'property-listings-property-types');
-        $schema = $typesBlock->toArray()['config_schema'] ?? [];
+        $schema = collect($typesBlock->toArray()['config_schema'] ?? []);
 
         $this->assertNotNull($typesBlock);
-        $this->assertSame('per_page', $schema[0]['key'] ?? null);
+        $this->assertSame('title', $schema->firstWhere('key', 'title')['key'] ?? null);
+        $this->assertSame('Browse by property type', $schema->firstWhere('key', 'title')['default'] ?? null);
+        $this->assertSame('subtext', $schema->firstWhere('key', 'subtext')['key'] ?? null);
+        $this->assertSame('Number of types', $schema->firstWhere('key', 'per_page')['label'] ?? null);
     }
 
     protected function createSampleListingWithUnits(): Listing
