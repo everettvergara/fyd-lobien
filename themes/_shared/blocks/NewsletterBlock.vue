@@ -4,6 +4,8 @@ import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps({
     slug: { type: String, default: '' },
+    name: { type: String, default: '' },
+    description: { type: String, default: '' },
 });
 
 const { execute } = useRecaptcha();
@@ -170,12 +172,16 @@ onMounted(loadNewsletter);
 
 <template>
     <div v-if="!slug" />
-    <div v-else-if="loading" class="text-muted">Loading...</div>
-    <div v-else-if="loadError" class="alert alert-danger">{{ loadError }}</div>
 
-    <template v-else-if="newsletter">
-        <div v-if="newsletter.description" class="mb-3 text-muted">{{ newsletter.description }}</div>
-        <div v-if="successMessage" class="alert alert-success">{{ successMessage }}</div>
+    <section v-else class="newsletter-block">
+        <h2 v-if="name" class="newsletter-block__name h4 fw-semibold mb-2">{{ name }}</h2>
+        <p v-if="description" class="newsletter-block__description text-muted mb-3">{{ description }}</p>
+
+        <div v-if="loading" class="text-muted">Loading...</div>
+        <div v-else-if="loadError" class="alert alert-danger">{{ loadError }}</div>
+
+        <template v-else-if="newsletter">
+            <div v-if="successMessage" class="alert alert-success">{{ successMessage }}</div>
 
         <form @submit.prevent="isSubscribed ? unsubscribe() : subscribe()">
             <template v-if="!isLoggedIn && !isSubscribed">
@@ -244,5 +250,6 @@ onMounted(loadNewsletter);
                 }}
             </button>
         </form>
-    </template>
+        </template>
+    </section>
 </template>
