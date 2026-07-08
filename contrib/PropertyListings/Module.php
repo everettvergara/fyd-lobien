@@ -171,7 +171,7 @@ class Module extends \App\Framework\Module
                         'key' => 'title',
                         'label' => 'Title',
                         'type' => 'text',
-                        'default' => 'Browse by property type',
+                        'default' => '',
                     ],
                     [
                         'key' => 'subtext',

@@ -183,7 +183,7 @@ class PropertyListingPageGenerationService
         $this->syncPageBlocks($page, [
             ['type' => self::BLOCK_SEARCH_BANNER, 'sort' => 0, 'config' => ['banner_key' => 'default']],
             ['type' => self::BLOCK_CITIES, 'sort' => 1, 'config' => []],
-            ['type' => self::BLOCK_PROPERTY_TYPES, 'sort' => 2, 'config' => ['title' => 'Browse by property type', 'per_page' => 9]],
+            ['type' => self::BLOCK_PROPERTY_TYPES, 'sort' => 2, 'config' => ['per_page' => 9]],
         ]);
 
         return ['created' => $created ? 1 : 0, 'updated' => $created ? 0 : 1];

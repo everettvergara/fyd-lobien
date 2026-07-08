@@ -60,6 +60,7 @@ class ContentBlockRenderingService
 
         return [
             'key' => $block->key,
+            'summary' => (string) ($block->summary ?? ''),
             'formatter' => $block->formatter->value,
             'wrapperClass' => $block->wrapper_class ?: 'content-block content-block--'.$block->key,
             'wrapperId' => $block->wrapper_id ?: 'content-block-'.$block->key,

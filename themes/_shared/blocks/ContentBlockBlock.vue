@@ -23,11 +23,13 @@ function pageUrl(pageNumber) {
 
 <template>
     <section
-        v-if="block && block.rows?.length"
+        v-if="block && (block.summary || block.rows?.length)"
         :id="block.wrapperId"
         :class="block.wrapperClass"
     >
-        <div :class="['content-block__format', `content-block__format--${block.formatter}`]">
+        <p v-if="block.summary" class="content-block__summary text-muted mb-4">{{ block.summary }}</p>
+
+        <div v-if="block.rows?.length" :class="['content-block__format', `content-block__format--${block.formatter}`]">
             <table v-if="block.formatter === 'table'" class="table content-block__table">
                 <thead>
                     <tr>
@@ -86,7 +88,7 @@ function pageUrl(pageNumber) {
             </div>
         </div>
 
-        <nav v-if="block.pagination && block.pagination.lastPage > 1" class="mt-3" aria-label="Content block pagination">
+        <nav v-if="block.rows?.length && block.pagination && block.pagination.lastPage > 1" class="mt-3" aria-label="Content block pagination">
             <ul class="pagination content-block__pagination">
                 <li v-for="pageNumber in block.pagination.lastPage" :key="pageNumber" class="page-item" :class="{ active: pageNumber === block.pagination.currentPage }">
                     <Link :href="pageUrl(pageNumber)" class="page-link">{{ pageNumber }}</Link>

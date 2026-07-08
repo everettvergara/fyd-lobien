@@ -59,7 +59,7 @@ The **Property Types** block (`property-listings-property-types`) renders a card
 | **Subtext** | Optional supporting text below the title |
 | **Number of types** | How many property types to show (`per_page`, default 9). Types are ordered by **Sort Order** on each Dropdown Value, then label. There is no pagination. |
 
-**Generate Public Website** adds this block to the `/properties` hub (sort order: search banner, city cards, property types) with the default title. **Clear Public Website** removes it with other generated pages. The block can also be attached manually to other pages via Page Manager.
+**Generate Public Website** adds this block to the `/properties` hub (sort order: search banner, city cards, property types). Set **Title** and **Subtext** in Page Manager when placing the block; the title renders as the section `<h2>` with no hardcoded heading. **Clear Public Website** removes it with other generated pages. The block can also be attached manually to other pages via Page Manager.
 
 ## Listing slug (public URL)
 

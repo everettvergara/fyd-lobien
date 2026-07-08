@@ -33,6 +33,7 @@ Table: `content_blocks`
 |--------|-------|
 | `key` | Unique kebab-case identifier |
 | `name` | Admin label |
+| `summary` | Optional intro text exposed to themes as `contentBlock.summary` |
 | `icon` | Bootstrap Icons class (`ContentBlockSeeder::MENU_ICON` for module menu; per-block icons seeded for samples) |
 | `status` | `draft`, `published`, `archived` |
 | `content_types` | JSON array of content type keys |
@@ -118,6 +119,8 @@ Page Manager block config:
 ```
 
 Pagination query param: `cb_{key}_page` (example: `cb_latest-articles_page=2`)
+
+Block-level **Summary** (admin General section) is included on the public DTO as `summary` (string). Themes render it above the formatted rows via `contentBlock.summary` in `ContentBlockBlock.vue`.
 
 ### Theme CSS hooks
 

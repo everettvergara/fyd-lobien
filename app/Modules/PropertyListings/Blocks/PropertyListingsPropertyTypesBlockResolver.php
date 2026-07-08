@@ -19,7 +19,7 @@ class PropertyListingsPropertyTypesBlockResolver implements BlockResolver
         $limit = max(1, (int) ($config['per_page'] ?? self::PER_PAGE));
 
         return [
-            'title' => (string) ($config['title'] ?? 'Browse by property type'),
+            'title' => (string) ($config['title'] ?? ''),
             'subtext' => (string) ($config['subtext'] ?? ''),
             'property_types' => $this->publicService->propertyTypeCards($limit),
         ];
