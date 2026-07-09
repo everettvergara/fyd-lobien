@@ -1,4 +1,5 @@
 @php
+    $job = $job ?? null;
     $hasPublishingErrors = $errors->hasAny(['status', 'published_at', 'closing_date', 'sort_order']);
     $hasPictureErrors = $errors->has('picture_media_id');
 @endphp
