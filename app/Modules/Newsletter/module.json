@@ -1,0 +1,20 @@
+{
+  "name": "Newsletter",
+  "slug": "newsletter",
+  "version": "1.0.0",
+  "description": "Newsletter subscription lists, subscriber management, and batch email campaigns.",
+  "group": "Newsletter",
+  "group_icon": "bi-envelope",
+  "group_sort": 55,
+  "author": "FYD CMS",
+  "license": "MIT",
+  "fyd_cms": ">=0.0.0",
+  "requires_core": ["Settings", "AuditLogs"],
+  "autoload": "App\\Modules\\Newsletter",
+  "features": [
+    { "label": "Newsletter Lists", "permission": "newsletter-lists.view", "route": "admin.newsletter-lists.index", "icon": "bi-envelope-open", "sort": 10 },
+    { "label": "Subscribers", "permission": "newsletter-subscribers.view", "route": "admin.newsletter-subscribers.index", "icon": "bi-people", "sort": 20 },
+    { "label": "Send Newsletter", "permission": "newsletters.send", "route": "admin.newsletters.compose", "icon": "bi-send", "sort": 30 },
+    { "label": "Send History", "permission": "newsletter-sends.view", "route": "admin.newsletter-sends.index", "icon": "bi-clock-history", "sort": 40 }
+  ]
+}

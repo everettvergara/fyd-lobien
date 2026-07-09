@@ -39,14 +39,22 @@ Configure these banner keys in **Administration → Banners**:
 
 ## Localhost content mapping
 
-Uses existing seeded content (no Lobien-specific seeders):
+Lobien legal pages are seeded by `Database\Seeders\LobienLegalPagesSeeder` (runs after sample content on fresh installs):
 
 | Local URL | Lobien treatment |
 |-----------|------------------|
 | `/` | Lobien home sections + latest articles |
 | `/about`, `/services`, `/contact` | Banner + page header/body with Lobien typography |
+| `/privacy-policy` | Lobien Privacy Policy (seeded) |
+| `/terms-of-use` | Lobien Terms of Use (seeded) |
 | `/articles` | Lobien-styled article index |
 | `/articles/{slug}` | Lobien article detail layout |
+
+Re-seed legal pages on an existing database:
+
+```bash
+php artisan db:seed --class=Database\\Seeders\\LobienLegalPagesSeeder
+```
 
 ## Design tokens
 

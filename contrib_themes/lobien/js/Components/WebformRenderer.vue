@@ -237,7 +237,7 @@ onMounted(loadForm);
                     {{ fieldErrors.recaptcha_token[0] }}
                 </div>
 
-                <button type="submit" class="btn btn-primary" :disabled="submitting">
+                <button type="submit" class="btn btn-search" :disabled="submitting">
                     {{ submitting ? 'Submitting...' : (settings.submit_label || 'Submit') }}
                 </button>
             </form>

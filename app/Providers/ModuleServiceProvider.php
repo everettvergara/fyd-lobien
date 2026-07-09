@@ -85,6 +85,8 @@ class ModuleServiceProvider extends ServiceProvider
     protected function registerPublicPageCatchAll(): void
     {
         Route::middleware('web')->group(function () {
+            Route::redirect('/terms-of-service', '/terms-of-use', 301);
+
             Route::get('/search', [SearchController::class, 'index'])->name('search');
             Route::post('/search', [SearchController::class, 'store'])->name('search.submit');
 

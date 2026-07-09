@@ -100,6 +100,7 @@ class ContentBlockManagementTest extends TestCase
         $dto = app(ContentBlockRenderingService::class)->contentBlockByKey('latest-articles');
 
         $this->assertNotNull($dto);
+        $this->assertSame("What's New?", $dto['title']);
         $this->assertSame('unformatted', $dto['formatter']);
         $this->assertSame('content-block content-block--latest-articles', $dto['wrapperClass']);
         $this->assertNotEmpty($dto['fields']);
@@ -240,7 +241,7 @@ class ContentBlockManagementTest extends TestCase
         $this->assertSame('select', $field['type']);
         $this->assertArrayHasKey('options', $field);
         $this->assertTrue(collect($field['options'])->contains(
-            fn (array $option) => $option['value'] === 'latest-articles' && $option['label'] === 'Latest Articles',
+            fn (array $option) => $option['value'] === 'latest-articles' && $option['label'] === "What's New?",
         ));
     }
 
@@ -395,6 +396,7 @@ class ContentBlockManagementTest extends TestCase
         $this->assertSame('Latest news and updates from our team.', $block->summary);
 
         $dto = app(ContentBlockRenderingService::class)->dto($block);
+        $this->assertSame('Summarized Block', $dto['title']);
         $this->assertSame('Latest news and updates from our team.', $dto['summary']);
     }
 

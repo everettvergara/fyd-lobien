@@ -71,6 +71,8 @@ class CareersModuleTest extends TestCase
     {
         $this->seed();
 
+        Page::query()->where('path', '/careers')->forceDelete();
+
         $page = Page::create([
             'path' => '/careers',
             'slug' => 'careers',
@@ -268,6 +270,15 @@ class CareersModuleTest extends TestCase
 
         $page = Page::query()->where('path', CareerPageSyncService::INDEX_PATH)->first();
         $this->assertNotNull($page);
+
+        $page->blocks()->delete();
+        PageBlock::create([
+            'page_id' => $page->id,
+            'region_key' => 'main',
+            'block_type' => 'careers-listing',
+            'sort_order' => 0,
+            'config' => [],
+        ]);
 
         Artisan::call('module:uninstall', ['name' => 'Careers', '--force' => true]);
 

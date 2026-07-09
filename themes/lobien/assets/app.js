@@ -4,9 +4,13 @@ import 'bootstrap';
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolveThemePage } from '../../_shared/resolveInertiaPage.js';
+import { registerThemeBlocks } from '../../_shared/resolveBlockComponent.js';
 
 const themePages = import.meta.glob('../js/Pages/**/*.vue');
 const fallbackPages = import.meta.glob('../../fyd-default/js/Pages/**/*.vue');
+const themeBlocks = import.meta.glob('../js/blocks/*.vue');
+
+registerThemeBlocks(themeBlocks);
 
 function getPrimaryColor() {
     if (typeof document === 'undefined') {

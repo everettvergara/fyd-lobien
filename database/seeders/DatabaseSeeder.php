@@ -42,6 +42,9 @@ class DatabaseSeeder extends Seeder
         // Sample content for new projects
         $this->call([
             SampleContentSeeder::class,
+            LobienLegalPagesSeeder::class,
+            LobienStaticPagesSeeder::class,
+            LobienCareersPageSeeder::class,
             \App\Modules\ContentBlocks\Database\Seeders\ContentBlockSeeder::class,
             \App\Modules\PageManager\Database\Seeders\PageManagerSeeder::class,
         ]);

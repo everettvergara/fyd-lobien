@@ -1,50 +1,80 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
+import { onMounted, onUnmounted } from 'vue';
 import NavMenu from '../Components/NavMenu.vue';
+import LobienBrandStrip from '../Components/LobienBrandStrip.vue';
+import FooterLinkList from '../Components/FooterLinkList.vue';
+import { useSocialLinks } from '../composables/useSocialLinks';
+
+const DESKTOP_BREAKPOINT = '(min-width: 992px)';
+
+let desktopMediaQuery;
+
+function resetMobileNav() {
+    const nav = document.getElementById('publicNavbar');
+    const toggler = document.querySelector('.lobien-navbar-toggler');
+
+    if (!nav) {
+        return;
+    }
+
+    const collapse = window.bootstrap?.Collapse?.getInstance(nav)
+        ?? window.bootstrap?.Collapse?.getOrCreateInstance(nav, { toggle: false });
+
+    collapse?.hide();
+
+    nav.classList.remove('collapsing');
+    nav.removeAttribute('style');
+    toggler?.setAttribute('aria-expanded', 'false');
+}
+
+function handleBreakpointChange(event) {
+    if (event.matches) {
+        resetMobileNav();
+    }
+}
+
+onMounted(() => {
+    desktopMediaQuery = window.matchMedia(DESKTOP_BREAKPOINT);
+    desktopMediaQuery.addEventListener('change', handleBreakpointChange);
+
+    if (desktopMediaQuery.matches) {
+        resetMobileNav();
+    }
+});
+
+onUnmounted(() => {
+    desktopMediaQuery?.removeEventListener('change', handleBreakpointChange);
+});
 
 const page = usePage();
 const app = page.props.app ?? {};
 const navigation = page.props.navigation ?? {};
+const { socialLinks } = useSocialLinks();
 
-const footerAbout = 'Lobien Realty Group is the No. 1 Realty Property Provider in the Philippines. We provide office and commercial spaces, lots and properties for sale/lease in the cities of Makati, Taguig, Pasig, Mandaluyong, San Juan, Pasay, Parañaque, Las Piñas, Quezon, and Caloocan.';
+const joinUsLinks = [
+    { title: 'Partner With Us', url: '#' },
+    { title: 'Careers', url: '/careers' },
+];
 
-const footerColumns = [
-    {
-        title: 'Join Us',
-        links: [
-            { title: 'Partner With Us', url: '#' },
-            { title: 'Careers', url: '/careers' },
-        ],
-    },
-    {
-        title: 'LRG Bulletin',
-        links: [
-            { title: 'Talks', url: '#' },
-            { title: 'Video Podcast', url: '#' },
-            { title: 'Vlogs/Interviews', url: '#' },
-            { title: 'Property Tours', url: '#' },
-            { title: 'Downloadables', url: '#' },
-        ],
-    },
-    {
-        title: 'About Us',
-        links: [
-            { title: 'History', url: '#' },
-            { title: 'Vision', url: '#' },
-            { title: 'Mission', url: '#' },
-            { title: 'Our People', url: '/about' },
-        ],
-    },
-    {
-        title: 'What We Offer',
-        links: [
-            { title: 'Project Leasing', url: '#' },
-            { title: 'Tenant Solutions', url: '#' },
-            { title: 'Property Sale and Acquisition', url: '#' },
-            { title: 'For Lease Office and Retail', url: '#' },
-            { title: 'For Sale Office and Retail', url: '#' },
-        ],
-    },
+const lrgBulletinLinks = [
+    { title: 'Talks', url: '#' },
+    { title: 'Video Podcast', url: '#' },
+    { title: 'Vlogs/Interviews', url: '#' },
+    { title: 'Property Tours', url: '#' },
+    { title: 'Downloadables', url: '#' },
+];
+
+const aboutUsLinks = [
+    { title: 'About Us', url: '/about' },
+];
+
+const whatWeOfferLinks = [
+    { title: 'Project Leasing', url: '/services' },
+    { title: 'Tenant Solutions', url: '/services' },
+    { title: 'Property Sale and Acquisition', url: '/services' },
+    { title: 'For Lease Office and Retail', url: '#' },
+    { title: 'For Sale Office and Retail', url: '#' },
 ];
 
 const officeAddress = '23F High Street South Corporate Plaza, Tower 1, 26th Street Corner 9th Avenue, Bonifacio Global City Taguig City, Philippines 1630';
@@ -57,8 +87,8 @@ const email = app.contact?.email || 'inquiry@lobiengroup.com';
     <div class="d-flex flex-column min-vh-100">
         <header class="lobien-header">
             <nav class="navbar navbar-expand-lg navbar-light bg-white lobien-navbar">
-                <div class="lobien-container">
-                    <div class="d-flex flex-wrap align-items-center w-100">
+                <div class="lobien-container lobien-navbar-container">
+                    <div class="lobien-navbar-inner d-flex flex-wrap align-items-center w-100">
                         <Link href="/" class="navbar-brand lobien-navbar-brand text-decoration-none d-flex align-items-center">
                             <img
                                 v-if="app.logo"
@@ -86,7 +116,7 @@ const email = app.contact?.email || 'inquiry@lobiengroup.com';
                             <span class="navbar-toggler-icon"></span>
                         </button>
 
-                        <div class="collapse navbar-collapse flex-grow-0" id="publicNavbar">
+                        <div class="collapse navbar-collapse lobien-navbar-collapse flex-grow-0" id="publicNavbar">
                             <NavMenu :items="navigation.header || []" />
                         </div>
                     </div>
@@ -98,64 +128,66 @@ const email = app.contact?.email || 'inquiry@lobiengroup.com';
             <slot />
         </main>
 
+        <LobienBrandStrip />
+
         <footer class="lobien-footer">
             <div class="lobien-container">
-                <div class="row g-4 mb-4">
-                    <div class="col-lg-4">
-                        <h5>{{ app.name || 'Lobien Realty Group' }}</h5>
-                        <p class="lobien-footer-about">{{ footerAbout }}</p>
-                        <p class="lobien-footer-address small mb-2">{{ officeAddress }}</p>
-                        <p class="small mb-1">
+                <div class="row g-4 mb-4 lobien-footer-main">
+                    <div class="col-lg-9">
+                        <div class="row g-4 lobien-footer-nav">
+                            <div class="col-6 col-md-4 col-lg-3 lobien-footer-stack">
+                                <FooterLinkList title="Join Us" :links="joinUsLinks" />
+                                <FooterLinkList title="LRG Bulletin" :links="lrgBulletinLinks" />
+                                <div>
+                                    <h6 class="lobien-footer-group-title">Follow Us</h6>
+                                    <div class="d-flex gap-2 lobien-footer-social">
+                                        <a
+                                            v-for="item in socialLinks"
+                                            :key="item.key"
+                                            :href="item.url"
+                                            :aria-label="item.label"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            <i class="bi" :class="item.icon" />
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-md-4 col-lg-2">
+                                <FooterLinkList title="About Us" :links="aboutUsLinks" />
+                            </div>
+
+                            <div class="col-12 col-md-6 col-lg-4 lobien-footer-offer-col">
+                                <FooterLinkList title="What We Offer" :links="whatWeOfferLinks" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 lobien-footer-contact order-lg-last">
+                        <h5>{{ app.name || 'Lobien Realty Group, Inc.' }}</h5>
+                        <p class="lobien-footer-address mb-2">{{ officeAddress }}</p>
+                        <p class="mb-1">
                             Call or Message us at <a :href="`tel:${phonePrimary.replace(/\s/g, '')}`">{{ phonePrimary }}</a>
                         </p>
-                        <p class="small mb-1">
+                        <p class="mb-1">
                             Direct Call at <a :href="`tel:${phoneDirect.replace(/\s/g, '')}`">{{ phoneDirect }}</a>
                         </p>
-                        <p class="small mb-0">
+                        <p class="mb-0">
                             <a :href="`mailto:${email}`">{{ email }}</a>
                         </p>
                     </div>
-
-                    <div
-                        v-for="(column, index) in footerColumns"
-                        :key="index"
-                        class="col-6 col-md-4 col-lg-2"
-                    >
-                        <h6>{{ column.title }}</h6>
-                        <ul>
-                            <li v-for="(link, linkIndex) in column.links" :key="linkIndex">
-                                <Link v-if="!link.url.startsWith('http') && link.url !== '#'" :href="link.url">{{ link.title }}</Link>
-                                <a v-else-if="link.url.startsWith('http')" :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.title }}</a>
-                                <a v-else href="#" @click.prevent>{{ link.title }}</a>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div v-if="(navigation.footer || []).length" class="col-6 col-md-4 col-lg-2">
-                        <h6>Quick Links</h6>
-                        <ul>
-                            <li v-for="(item, i) in navigation.footer.slice(0, 8)" :key="i">
-                                <Link v-if="!item.url.startsWith('http')" :href="item.url">{{ item.title }}</Link>
-                                <a v-else :href="item.url" :target="item.target">{{ item.title }}</a>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <h6>Follow Us</h6>
-                        <div class="d-flex gap-2 mb-3 lobien-footer-social">
-                            <a v-if="app.social?.facebook" :href="app.social.facebook" target="_blank" rel="noopener noreferrer"><i class="bi bi-facebook"></i></a>
-                            <a v-if="app.social?.instagram" :href="app.social.instagram" target="_blank" rel="noopener noreferrer"><i class="bi bi-instagram"></i></a>
-                            <a v-if="app.social?.linkedin" :href="app.social.linkedin" target="_blank" rel="noopener noreferrer"><i class="bi bi-linkedin"></i></a>
-                            <a v-if="app.social?.tiktok" :href="app.social.tiktok" target="_blank" rel="noopener noreferrer"><i class="bi bi-tiktok"></i></a>
-                            <a v-if="app.social?.youtube" :href="app.social.youtube" target="_blank" rel="noopener noreferrer"><i class="bi bi-youtube"></i></a>
-                        </div>
-                    </div>
                 </div>
-                <hr class="border-secondary my-4">
+
+                <div class="lobien-footer-legal text-center">
+                    <Link href="/privacy-policy">Privacy Policy</Link>
+                    <span class="lobien-footer-legal-sep" aria-hidden="true">|</span>
+                    <Link href="/terms-of-use">Terms of Use</Link>
+                </div>
+
                 <p class="lobien-footer-copyright text-center mb-0">
                     &copy; {{ new Date().getFullYear() }} {{ app.name || 'Lobien Realty Group, Inc.' }}. All rights reserved.
-                    <span class="lobien-footer-tagline d-block mt-1">Buy &amp; Sell Property PH</span>
                 </p>
             </div>
         </footer>

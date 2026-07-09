@@ -31,8 +31,10 @@ onMounted(loadJobs);
 </script>
 
 <template>
-    <section class="careers-listing">
-        <h2 class="h3 fw-bold mb-4">Open Positions</h2>
+    <section class="careers-listing lobien-section">
+        <div class="lobien-section-heading">
+            <h2>Open Positions</h2>
+        </div>
 
         <div v-if="loading" class="text-muted">Loading job listings...</div>
         <div v-else-if="loadError" class="alert alert-danger">{{ loadError }}</div>
@@ -40,16 +42,16 @@ onMounted(loadJobs);
 
         <div v-else class="row g-4">
             <div v-for="job in jobs" :key="job.id" class="col-md-6 col-lg-4">
-                <article class="card h-100 border-0 shadow-sm">
+                <article class="careers-job card h-100 border-0 shadow-sm">
                     <img
                         v-if="job.picture"
                         :src="job.picture.url"
                         :alt="job.picture.alt"
-                        class="card-img-top"
+                        class="careers-job__picture card-img-top"
                         style="height: 180px; object-fit: cover;"
                     >
                     <div class="card-body d-flex flex-column">
-                        <h3 class="h5 card-title mb-2">
+                        <h3 class="careers-job__title card-title mb-2">
                             <a :href="job.url" class="text-decoration-none stretched-link">{{ job.title }}</a>
                         </h3>
                         <p v-if="job.summary" class="card-text text-muted small mb-3">{{ job.summary }}</p>

@@ -3,6 +3,8 @@
 namespace App\Modules\PageManager;
 
 use App\Framework\PublicBlock;
+use App\Modules\PageManager\Blocks\ContactBannerBlockResolver;
+use App\Modules\PageManager\Blocks\ContactMapBlockResolver;
 use App\Modules\PageManager\Blocks\PageBodyBlockResolver;
 use App\Modules\PageManager\Blocks\PageHeaderBlockResolver;
 use App\Modules\PageManager\Database\Seeders\PageManagerSeeder;
@@ -66,6 +68,28 @@ class Module extends \App\Framework\Module
                 ->module($this->name())
                 ->resolver(PageBodyBlockResolver::class)
                 ->component('PageBodyBlock'),
+            PublicBlock::make('contact-banner')
+                ->label('Contact Banner')
+                ->icon('bi-telephone')
+                ->module($this->name())
+                ->resolver(ContactBannerBlockResolver::class)
+                ->component('ContactBannerBlock')
+                ->configSchema([
+                    ['key' => 'heading', 'label' => 'Heading', 'type' => 'text', 'default' => 'CONTACT US'],
+                    ['key' => 'description', 'label' => 'Description', 'type' => 'textarea'],
+                    ['key' => 'image_url', 'label' => 'Image URL', 'type' => 'text'],
+                    ['key' => 'show_cta_bar', 'label' => 'Show CTA Bar', 'type' => 'text', 'default' => '1'],
+                ]),
+            PublicBlock::make('contact-map')
+                ->label('Contact Map')
+                ->icon('bi-geo-alt')
+                ->module($this->name())
+                ->resolver(ContactMapBlockResolver::class)
+                ->component('ContactMapBlock')
+                ->configSchema([
+                    ['key' => 'embed_url', 'label' => 'Google Maps Embed URL', 'type' => 'text'],
+                    ['key' => 'title', 'label' => 'Accessible Title', 'type' => 'text', 'default' => 'Lobien Realty Group office location'],
+                ]),
         ];
     }
 }

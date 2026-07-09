@@ -2,6 +2,12 @@ import { defineAsyncComponent, computed } from 'vue';
 
 const sharedBlocks = import.meta.glob('./blocks/*.vue');
 
+let themeBlockLoaders = {};
+
+export function registerThemeBlocks(loaders) {
+    themeBlockLoaders = loaders ?? {};
+}
+
 function blockTypeToComponentName(type) {
     return type
         .split('-')
@@ -11,22 +17,18 @@ function blockTypeToComponentName(type) {
         + 'Block';
 }
 
-function findBlockLoader(name) {
+function findBlockLoader(name, loaders) {
     const suffix = `/blocks/${name}.vue`;
-    const direct = sharedBlocks[`./blocks/${name}.vue`];
+    const direct = loaders[`./blocks/${name}.vue`];
 
     if (direct) {
         return direct;
     }
 
-    return Object.entries(sharedBlocks).find(([key]) => key.replace(/\\/g, '/').endsWith(suffix))?.[1] ?? null;
+    return Object.entries(loaders).find(([key]) => key.replace(/\\/g, '/').endsWith(suffix))?.[1] ?? null;
 }
 
-export function resolveBlockComponent(name) {
-    if (!name) {
-        return null;
-    }
-
+function resolveLoader(name) {
     const candidates = [name];
 
     if (!name.endsWith('Block')) {
@@ -34,16 +36,30 @@ export function resolveBlockComponent(name) {
     }
 
     for (const candidate of candidates) {
-        const loader = findBlockLoader(candidate);
+        const themeLoader = findBlockLoader(candidate, themeBlockLoaders);
 
-        if (loader) {
-            return defineAsyncComponent(loader);
+        if (themeLoader) {
+            return themeLoader;
+        }
+
+        const sharedLoader = findBlockLoader(candidate, sharedBlocks);
+
+        if (sharedLoader) {
+            return sharedLoader;
         }
     }
 
-    const fallback = findBlockLoader('FallbackBlock');
+    return findBlockLoader('FallbackBlock', sharedBlocks);
+}
 
-    return fallback ? defineAsyncComponent(fallback) : null;
+export function resolveBlockComponent(name) {
+    if (!name) {
+        return null;
+    }
+
+    const loader = resolveLoader(name);
+
+    return loader ? defineAsyncComponent(loader) : null;
 }
 
 export function useBlockComponent(name) {

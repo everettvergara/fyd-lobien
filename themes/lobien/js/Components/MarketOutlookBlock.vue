@@ -1,5 +1,5 @@
 <script setup>
-const outlookImage = 'https://www.lobiengroup.com/sites/default/files/image%20display/263f5d8a6e641115e2a31136e2b7b191.jpg';
+import outlookImage from '../../assets/images/market-outlook.jpg';
 </script>
 
 <template>
@@ -12,7 +12,7 @@ const outlookImage = 'https://www.lobiengroup.com/sites/default/files/image%20di
                         Be informed about the current performance and trends of the Philippine commercial real estate.
                         Fill out your details and download our latest market outlook now!
                     </p>
-                    <form action="#" method="post" @submit.prevent class="mt-4">
+                    <form action="#" method="post" @submit.prevent class="mt-4 lobien-outlook-form">
                         <div class="mb-3">
                             <input type="text" class="form-control" placeholder="Name" aria-label="Name">
                         </div>
@@ -22,9 +22,6 @@ const outlookImage = 'https://www.lobiengroup.com/sites/default/files/image%20di
                         <div class="mb-3">
                             <input type="text" class="form-control" placeholder="Company" aria-label="Company">
                         </div>
-                        <p class="small opacity-75">
-                            CAPTCHA — This question is for testing whether or not you are a human visitor and to prevent automated spam submissions.
-                        </p>
                         <div class="text-end">
                             <button type="submit" class="btn btn-outlook">Download</button>
                         </div>

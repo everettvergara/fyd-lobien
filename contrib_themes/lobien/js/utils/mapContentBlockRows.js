@@ -4,8 +4,21 @@ function cellValue(row, field) {
     return cell?.value ?? null;
 }
 
+function rowCell(row, field) {
+    return row.find((item) => item.field === field) ?? null;
+}
+
+function cellContentHref(cell) {
+    if (cell?.linkToContent && cell?.contentPath) {
+        return `/${cell.contentPath}`;
+    }
+
+    return null;
+}
+
 function rowPath(row, pathPrefix) {
-    const linkedCell = row.find((item) => item.contentPath);
+    const linkedCell = row.find((item) => item.linkToContent && item.contentPath)
+        ?? row.find((item) => item.contentPath);
 
     if (linkedCell?.contentPath) {
         return linkedCell.contentPath;
@@ -38,7 +51,7 @@ function rowPath(row, pathPrefix) {
 /**
  * @param {object|null|undefined} contentBlock
  * @param {string|null} pathPrefix e.g. "articles" for article listings
- * @returns {Array<{title: string, summary: string|null, publishedAt: string|null, featuredImage: object|null, path: string|null}>}
+ * @returns {Array<{title: string, summary: string|null, publishedAt: string|null, author: string|null, featuredImage: object|null, path: string|null, titleHref: string|null, imageHref: string|null, urlLink: string|null}>}
  */
 export function mapContentBlockRowsToArticles(contentBlock, pathPrefix = null) {
     const rows = contentBlock?.rows ?? [];
@@ -47,7 +60,11 @@ export function mapContentBlockRowsToArticles(contentBlock, pathPrefix = null) {
         title: cellValue(row, 'title') ?? '',
         summary: cellValue(row, 'summary'),
         publishedAt: cellValue(row, 'published_at'),
+        author: cellValue(row, 'author.name'),
         featuredImage: cellValue(row, 'featured_image'),
         path: rowPath(row, pathPrefix),
+        titleHref: cellContentHref(rowCell(row, 'title')),
+        imageHref: cellContentHref(rowCell(row, 'featured_image')),
+        urlLink: cellValue(row, 'url_link'),
     })).filter((article) => article.title !== '');
 }
