@@ -377,6 +377,45 @@ class ContentFrameworkTest extends TestCase
         $this->assertSame('User Guide', $entry['attachment']['label']);
         $this->assertSame('application/pdf', $entry['attachment']['mimeType']);
         $this->assertNotEmpty($entry['attachment']['url']);
+        $this->assertSame([], $entry['galleryImages']);
+    }
+
+    public function test_public_content_entry_includes_gallery_images(): void
+    {
+        Storage::fake('public');
+        $this->seed();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $firstId = app(MediaLibraryService::class)->upload(
+            UploadedFile::fake()->create('gallery-one.jpg', 64, 'image/jpeg'),
+            [],
+            $admin->id,
+        )->id;
+        $secondId = app(MediaLibraryService::class)->upload(
+            UploadedFile::fake()->create('gallery-two.jpg', 64, 'image/jpeg'),
+            [],
+            $admin->id,
+        )->id;
+
+        $content = Content::create([
+            'content_type' => 'article',
+            'title' => 'Gallery Entry Content',
+            'slug' => 'gallery-entry-content',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $admin->id,
+            'featured_image_id' => $firstId,
+        ]);
+        $content->galleryImages()->sync([
+            $firstId => ['sort_order' => 0],
+            $secondId => ['sort_order' => 1],
+        ]);
+
+        $entry = PublicContent::entry($content->fresh(['galleryImages']));
+
+        $this->assertCount(2, $entry['galleryImages']);
+        $this->assertNotEmpty($entry['galleryImages'][0]['url']);
+        $this->assertNotEmpty($entry['galleryImages'][1]['url']);
     }
 
     public function test_content_block_renders_url_link_and_attachment_fields(): void

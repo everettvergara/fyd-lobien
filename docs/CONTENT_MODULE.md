@@ -52,9 +52,40 @@ Table: `contents`
 | `title`, `slug`, `summary` | Core metadata |
 | `body` | Rich HTML (formerly `pages.content`) |
 | `featured_image_id` | Media Library FK |
+| `attachment_id` | Media Library FK (downloadable file) |
+| `url_link` | Optional external URL |
+| `public_page_path` | Synced Page Manager path when published |
 | `status`, `published_at`, `author_id` | Publishing |
 
-SEO and public URLs are owned by the **Page Manager** module — not Content. Use Page Manager to place content on the public site via blocks (e.g. featured content, latest articles).
+Gallery images are stored via `content_media` pivot (`galleryImages` relation).
+
+### Public page sync
+
+When content is **published** (slug required, `published_at` null or in the past), [`ContentPageSyncService`](../app/Modules/Content/Services/ContentPageSyncService.php) creates or updates a Page Manager page at:
+
+- `/{contentSlug}` when the content type has no URL prefix (e.g. `page` → `/about-us`)
+- `/{typeSlug}/{contentSlug}` when the type has a slug (e.g. `article` → `/articles/my-post`)
+
+Default blocks on first sync: `page-header`, `page-body`, `content-extras` (and `banner` in hero for `page` type).
+
+Draft, archived, future-dated, or slugless content removes the synced page.
+
+### Public field contract
+
+Synced content detail pages render via **`Page/Show.vue`**. Themes receive:
+
+| Prop | Shape |
+|------|-------|
+| `content` | Full `PublicContent::entry()` DTO when the page is linked to published content; otherwise `null` |
+| `page` | Page Manager fields (title, summary, body, featuredImage, …) |
+
+`PublicContent::entry()` includes: `id`, `title`, `slug`, `path`, `summary`, `body`, `urlLink`, `contentType`, `featuredImage`, `attachment`, `galleryImages`, `author`, `publishedAt`, `seo`.
+
+Default blocks also expose subsets: `page-header` (featured image, author, date, type) and `content-extras` (URL link, attachment, gallery).
+
+Manual Page Manager pages without linked content have `content: null`.
+
+SEO on synced pages is copied from Content to the Page record during sync.
 
 ### Removed (do not reintroduce)
 

@@ -46,6 +46,7 @@ Themes are **presentation only**. Page Manager resolves block data in PHP and pa
 | Prop | Source |
 |------|--------|
 | `page` | Page Manager entry — `title`, `path`, `body`, `summary`, `featuredImage` |
+| `content` | Linked published Content entry when the page was synced from Content (`PublicContent::entry()`), otherwise `null` |
 | `regionOrder` | Ordered region keys from active theme |
 | `regions` | Map of region → array of `{ id, type, component, props }` blocks |
 | `seo` | `PublicSeo::fromModel()` on the page |

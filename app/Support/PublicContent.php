@@ -14,7 +14,7 @@ class PublicContent
 {
     public static function entry(Content $content): array
     {
-        $content->loadMissing(['featuredImage', 'attachment', 'seoMeta', 'author']);
+        $content->loadMissing(['featuredImage', 'attachment', 'galleryImages', 'seoMeta', 'author']);
         $registry = app(ContentTypeRegistry::class);
         $path = app(ContentUrlService::class)->pathFor($content);
 
@@ -32,6 +32,11 @@ class PublicContent
             ],
             'featuredImage' => self::media($content->featuredImage),
             'attachment' => self::file($content->attachment),
+            'galleryImages' => $content->galleryImages
+                ->map(fn (Media $media) => self::responsiveMedia($media))
+                ->filter()
+                ->values()
+                ->all(),
             'author' => $content->author?->name,
             'publishedAt' => $content->published_at?->toIso8601String(),
             'seo' => PublicSeo::fromModel($content),
