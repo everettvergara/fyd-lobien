@@ -154,6 +154,15 @@ class ContentPageSyncService
         return $stats;
     }
 
+    public function contentForPage(Page $page): ?Content
+    {
+        return Content::query()
+            ->published()
+            ->where('public_page_path', $page->path)
+            ->with(['featuredImage', 'attachment', 'galleryImages', 'seoMeta', 'author'])
+            ->first();
+    }
+
     public function removeContentPage(Content $content): bool
     {
         $path = $content->public_page_path;
@@ -275,6 +284,14 @@ class ContentPageSyncService
             'page_id' => $page->id,
             'region_key' => 'main',
             'block_type' => 'page-body',
+            'sort_order' => $sortOrder++,
+            'config' => [],
+        ]);
+
+        PageBlock::create([
+            'page_id' => $page->id,
+            'region_key' => 'main',
+            'block_type' => 'content-extras',
             'sort_order' => $sortOrder,
             'config' => [],
         ]);

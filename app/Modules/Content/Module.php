@@ -3,6 +3,7 @@
 namespace App\Modules\Content;
 
 use App\Framework\PublicBlock;
+use App\Modules\Content\Blocks\ContentExtrasBlockResolver;
 use App\Modules\Content\Blocks\ContentTypeListingBlockResolver;
 use App\Modules\Content\Models\Content;
 use App\Modules\Content\Models\ContentType;
@@ -68,6 +69,12 @@ class Module extends \App\Framework\Module
     public function publicBlocks(): array
     {
         return [
+            PublicBlock::make('content-extras')
+                ->label('Content Extras')
+                ->icon('bi-images')
+                ->module($this->name())
+                ->resolver(ContentExtrasBlockResolver::class)
+                ->component('ContentExtrasBlock'),
             PublicBlock::make('content-type-listing')
                 ->label('Content Type Listing')
                 ->icon('bi-collection')

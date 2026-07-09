@@ -2,9 +2,11 @@
 
 namespace App\Services\Public;
 
+use App\Modules\Content\Services\ContentPageSyncService;
 use App\Modules\PageManager\Models\Page;
 use App\Modules\PageManager\Services\PageBlockMergeService;
 use App\Services\Theme\ThemeService;
+use App\Support\PublicContent;
 use App\Support\PublicSeo;
 use App\Support\HtmlSanitizer;
 
@@ -14,6 +16,7 @@ class PageRenderService
         protected PageBlockMergeService $blockMerge,
         protected PublicBlockRegistry $blocks,
         protected ThemeService $themes,
+        protected ContentPageSyncService $contentPages,
     ) {}
 
     /**
@@ -57,6 +60,7 @@ class PageRenderService
         }
 
         $regionOrder = $this->regionOrderFor($regions);
+        $linkedContent = $this->contentPages->contentForPage($page);
 
         return [
             'page' => [
@@ -68,6 +72,7 @@ class PageRenderService
                 'body' => HtmlSanitizer::clean($page->body ?? ''),
                 'featuredImage' => $this->media($page->featuredImage),
             ],
+            'content' => $linkedContent ? PublicContent::entry($linkedContent) : null,
             'regionOrder' => $regionOrder,
             'regions' => $regions,
             'seo' => PublicSeo::fromModel($page, $page->title),

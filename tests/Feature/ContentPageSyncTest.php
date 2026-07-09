@@ -11,6 +11,8 @@ use App\Modules\Content\Services\ContentUrlService;
 use App\Modules\PageManager\Models\Page;
 use App\Modules\PageManager\Models\PageBlock;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ContentPageSyncTest extends TestCase
@@ -68,6 +70,7 @@ class ContentPageSyncTest extends TestCase
         $blockTypes = $page->blocks()->pluck('block_type')->all();
         $this->assertContains('page-header', $blockTypes);
         $this->assertContains('page-body', $blockTypes);
+        $this->assertContains('content-extras', $blockTypes);
     }
 
     public function test_article_detail_page_is_publicly_accessible(): void
@@ -83,6 +86,62 @@ class ContentPageSyncTest extends TestCase
                 ->component('Page/Show')
                 ->where('page.path', '/articles/public-article')
                 ->where('page.title', 'Public Article'));
+    }
+
+    public function test_synced_content_page_exposes_full_content_fields(): void
+    {
+        Storage::fake('public');
+        $this->ensureArticleSlug();
+
+        $featuredId = app(\App\Services\Media\MediaLibraryService::class)->upload(
+            UploadedFile::fake()->create('featured.jpg', 64, 'image/jpeg'),
+            [],
+            $this->author->id,
+        )->id;
+        $galleryId = app(\App\Services\Media\MediaLibraryService::class)->upload(
+            UploadedFile::fake()->create('gallery.jpg', 64, 'image/jpeg'),
+            [],
+            $this->author->id,
+        )->id;
+        $pdf = app(\App\Services\Media\MediaLibraryService::class)->upload(
+            UploadedFile::fake()->create('guide.pdf', 64, 'application/pdf'),
+            ['title' => 'User Guide'],
+            $this->author->id,
+        );
+
+        $content = Content::create([
+            'content_type' => 'article',
+            'title' => 'Full Fields Article',
+            'slug' => 'full-fields-article',
+            'summary' => 'Article summary',
+            'body' => '<p>Article body</p>',
+            'url_link' => 'https://example.com/resource',
+            'featured_image_id' => $featuredId,
+            'attachment_id' => $pdf->id,
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+            'author_id' => $this->author->id,
+        ]);
+        $content->galleryImages()->sync([
+            $galleryId => ['sort_order' => 0],
+        ]);
+
+        app(ContentPageSyncService::class)->syncContentPage($content->fresh());
+
+        $this->get('/articles/full-fields-article')
+            ->assertOk()
+            ->assertInertia(fn ($inertia) => $inertia
+                ->component('Page/Show')
+                ->where('content.urlLink', 'https://example.com/resource')
+                ->where('content.author', $this->author->name)
+                ->where('content.contentType.key', 'article')
+                ->has('content.galleryImages', 1)
+                ->has('content.featuredImage.url')
+                ->has('content.attachment.url')
+                ->where('regions.main.0.props.featuredImage.url', fn ($url) => $url !== null)
+                ->where('regions.main.0.props.author', $this->author->name)
+                ->where('regions.main.2.props.urlLink', 'https://example.com/resource')
+                ->has('regions.main.2.props.galleryImages', 1));
     }
 
     public function test_page_type_syncs_to_root_content_slug_path(): void
