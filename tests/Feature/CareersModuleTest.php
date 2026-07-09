@@ -50,6 +50,18 @@ class CareersModuleTest extends TestCase
         $this->assertDatabaseHas('career_jobs', ['slug' => 'senior-web-developer']);
     }
 
+    public function test_admin_create_job_page_loads(): void
+    {
+        $this->installCareers();
+
+        $admin = User::where('email', 'admin@fyd.local')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->get(route('admin.career-jobs.create'))
+            ->assertOk()
+            ->assertSee('Create Job Listing', false);
+    }
+
     public function test_install_creates_careers_page_with_listing_block(): void
     {
         $this->installCareers();
