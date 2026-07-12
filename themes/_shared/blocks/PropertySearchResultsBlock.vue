@@ -36,8 +36,8 @@ defineProps({
                 No properties match your search. Try widening your filters.
             </div>
 
-            <div v-else class="row g-4 mb-4">
-                <div v-for="listing in listings" :key="listing.id" class="col-md-6 col-lg-4">
+            <div v-else class="row g-4 mb-4 justify-content-center">
+                <div v-for="listing in listings" :key="listing.id" class="col-6 col-md-4 col-lg-2">
                     <PropertyListingCard :listing="listing" />
                 </div>
             </div>
