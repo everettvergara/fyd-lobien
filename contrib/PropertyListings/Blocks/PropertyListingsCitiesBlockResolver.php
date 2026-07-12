@@ -8,7 +8,7 @@ use App\Modules\PropertyListings\Services\PropertyListingPublicService;
 
 class PropertyListingsCitiesBlockResolver implements BlockResolver
 {
-    public const PER_PAGE = 9;
+    public const PER_PAGE = 36;
 
     public function __construct(
         protected PropertyListingPublicService $publicService,

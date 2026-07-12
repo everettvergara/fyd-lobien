@@ -10,7 +10,7 @@ use App\Modules\PropertyListings\Support\ListingPathHelper;
 
 class PropertySearchResultsBlockResolver implements BlockResolver
 {
-    public const PER_PAGE = 9;
+    public const PER_PAGE = 36;
 
     public function __construct(
         protected PropertyListingPublicService $publicService,
