@@ -190,6 +190,12 @@
                     return '<div class="tpl tpl-three"><div></div><div></div><div></div></div>';
                 }
 
+                if (templateKey === 'four_column_full_width' || templateKey === 'five_column_full_width' || templateKey === 'six_column_full_width') {
+                    const count = templateKey === 'four_column_full_width' ? 4 : templateKey === 'five_column_full_width' ? 5 : 6;
+                    const cell = '<div style="border-radius:0.35rem;background:rgba(255,255,255,0.78)"></div>';
+                    return `<div class="tpl" style="display:grid;grid-template-columns:repeat(${count},1fr)">${cell.repeat(count)}</div>`;
+                }
+
                 if (templateKey === 'image_left') {
                     return '<div class="tpl tpl-split"><div class="tpl-media"></div><div class="tpl-copy tpl-copy-lines"></div></div>';
                 }
