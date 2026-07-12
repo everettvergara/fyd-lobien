@@ -39,6 +39,9 @@ class BannerFormSchemaService
         'column_1_image' => 'Column 1 Picture',
         'column_2_image' => 'Column 2 Picture',
         'column_3_image' => 'Column 3 Picture',
+        'column_4_image' => 'Column 4 Picture',
+        'column_5_image' => 'Column 5 Picture',
+        'column_6_image' => 'Column 6 Picture',
     ];
 
     public function defaultSchema(): array
