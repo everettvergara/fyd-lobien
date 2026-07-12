@@ -5,7 +5,9 @@
 @section('content')
     <h2 class="h5 text-center mb-4">Create Account</h2>
 
-    <form method="POST" action="{{ route('admin.register', absolute: false) }}">
+    <form method="POST"
+          action="{{ route('admin.register', absolute: false) }}"
+          @include('partials.recaptcha-form-attributes', ['action' => 'admin_register'])>
         @csrf
 
         <div class="mb-3">
@@ -40,6 +42,8 @@
         <x-admin.form.password label="Password" name="password" required autocomplete="new-password" />
 
         <x-admin.form.password label="Confirm Password" name="password_confirmation" class="mb-4" required autocomplete="new-password" />
+
+        @include('partials.recaptcha-error')
 
         <button type="submit" class="btn btn-primary w-100 mb-3">Register</button>
 

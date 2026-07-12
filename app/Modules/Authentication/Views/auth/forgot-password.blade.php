@@ -6,7 +6,9 @@
     <h2 class="h5 text-center mb-2">Forgot Password</h2>
     <p class="text-muted text-center small mb-4">Enter your email address and we will send you a reset link.</p>
 
-    <form method="POST" action="{{ route('admin.password.email', absolute: false) }}">
+    <form method="POST"
+          action="{{ route('admin.password.email', absolute: false) }}"
+          @include('partials.recaptcha-form-attributes', ['action' => 'admin_password_forgot'])>
         @csrf
 
         <div class="mb-4">
@@ -23,6 +25,8 @@
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
+
+        @include('partials.recaptcha-error')
 
         <button type="submit" class="btn btn-primary w-100 mb-3">Send Reset Link</button>
 
