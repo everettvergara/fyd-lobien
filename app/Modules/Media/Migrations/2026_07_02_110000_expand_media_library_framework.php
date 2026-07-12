@@ -18,7 +18,7 @@ return new class extends Migration
         });
 
         Schema::table('media', function (Blueprint $table) {
-            $table->uuid('uuid')->nullable()->unique()->after('id');
+            $table->char('uuid', 36)->nullable()->unique()->after('id');
             $table->string('title')->nullable()->after('original_filename');
             $table->text('description')->nullable()->after('title');
             $table->text('caption')->nullable()->after('description');
