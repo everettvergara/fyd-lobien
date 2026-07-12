@@ -32,6 +32,23 @@ const breadcrumbItems = computed(() => [{ label: props.page.title }]);
 function blocksFor(region) {
     return props.regions[region] || [];
 }
+
+const mainBlocks = computed(() => blocksFor('main'));
+
+const leadingMainBanners = computed(() => {
+    const out = [];
+    for (const block of mainBlocks.value) {
+        if (block.type !== 'banner') {
+            break;
+        }
+        out.push(block);
+    }
+    return out;
+});
+
+const sidebarMainBlocks = computed(() =>
+    mainBlocks.value.slice(leadingMainBanners.value.length)
+);
 </script>
 
 <template>
@@ -52,10 +69,19 @@ function blocksFor(region) {
             <div class="lobien-container pt-4">
                 <Breadcrumb :items="breadcrumbItems" />
             </div>
+
+            <BlockRenderer
+                v-for="block in leadingMainBanners"
+                :key="block.id"
+                :type="block.type"
+                :component="block.component"
+                :block-props="block.props"
+            />
+
             <div class="lobien-page-with-sidebar lobien-container">
                 <div class="lobien-page-with-sidebar__main">
                     <BlockRenderer
-                        v-for="block in blocksFor('main')"
+                        v-for="block in sidebarMainBlocks"
                         :key="block.id"
                         :type="block.type"
                         :component="block.component"

@@ -11,7 +11,11 @@ const block = computed(() => activeSlide.value.blocks?.[0] ?? {});
 const media = computed(() => activeSlide.value.media ?? {});
 const templateKey = computed(() => props.banner.template?.key ?? 'hero_center');
 
-const isColumnLayout = computed(() => ['two_column_full_width', 'three_column_full_width'].includes(templateKey.value));
+const isColumnLayout = computed(() => [
+    'two_column_full_width',
+    'three_column_full_width',
+    'four_column_full_width',
+].includes(templateKey.value));
 
 const columns = computed(() => {
     if (! isColumnLayout.value) {
@@ -33,6 +37,10 @@ const columns = computed(() => {
 });
 
 const columnClass = computed(() => {
+    if (templateKey.value === 'four_column_full_width') {
+        return 'col-lg-3 col-md-6';
+    }
+
     if (templateKey.value === 'three_column_full_width') {
         return 'col-md-4';
     }
@@ -202,7 +210,7 @@ const headlineClass = computed(() => {
         </picture>
 
         <div class="public-banner-overlay"></div>
-        <div class="container position-relative py-5">
+        <div class="container position-relative pt-5">
             <div class="row g-4" :class="splitRowAlignClass">
                 <div class="col-lg" :class="{ 'order-lg-2': templateKey === 'image_left' }">
                     <div class="public-banner-content" :class="[alignmentClass, { 'public-banner-content--split': isSplit }]">

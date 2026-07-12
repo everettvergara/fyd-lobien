@@ -212,10 +212,19 @@ class LobienStaticPagesSeeder extends Seeder
                 'region_key' => 'hero',
                 'block_type' => 'banner',
                 'sort_order' => 0,
-                'config' => [
-                    'banner_key' => $heroKey,
-                    'show_cta_bar' => true,
-                ],
+                'config' => ['banner_key' => $heroKey],
+            ]);
+        }
+
+        $mainSort = 0;
+
+        foreach ($keys as $bannerKey) {
+            PageBlock::create([
+                'page_id' => $page->id,
+                'region_key' => 'main',
+                'block_type' => 'banner',
+                'sort_order' => $mainSort++,
+                'config' => ['banner_key' => $bannerKey],
             ]);
         }
 
@@ -224,7 +233,7 @@ class LobienStaticPagesSeeder extends Seeder
                 'page_id' => $page->id,
                 'region_key' => 'main',
                 'block_type' => 'webform',
-                'sort_order' => 0,
+                'sort_order' => $mainSort++,
                 'config' => ['webform_slug' => 'contact-form'],
             ]);
 

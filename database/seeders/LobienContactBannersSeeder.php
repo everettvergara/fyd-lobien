@@ -52,6 +52,7 @@ class LobienContactBannersSeeder extends Seeder
     public static function pageBannerKeys(): array
     {
         return [
+            'contact-header',
             'contact-intro',
         ];
     }
@@ -60,7 +61,7 @@ class LobienContactBannersSeeder extends Seeder
     {
         $bannerService = app(BannerService::class);
         $templates = BannerTemplate::query()
-            ->whereIn('key', ['image_right'])
+            ->whereIn('key', ['inner_page', 'image_right'])
             ->get()
             ->keyBy('key');
 
@@ -123,6 +124,25 @@ class LobienContactBannersSeeder extends Seeder
             .'<p><a href="mailto:'.e(self::EMAIL).'">'.e(self::EMAIL).'</a></p>';
 
         return [
+            [
+                'key' => 'contact-header',
+                'name' => 'Contact Us — Page Header',
+                'template_key' => 'inner_page',
+                'structure' => [
+                    'slides' => [[
+                        'name' => 'Default',
+                        'blocks' => [[
+                            'region' => 'main',
+                            'type' => 'content',
+                            'headline' => 'Contact Us',
+                            'subheading' => 'Lobien Realty Group',
+                            'description' => 'Get in touch with Lobien Realty Group. We\'d love to hear from you.',
+                            'buttons' => [],
+                        ]],
+                        'media' => $this->mediaSlot('background_image', $teamImage),
+                    ]],
+                ],
+            ],
             [
                 'key' => 'contact-intro',
                 'name' => 'Contact Us — Intro',

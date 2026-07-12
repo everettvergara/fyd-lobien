@@ -386,6 +386,10 @@ $fyd-btn-hover: $fyd-color-primary-dark;
     background: $fyd-color-bg;
     min-height: 0;
 
+    > .container {
+        padding-bottom: 3rem;
+    }
+
     .public-banner-media,
     .public-banner-overlay {
         display: none;
@@ -510,11 +514,18 @@ $fyd-btn-hover: $fyd-color-primary-dark;
 
 .public-banner-key-about-partners-row-1,
 .public-banner-key-about-partners-row-2 {
+    .public-banner-column {
+        align-items: center;
+        justify-content: center;
+    }
+
     .public-banner-column-image {
         aspect-ratio: auto;
         object-fit: contain;
-        width: 100%;
+        width: 50%;
         height: auto;
+        margin-inline: auto;
+        display: block;
     }
 }
 
@@ -976,6 +987,20 @@ $fyd-btn-hover: $fyd-color-primary-dark;
         &:hover {
             background: $fyd-color-primary-dark;
             color: #fff;
+        }
+    }
+}
+
+.lobien-banner-block--with-cta {
+    .public-banner {
+        margin-bottom: 0;
+
+        > .container {
+            padding-bottom: 0;
+        }
+
+        .public-banner-content > :last-child {
+            margin-bottom: 0 !important;
         }
     }
 }
@@ -1964,6 +1989,13 @@ $fyd-btn-hover: $fyd-color-primary-dark;
     }
 }
 
+.lobien-page-with-sidebar:has(.lobien-contact-map) {
+    @media (min-width: 992px) {
+        grid-template-columns: minmax(0, 360px) minmax(520px, 640px);
+        justify-content: center;
+    }
+}
+
 .lobien-sidebar-content-block {
     border: 1px solid $fyd-color-border;
 
@@ -2074,6 +2106,12 @@ $fyd-btn-hover: $fyd-color-primary-dark;
 .lobien-contact-form {
     padding-top: 0;
     height: 100%;
+
+    @media (max-width: 991.98px) {
+        max-width: 360px;
+        margin-inline: auto;
+        width: 100%;
+    }
 
     &__title {
         font-size: $fyd-font-size-h3;

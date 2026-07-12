@@ -49,8 +49,7 @@ class LobienAboutBannersSeeder extends Seeder
             'about-history',
             'about-vision',
             'about-mission',
-            'about-pillars-row-1',
-            'about-pillars-row-2',
+            'about-pillars',
             'about-partners-heading',
             'about-partners-row-1',
             'about-partners-row-2',
@@ -72,6 +71,7 @@ class LobienAboutBannersSeeder extends Seeder
                 'two_column_full_width',
                 'minimal',
                 'three_column_full_width',
+                'four_column_full_width',
                 'image_left',
                 'split_layout',
             ])
@@ -273,9 +273,9 @@ class LobienAboutBannersSeeder extends Seeder
                 ],
             ],
             [
-                'key' => 'about-pillars-row-1',
-                'name' => 'About Us — Mission Pillars (1–3)',
-                'template_key' => 'three_column_full_width',
+                'key' => 'about-pillars',
+                'name' => 'About Us — Mission Pillars',
+                'template_key' => 'four_column_full_width',
                 'structure' => [
                     'slides' => [[
                         'name' => 'Default',
@@ -301,37 +301,20 @@ class LobienAboutBannersSeeder extends Seeder
                                 'description' => 'Equipping employees in the real estate industry through exposure in a continuous learning environment in order to attain personal aspirations and organizational growth.',
                                 'buttons' => [],
                             ],
-                        ],
-                        'media' => array_merge(
-                            $this->mediaSlot('column_1_image', $pillarImages[0], 'For Investors'),
-                            $this->mediaSlot('column_2_image', $pillarImages[1], 'For Clients'),
-                            $this->mediaSlot('column_3_image', $pillarImages[2], 'For Employees'),
-                        ),
-                    ]],
-                ],
-            ],
-            [
-                'key' => 'about-pillars-row-2',
-                'name' => 'About Us — Mission Pillars (4)',
-                'template_key' => 'two_column_full_width',
-                'structure' => [
-                    'slides' => [[
-                        'name' => 'Default',
-                        'blocks' => [
                             [
-                                'region' => 'column_1',
+                                'region' => 'column_4',
                                 'type' => 'content',
                                 'headline' => 'FOR THE PUBLIC',
                                 'description' => 'We foster nation-building through ethical and socially responsible strategies.',
                                 'buttons' => [],
                             ],
-                            [
-                                'region' => 'column_2',
-                                'type' => 'content',
-                                'buttons' => [],
-                            ],
                         ],
-                        'media' => $this->mediaSlot('column_1_image', $pillarImages[3], 'For The Public'),
+                        'media' => array_merge(
+                            $this->mediaSlot('column_1_image', $pillarImages[0], 'For Investors'),
+                            $this->mediaSlot('column_2_image', $pillarImages[1], 'For Clients'),
+                            $this->mediaSlot('column_3_image', $pillarImages[2], 'For Employees'),
+                            $this->mediaSlot('column_4_image', $pillarImages[3], 'For The Public'),
+                        ),
                     ]],
                 ],
             ],
