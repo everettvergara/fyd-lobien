@@ -3,8 +3,17 @@ import { computed } from 'vue';
 import PublicLayout from '../../Layouts/PublicLayout.vue';
 import SeoHead from '../../Components/SeoHead.vue';
 import Breadcrumb from '../../Components/Breadcrumb.vue';
+import LobienBulletinFeedSidebar from '../../Components/LobienBulletinFeedSidebar.vue';
 import RegionShell from '../../../../_shared/Components/RegionShell.vue';
 import BlockRenderer from '../../../../_shared/Components/BlockRenderer.vue';
+
+const FEED_LISTING_PATHS = [
+    '/articles',
+    '/downloadable',
+    '/videos',
+    '/property-tours',
+    '/social-media',
+];
 
 const props = defineProps({
     page: { type: Object, required: true },
@@ -14,7 +23,9 @@ const props = defineProps({
 });
 
 const hasSidebar = computed(() => (props.regions.sidebar || []).length > 0);
-const isSidebarLayout = computed(() => hasSidebar.value);
+const isFeedListingPath = computed(() => FEED_LISTING_PATHS.includes(props.page.path));
+const isSidebarLayout = computed(() => hasSidebar.value || isFeedListingPath.value);
+const useThemeFeedSidebar = computed(() => isFeedListingPath.value && !hasSidebar.value);
 
 const breadcrumbItems = computed(() => [{ label: props.page.title }]);
 
@@ -38,9 +49,11 @@ function blocksFor(region) {
         </RegionShell>
 
         <template v-if="isSidebarLayout">
-            <div class="lobien-page-with-sidebar lobien-container pt-4">
+            <div class="lobien-container pt-4">
+                <Breadcrumb :items="breadcrumbItems" />
+            </div>
+            <div class="lobien-page-with-sidebar lobien-container">
                 <div class="lobien-page-with-sidebar__main">
-                    <Breadcrumb :items="breadcrumbItems" />
                     <BlockRenderer
                         v-for="block in blocksFor('main')"
                         :key="block.id"
@@ -57,6 +70,7 @@ function blocksFor(region) {
                         :component="block.component"
                         :block-props="block.props"
                     />
+                    <LobienBulletinFeedSidebar v-if="useThemeFeedSidebar" />
                 </aside>
             </div>
         </template>

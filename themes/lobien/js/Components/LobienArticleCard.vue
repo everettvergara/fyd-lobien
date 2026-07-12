@@ -1,9 +1,11 @@
 <script setup>
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import { youtubeEmbedUrl } from '../utils/youtube.js';
 
 const props = defineProps({
     content: { type: Object, required: true },
+    readMoreLabel: { type: String, default: 'Read more' },
 });
 
 const metaLine = computed(() => {
@@ -20,6 +22,14 @@ const metaLine = computed(() => {
     return parts.join(' | ');
 });
 
+const youtubeSrc = computed(() => (
+    youtubeEmbedUrl(props.content.urlLink)
+    ?? youtubeEmbedUrl(props.content.titleHref)
+    ?? youtubeEmbedUrl(props.content.imageHref)
+));
+
+const hasMedia = computed(() => Boolean(youtubeSrc.value || props.content.featuredImage));
+
 const readMoreHref = computed(() => (
     props.content.titleHref
     ?? props.content.imageHref
@@ -35,69 +45,86 @@ function isExternalHref(href) {
 
 <template>
     <article class="lobien-article-card">
-        <div v-if="content.featuredImage" class="lobien-article-image">
-            <Link
-                v-if="content.imageHref && !isExternalHref(content.imageHref)"
-                :href="content.imageHref"
-                class="lobien-article-image-link"
+        <div v-if="hasMedia" class="lobien-article-image">
+            <div
+                v-if="youtubeSrc"
+                class="lobien-article-video"
             >
+                <iframe
+                    :src="youtubeSrc"
+                    :title="content.title || 'YouTube video'"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    referrerpolicy="strict-origin-when-cross-origin"
+                />
+            </div>
+            <template v-else-if="content.featuredImage">
+                <Link
+                    v-if="content.imageHref && !isExternalHref(content.imageHref)"
+                    :href="content.imageHref"
+                    class="lobien-article-image-link"
+                >
+                    <img
+                        :src="content.featuredImage.url"
+                        :alt="content.featuredImage.alt || content.title"
+                        loading="lazy"
+                    >
+                </Link>
+                <a
+                    v-else-if="content.imageHref && isExternalHref(content.imageHref)"
+                    :href="content.imageHref"
+                    class="lobien-article-image-link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <img
+                        :src="content.featuredImage.url"
+                        :alt="content.featuredImage.alt || content.title"
+                        loading="lazy"
+                    >
+                </a>
                 <img
+                    v-else
                     :src="content.featuredImage.url"
                     :alt="content.featuredImage.alt || content.title"
                     loading="lazy"
                 >
-            </Link>
-            <a
-                v-else-if="content.imageHref && isExternalHref(content.imageHref)"
-                :href="content.imageHref"
-                class="lobien-article-image-link"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                <img
-                    :src="content.featuredImage.url"
-                    :alt="content.featuredImage.alt || content.title"
-                    loading="lazy"
-                >
-            </a>
-            <img
-                v-else
-                :src="content.featuredImage.url"
-                :alt="content.featuredImage.alt || content.title"
-                loading="lazy"
-            >
+            </template>
         </div>
 
-        <h3 class="lobien-article-title">
+        <div class="lobien-article-body">
+            <h3 class="lobien-article-title">
+                <Link
+                    v-if="content.titleHref && !isExternalHref(content.titleHref)"
+                    :href="content.titleHref"
+                    class="lobien-article-title-link"
+                >{{ content.title }}</Link>
+                <a
+                    v-else-if="content.titleHref && isExternalHref(content.titleHref)"
+                    :href="content.titleHref"
+                    class="lobien-article-title-link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >{{ content.title }}</a>
+                <template v-else>{{ content.title }}</template>
+            </h3>
+
+            <p v-if="metaLine" class="lobien-article-meta">{{ metaLine }}</p>
+            <p v-if="content.summary" class="lobien-article-summary">{{ content.summary }}</p>
+
             <Link
-                v-if="content.titleHref && !isExternalHref(content.titleHref)"
-                :href="content.titleHref"
-                class="lobien-article-title-link"
-            >{{ content.title }}</Link>
+                v-if="readMoreHref && !isExternalHref(readMoreHref)"
+                :href="readMoreHref"
+                class="lobien-article-link"
+            >{{ readMoreLabel }}</Link>
             <a
-                v-else-if="content.titleHref && isExternalHref(content.titleHref)"
-                :href="content.titleHref"
-                class="lobien-article-title-link"
+                v-else-if="readMoreHref && isExternalHref(readMoreHref)"
+                :href="readMoreHref"
+                class="lobien-article-link"
                 target="_blank"
                 rel="noopener noreferrer"
-            >{{ content.title }}</a>
-            <template v-else>{{ content.title }}</template>
-        </h3>
-
-        <p v-if="metaLine" class="lobien-article-meta">{{ metaLine }}</p>
-        <p v-if="content.summary" class="lobien-article-summary">{{ content.summary }}</p>
-
-        <Link
-            v-if="readMoreHref && !isExternalHref(readMoreHref)"
-            :href="readMoreHref"
-            class="lobien-article-link"
-        >Read more</Link>
-        <a
-            v-else-if="readMoreHref && isExternalHref(readMoreHref)"
-            :href="readMoreHref"
-            class="lobien-article-link"
-            target="_blank"
-            rel="noopener noreferrer"
-        >Read more</a>
+            >{{ readMoreLabel }}</a>
+        </div>
     </article>
 </template>

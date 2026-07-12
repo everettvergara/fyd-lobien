@@ -1,5 +1,4 @@
 <script setup>
-import PageContentShell from '../../../_shared/Components/PageContentShell.vue';
 import SimplePager from '../../../_shared/Components/SimplePager.vue';
 
 defineProps({
@@ -9,17 +8,17 @@ defineProps({
 </script>
 
 <template>
-    <PageContentShell spacing="section">
-        <section class="careers-listing lobien-section">
+    <section class="careers-listing lobien-section">
+        <div class="lobien-container">
             <div class="lobien-section-heading">
                 <h2>Open Positions</h2>
             </div>
 
-            <div v-if="jobs.length === 0" class="careers-listing__empty text-muted">
+            <div v-if="jobs.length === 0" class="careers-listing__empty text-muted text-center">
                 No open positions at this time.
             </div>
 
-            <div v-else class="careers-listing__grid row g-4">
+            <div v-else class="careers-listing__grid row g-4 justify-content-center">
                 <div v-for="job in jobs" :key="job.id" class="careers-listing__item col-md-6 col-lg-4">
                     <article class="careers-job card h-100 border-0 shadow-sm">
                         <img
@@ -72,6 +71,6 @@ defineProps({
             </div>
 
             <SimplePager v-if="pagination" :pagination="pagination" class="careers-listing__pager mt-4" />
-        </section>
-    </PageContentShell>
+        </div>
+    </section>
 </template>

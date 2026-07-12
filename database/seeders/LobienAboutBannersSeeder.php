@@ -51,6 +51,7 @@ class LobienAboutBannersSeeder extends Seeder
             'about-mission',
             'about-pillars-row-1',
             'about-pillars-row-2',
+            'about-partners-heading',
             'about-partners-row-1',
             'about-partners-row-2',
             'about-people-heading',
@@ -335,6 +336,23 @@ class LobienAboutBannersSeeder extends Seeder
                 ],
             ],
             [
+                'key' => 'about-partners-heading',
+                'name' => 'About Us — Our Partners Heading',
+                'template_key' => 'minimal',
+                'structure' => [
+                    'slides' => [[
+                        'name' => 'Default',
+                        'blocks' => [[
+                            'region' => 'main',
+                            'type' => 'content',
+                            'headline' => 'Our Partners',
+                            'buttons' => [],
+                        ]],
+                        'media' => [],
+                    ]],
+                ],
+            ],
+            [
                 'key' => 'about-partners-row-1',
                 'name' => 'About Us — Partners (1–3)',
                 'template_key' => 'three_column_full_width',
@@ -342,7 +360,7 @@ class LobienAboutBannersSeeder extends Seeder
                     'slides' => [[
                         'name' => 'Default',
                         'blocks' => [
-                            ['region' => 'column_1', 'type' => 'content', 'headline' => 'Our Partners', 'buttons' => []],
+                            ['region' => 'column_1', 'type' => 'content', 'buttons' => []],
                             ['region' => 'column_2', 'type' => 'content', 'buttons' => []],
                             ['region' => 'column_3', 'type' => 'content', 'buttons' => []],
                         ],

@@ -58,12 +58,44 @@ const poster = computed(() => media.value.poster_image ?? desktopImage.value);
 const alignmentClass = computed(() => ({
     hero_left: 'text-start',
     image_left: 'text-start',
+    image_right: 'text-start',
     hero_right: 'text-end ms-auto',
-    image_right: 'text-end ms-auto',
 }[templateKey.value] ?? 'text-center mx-auto'));
 
 const isSplit = computed(() => ['split_layout', 'image_left', 'image_right'].includes(templateKey.value));
 const isInnerPage = computed(() => templateKey.value === 'inner_page');
+const isFullBleedImage = computed(() => props.banner.key === 'about-footer-banner');
+const isMinimalSection = computed(() => templateKey.value === 'minimal');
+
+const columnSectionHeadline = computed(() => {
+    if (templateKey.value !== 'two_column_full_width') {
+        return null;
+    }
+
+    return columns.value.find((column) => column.headline)?.headline ?? null;
+});
+
+const bannerKeyClass = computed(() => {
+    const key = props.banner.key;
+    return key ? `public-banner-key-${key}` : null;
+});
+
+const splitRowAlignClass = computed(() => {
+    const key = props.banner.key ?? '';
+    if (['about-person-sheila', 'about-person-alex', 'about-person-steph'].includes(key)) {
+        return 'align-items-start';
+    }
+
+    return 'align-items-center';
+});
+
+const headlineClass = computed(() => {
+    if (isSplit.value || isMinimalSection.value) {
+        return 'public-banner-split-title';
+    }
+
+    return 'display-4 fw-bold mb-3';
+});
 </script>
 
 <template>
@@ -88,10 +120,11 @@ const isInnerPage = computed(() => templateKey.value === 'inner_page');
     <section
         v-else-if="isColumnLayout"
         class="public-banner public-banner-columns"
-        :class="`public-banner-${templateKey}`"
+        :class="[`public-banner-${templateKey}`, bannerKeyClass]"
         :aria-label="props.banner.name || 'Banner columns'"
     >
         <div class="container py-5">
+            <h2 v-if="columnSectionHeadline" class="public-banner-split-title">{{ columnSectionHeadline }}</h2>
             <div class="row g-4">
                 <div
                     v-for="(column, index) in columns"
@@ -107,7 +140,10 @@ const isInnerPage = computed(() => templateKey.value === 'inner_page');
                             loading="lazy"
                         >
                         <div class="public-banner-column-content">
-                            <h2 v-if="column.headline" class="h3 fw-bold mb-2">{{ column.headline }}</h2>
+                            <h2
+                                v-if="column.headline && templateKey !== 'two_column_full_width'"
+                                class="public-banner-split-title"
+                            >{{ column.headline }}</h2>
                             <p v-if="column.subheading" class="text-uppercase small fw-semibold text-muted mb-2">{{ column.subheading }}</p>
                             <p v-if="column.description" class="mb-3">{{ column.description }}</p>
                             <div v-if="column.buttons.length" class="d-flex flex-wrap gap-2">
@@ -130,9 +166,24 @@ const isInnerPage = computed(() => templateKey.value === 'inner_page');
     </section>
 
     <section
+        v-else-if="isFullBleedImage"
+        class="public-banner public-banner-full-bleed"
+        :class="bannerKeyClass"
+        :aria-label="props.banner.name || 'Banner'"
+    >
+        <img
+            v-if="desktopImage"
+            class="public-banner-full-bleed-image"
+            :src="desktopImage.url"
+            :alt="desktopImage.alt || ''"
+            loading="lazy"
+        >
+    </section>
+
+    <section
         v-else
         class="public-banner position-relative overflow-hidden"
-        :class="[`public-banner-${templateKey}`, { 'public-banner-split': isSplit }]"
+        :class="[`public-banner-${templateKey}`, bannerKeyClass, { 'public-banner-split': isSplit }]"
         :aria-label="props.banner.name || headline"
     >
         <video
@@ -152,13 +203,13 @@ const isInnerPage = computed(() => templateKey.value === 'inner_page');
 
         <div class="public-banner-overlay"></div>
         <div class="container position-relative py-5">
-            <div class="row align-items-center g-4">
+            <div class="row g-4" :class="splitRowAlignClass">
                 <div class="col-lg" :class="{ 'order-lg-2': templateKey === 'image_left' }">
-                    <div class="public-banner-content" :class="alignmentClass">
+                    <div class="public-banner-content" :class="[alignmentClass, { 'public-banner-content--split': isSplit }]">
                         <p v-if="subheading" class="text-uppercase fw-semibold mb-2 opacity-75 small">{{ subheading }}</p>
-                        <h1 class="display-4 fw-bold mb-3">{{ headline }}</h1>
-                        <p v-if="description" class="lead mb-3 opacity-90">{{ description }}</p>
-                        <div v-if="richText" class="mb-4" v-html="richText"></div>
+                        <h1 :class="headlineClass">{{ headline }}</h1>
+                        <p v-if="description" :class="isSplit ? 'public-banner-split-desc' : 'lead mb-3 opacity-90'">{{ description }}</p>
+                        <div v-if="richText" class="public-banner-rich-text mb-4" v-html="richText"></div>
                         <div v-if="buttons.length" class="d-flex flex-wrap gap-2" :class="{ 'justify-content-center': alignmentClass.includes('text-center'), 'justify-content-end': alignmentClass.includes('text-end') }">
                             <a
                                 v-for="button in buttons"
@@ -174,7 +225,7 @@ const isInnerPage = computed(() => templateKey.value === 'inner_page');
                     </div>
                 </div>
                 <div v-if="isSplit && desktopImage" class="col-lg">
-                    <img :src="desktopImage.url" :alt="desktopImage.alt || ''" class="img-fluid rounded shadow-sm" loading="lazy">
+                    <img :src="desktopImage.url" :alt="desktopImage.alt || ''" class="img-fluid public-banner-split-image" loading="lazy">
                 </div>
             </div>
         </div>

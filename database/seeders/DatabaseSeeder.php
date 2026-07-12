@@ -45,6 +45,8 @@ class DatabaseSeeder extends Seeder
             LobienLegalPagesSeeder::class,
             LobienStaticPagesSeeder::class,
             LobienCareersPageSeeder::class,
+            LobienFeedsContentSeeder::class,
+            LobienStaticBlocksSeeder::class,
             \App\Modules\ContentBlocks\Database\Seeders\ContentBlockSeeder::class,
             \App\Modules\PageManager\Database\Seeders\PageManagerSeeder::class,
         ]);

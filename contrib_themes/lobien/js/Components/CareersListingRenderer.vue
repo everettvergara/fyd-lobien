@@ -40,7 +40,7 @@ onMounted(loadJobs);
         <div v-else-if="loadError" class="alert alert-danger">{{ loadError }}</div>
         <div v-else-if="jobs.length === 0" class="text-muted">No open positions at this time.</div>
 
-        <div v-else class="row g-4">
+        <div v-else class="row g-4 justify-content-center">
             <div v-for="job in jobs" :key="job.id" class="col-md-6 col-lg-4">
                 <article class="careers-job card h-100 border-0 shadow-sm">
                     <img

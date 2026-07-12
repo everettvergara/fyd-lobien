@@ -54,9 +54,7 @@ const form = reactive({
                    placeholder="Building name">
         </div>
         <div class="col-md-auto">
-            <button type="submit" class="btn btn-primary w-100">
-                <i class="bi bi-search me-1"></i>Search
-            </button>
+            <button type="submit" class="btn btn-search">Search</button>
         </div>
     </form>
 </template>

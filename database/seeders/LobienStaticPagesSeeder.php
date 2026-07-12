@@ -31,8 +31,6 @@ class LobienStaticPagesSeeder extends Seeder
 
     private const MAP_EMBED_URL = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3409.330608884188!2d121.04874297450714!3d14.547904085932247!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c909e6a4a1b1%3A0xeb5bff922a557eb2!2sHigh%20Street%20South%20Corporate%20Plaza%20Tower%201!5e1!3m2!1sen!2sph!4v1736730881493!5m2!1sen!2sph';
 
-    private const CONTACT_BANNER_IMAGE = 'https://www.lobiengroup.com/sites/default/files/images/Copy%20of%20Team%20Banner%20%28May%202026%29_0.jpg';
-
     public function run(): void
     {
         $admin = User::query()->where('email', 'admin@fyd.local')->first();
@@ -203,25 +201,30 @@ class LobienStaticPagesSeeder extends Seeder
 
     protected function seedContactPageBlocks(Page $page): void
     {
-        PageBlock::create([
-            'page_id' => $page->id,
-            'region_key' => 'main',
-            'block_type' => 'contact-banner',
-            'sort_order' => 0,
-            'config' => [
-                'heading' => 'CONTACT US',
-                'description' => "Got questions or need assistance? We'd love to hear from you! Contact us, and our team will get back to you as soon as possible. Whether it's about our services, support, or anything else, we're here to help!",
-                'image_url' => self::CONTACT_BANNER_IMAGE,
-                'show_cta_bar' => true,
-            ],
-        ]);
+        $this->call(LobienContactBannersSeeder::class);
+
+        $keys = LobienContactBannersSeeder::pageBannerKeys();
+        $heroKey = array_shift($keys);
+
+        if ($heroKey !== null) {
+            PageBlock::create([
+                'page_id' => $page->id,
+                'region_key' => 'hero',
+                'block_type' => 'banner',
+                'sort_order' => 0,
+                'config' => [
+                    'banner_key' => $heroKey,
+                    'show_cta_bar' => true,
+                ],
+            ]);
+        }
 
         if (Schema::hasTable('webforms')) {
             PageBlock::create([
                 'page_id' => $page->id,
                 'region_key' => 'main',
                 'block_type' => 'webform',
-                'sort_order' => 1,
+                'sort_order' => 0,
                 'config' => ['webform_slug' => 'contact-form'],
             ]);
 

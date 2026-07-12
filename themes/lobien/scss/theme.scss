@@ -23,6 +23,22 @@ $body-color: $fyd-color-text;
 $link-color: $fyd-color-primary-dark;
 $link-hover-color: darken($fyd-color-primary-dark, 8%);
 
+$pagination-font-size: $fyd-font-size-small;
+$pagination-padding-y: 0.35rem;
+$pagination-padding-x: 0.65rem;
+$pagination-color: $fyd-color-primary;
+$pagination-bg: #fff;
+$pagination-border-color: #{$fyd-color-primary};
+$pagination-hover-color: $fyd-color-primary-dark;
+$pagination-hover-bg: #fff;
+$pagination-hover-border-color: $fyd-color-primary-dark;
+$pagination-active-color: #fff;
+$pagination-active-bg: $fyd-color-primary;
+$pagination-active-border-color: $fyd-color-primary;
+$pagination-disabled-color: $fyd-color-text-muted;
+$pagination-disabled-bg: #fff;
+$pagination-disabled-border-color: #{$fyd-color-primary};
+
 @import "bootstrap/scss/root";
 @import "tokens-root";
 @import "bootstrap/scss/reboot";
@@ -73,6 +89,25 @@ $link-hover-color: darken($fyd-color-primary-dark, 8%);
 
 .dropdown-item {
     font-size: $fyd-font-size-small;
+}
+
+// --- Global pagination -------------------------------------------------------
+
+.pagination {
+    .page-link {
+        font-size: $fyd-font-size-small;
+        color: $fyd-color-primary;
+    }
+
+    .page-item.active .page-link {
+        background-color: $fyd-color-primary;
+        border-color: $fyd-color-primary;
+        color: #fff;
+    }
+
+    .page-item.disabled .page-link {
+        color: $fyd-color-text-muted;
+    }
 }
 
 // --- Royal blue buttons (#004aad) --------------------------------------------
@@ -240,7 +275,7 @@ $fyd-btn-hover: $fyd-color-primary-dark;
             padding-top: $label-offset;
         }
 
-        .btn-primary {
+        .btn-search {
             --bs-btn-font-size: #{$fyd-font-size-small};
             font-size: $fyd-font-size-small;
             height: $field-height;
@@ -252,29 +287,6 @@ $fyd-btn-hover: $fyd-color-primary-dark;
             justify-content: center;
             line-height: 1.2;
             white-space: nowrap;
-
-            .bi-search {
-                font-size: 0.65rem;
-                line-height: 1;
-            }
-        }
-    }
-
-    .btn-primary {
-        --bs-btn-bg: #{$fyd-color-primary-dark};
-        --bs-btn-border-color: #{$fyd-color-primary-dark};
-        --bs-btn-hover-bg: #{$fyd-color-dark};
-        --bs-btn-hover-border-color: #{$fyd-color-dark};
-        --bs-btn-active-bg: #{$fyd-color-dark};
-        --bs-btn-active-border-color: #{$fyd-color-dark};
-        background-color: $fyd-color-primary-dark;
-        border-color: $fyd-color-primary-dark;
-
-        &:hover,
-        &:focus,
-        &:active {
-            background-color: $fyd-color-dark;
-            border-color: $fyd-color-dark;
         }
     }
 
@@ -372,10 +384,110 @@ $fyd-btn-hover: $fyd-color-primary-dark;
 .public-banner-split {
     color: $fyd-color-text;
     background: $fyd-color-bg;
+    min-height: 0;
 
     .public-banner-media,
     .public-banner-overlay {
         display: none;
+    }
+
+    .public-banner-split-desc {
+        margin-bottom: 1rem;
+        line-height: 1.7;
+        color: $fyd-color-text;
+    }
+
+    .public-banner-rich-text {
+        line-height: 1.7;
+
+        h4 {
+            font-family: $fyd-font-heading;
+            font-size: $fyd-font-size-h2;
+            text-transform: uppercase;
+            font-weight: 400;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            margin-bottom: 0.75rem;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 0.75rem;
+
+            li {
+                margin-bottom: 0.35rem;
+            }
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+
+            &:hover {
+                color: $fyd-color-primary;
+            }
+        }
+
+        p a[href^="mailto:"] {
+            color: $fyd-color-primary;
+        }
+    }
+
+    .public-banner-split-image {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+}
+
+.public-banner-split-title {
+    font-family: $fyd-font-heading;
+    font-size: $fyd-font-size-h2;
+    text-transform: uppercase;
+    font-weight: 400;
+    margin-bottom: 1rem;
+}
+
+.public-banner-minimal {
+    color: $fyd-color-text;
+    background: $fyd-color-bg;
+    min-height: 150px;
+
+    .public-banner-media,
+    .public-banner-overlay {
+        display: none;
+    }
+
+    .container {
+        padding-top: 1.25rem;
+        padding-bottom: 1.25rem;
+    }
+}
+
+.public-banner-full-bleed {
+    min-height: 0;
+    padding: 0;
+
+    .public-banner-full-bleed-image {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+}
+
+.public-banner-key-about-person-sheila,
+.public-banner-key-about-person-alex,
+.public-banner-key-about-person-steph {
+    .public-banner-split-image {
+        width: 50%;
+        height: auto;
     }
 }
 
@@ -394,6 +506,16 @@ $fyd-btn-hover: $fyd-color-primary-dark;
     aspect-ratio: 16 / 10;
     object-fit: cover;
     width: 100%;
+}
+
+.public-banner-key-about-partners-row-1,
+.public-banner-key-about-partners-row-2 {
+    .public-banner-column-image {
+        aspect-ratio: auto;
+        object-fit: contain;
+        width: 100%;
+        height: auto;
+    }
 }
 
 .public-banner-column-content {
@@ -739,7 +861,7 @@ $fyd-btn-hover: $fyd-color-primary-dark;
 }
 
 // CMS banner — Lobien hero styling
-.public-banner:not(.public-banner-inner_page):not(.public-banner-split):not(.public-banner-columns) {
+.public-banner:not(.public-banner-inner_page):not(.public-banner-split):not(.public-banner-columns):not(.public-banner-minimal):not(.public-banner-full-bleed) {
     min-height: 600px;
     display: flex;
     align-items: center;
@@ -777,8 +899,12 @@ $fyd-btn-hover: $fyd-color-primary-dark;
 }
 
 @media (max-width: 767.98px) {
-    .public-banner:not(.public-banner-inner_page):not(.public-banner-split):not(.public-banner-columns) {
+    .public-banner:not(.public-banner-inner_page):not(.public-banner-split):not(.public-banner-columns):not(.public-banner-minimal):not(.public-banner-full-bleed) {
         min-height: 480px;
+    }
+
+    .public-banner-minimal {
+        min-height: 120px;
     }
 }
 
@@ -1020,6 +1146,20 @@ $fyd-btn-hover: $fyd-color-primary-dark;
         padding: 0 15px;
         margin-bottom: 30px;
     }
+
+    .lobien-article-card {
+        padding: 0;
+        background: transparent;
+    }
+
+    .lobien-article-image {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .lobien-article-body {
+        width: 100%;
+    }
 }
 
 .lobien-article-card {
@@ -1041,6 +1181,10 @@ $fyd-btn-hover: $fyd-color-primary-dark;
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        .lobien-article-video {
+            height: 100%;
         }
     }
 
@@ -1067,22 +1211,48 @@ $fyd-btn-hover: $fyd-color-primary-dark;
     }
 
     .lobien-article-summary {
-        font-size: $fyd-font-size-body;
+        font-size: $fyd-font-size-small;
         line-height: 1.7;
         margin-bottom: 0.5rem;
     }
 
     .lobien-article-link {
         margin-top: 5px;
-        font-size: $fyd-font-size-body;
+        font-size: $fyd-font-size-small;
         color: $fyd-color-primary-dark;
         text-decoration: none;
         text-transform: uppercase;
+
+        &::after {
+            content: " →";
+        }
 
         &:hover {
             text-decoration: underline;
         }
     }
+}
+
+.lobien-article-video {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background: #000;
+
+    iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+}
+
+.content-extras-block__video,
+.lobien-content-video {
+    aspect-ratio: 16 / 9;
+    height: auto;
+    max-width: 100%;
 }
 
 .lobien-outlook-block {
@@ -1504,7 +1674,7 @@ $fyd-btn-hover: $fyd-color-primary-dark;
     }
 
     &__item-summary {
-        font-size: $fyd-font-size-body;
+        font-size: $fyd-font-size-small;
         line-height: 1.7;
         color: $fyd-color-text-muted;
     }
@@ -1524,6 +1694,120 @@ $fyd-btn-hover: $fyd-color-primary-dark;
 .content-block--latest-articles,
 .content-block--featured-pages {
     padding: $fyd-section-padding-y 0;
+}
+
+.lobien-bulletin-listing {
+    &__empty {
+        padding: 2rem 0;
+    }
+
+    &__pagination {
+        margin-top: 2rem;
+    }
+
+    .lobien-article-card {
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+        background: transparent;
+        padding: 0;
+    }
+
+    .lobien-article-image {
+        flex: 0 0 400px;
+        width: 400px;
+        height: auto;
+        margin-bottom: 0;
+
+        .lobien-article-image-link {
+            height: auto;
+        }
+
+        img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 10;
+            object-fit: cover;
+        }
+
+        .lobien-article-video {
+            aspect-ratio: 16 / 10;
+            height: auto;
+        }
+    }
+
+    .lobien-article-body {
+        flex: 0 0 400px;
+        width: 400px;
+        max-width: 400px;
+    }
+}
+
+.lobien-bulletin-grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px;
+
+    &__item {
+        flex: 0 0 100%;
+        max-width: 100%;
+        padding: 0 15px;
+        margin-bottom: 30px;
+    }
+}
+
+.lobien-bulletin-listing--two-col {
+    .lobien-bulletin-grid {
+        margin: 0 -15px;
+
+        &__item {
+            flex: 0 0 50%;
+            max-width: 50%;
+            padding: 0 15px;
+        }
+    }
+
+    .lobien-article-card {
+        flex-direction: column;
+        gap: 1rem;
+        height: 100%;
+    }
+
+    .lobien-article-image,
+    .lobien-article-body {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .lobien-article-image {
+        .lobien-article-video {
+            aspect-ratio: 16 / 9;
+            height: auto;
+        }
+    }
+}
+
+@media (max-width: 767.98px) {
+    .lobien-bulletin-listing {
+        .lobien-article-card {
+            flex-direction: column;
+        }
+
+        .lobien-article-image,
+        .lobien-article-body {
+            flex: 0 0 auto;
+            width: 100%;
+            max-width: 100%;
+        }
+    }
+
+    .lobien-bulletin-listing--two-col {
+        .lobien-bulletin-grid__item {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
 }
 
 .public-banner-inner_page {
@@ -1592,14 +1876,133 @@ $fyd-btn-hover: $fyd-color-primary-dark;
     padding-bottom: $fyd-section-padding-y;
 
     @media (min-width: 992px) {
-        grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-        align-items: start;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+        align-items: stretch;
+    }
+
+    &__main,
+    &__sidebar {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__main > .page-block,
+    &__sidebar > .page-block {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    &__main {
+        .lobien-bulletin-listing {
+            padding-top: 0;
+
+            .lobien-article-image,
+            .lobien-article-body {
+                flex: 1 1 0;
+                width: auto;
+                max-width: none;
+            }
+
+            &--two-col {
+                .lobien-bulletin-grid {
+                    margin: 0 -15px;
+
+                    &__item {
+                        flex: 0 0 50%;
+                        max-width: 50%;
+                        padding: 0 15px;
+                    }
+                }
+
+                .lobien-article-image,
+                .lobien-article-body {
+                    flex: 0 0 auto;
+                    width: 100%;
+                    max-width: 100%;
+                }
+
+                @media (max-width: 767.98px) {
+                    .lobien-bulletin-grid__item {
+                        flex: 0 0 100%;
+                        max-width: 100%;
+                    }
+                }
+            }
+        }
+
+        .lobien-section-heading {
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .lobien-bulletin-grid {
+            margin: 0;
+
+            &__item {
+                padding: 0;
+            }
+        }
     }
 
     &__sidebar {
-        @media (min-width: 992px) {
-            position: sticky;
-            top: 6rem;
+        .lobien-contact-map {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        > .lobien-sidebar-content-block {
+            flex: 0 0 auto;
+            align-self: flex-start;
+            width: 100%;
+            height: auto;
+        }
+    }
+}
+
+.lobien-sidebar-content-block {
+    border: 1px solid $fyd-color-border;
+
+    &__title {
+        margin: 0;
+        padding: 0.65rem 1rem;
+        background: $fyd-color-accent;
+        color: #fff;
+        font-family: $fyd-font-heading;
+        font-size: $fyd-font-size-body;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        line-height: 1.3;
+    }
+
+    &__body {
+        padding: 0.5rem 0 0.75rem;
+
+        ul {
+            list-style: none;
+            margin: 0;
+            padding: 0 0 0 1rem;
+        }
+
+        li {
+            margin: 0;
+        }
+
+        a {
+            display: block;
+            padding: 0.65rem 0;
+            color: $fyd-color-text;
+            text-decoration: none;
+
+            &:hover {
+                color: $fyd-color-accent;
+                text-decoration: none;
+            }
         }
     }
 }
@@ -1636,12 +2039,28 @@ $fyd-btn-hover: $fyd-color-primary-dark;
 }
 
 .lobien-contact-map {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+
     &__frame {
         position: relative;
         width: 100%;
-        aspect-ratio: 4 / 3;
+        flex: 1 1 auto;
+        min-height: 280px;
         overflow: hidden;
         background: $fyd-color-bg-alt;
+
+        @media (max-width: 991.98px) {
+            aspect-ratio: 4 / 3;
+            min-height: 0;
+        }
+
+        @media (min-width: 992px) {
+            height: 100%;
+            min-height: 100%;
+        }
 
         iframe {
             position: absolute;
@@ -1654,6 +2073,7 @@ $fyd-btn-hover: $fyd-color-primary-dark;
 
 .lobien-contact-form {
     padding-top: 0;
+    height: 100%;
 
     &__title {
         font-size: $fyd-font-size-h3;
@@ -1676,6 +2096,15 @@ $fyd-btn-hover: $fyd-color-primary-dark;
 .careers-listing {
     .lobien-section-heading {
         margin-bottom: 2rem;
+    }
+
+    &__empty {
+        text-align: center;
+    }
+
+    &__pager {
+        display: flex;
+        justify-content: center;
     }
 
     .careers-job__title {
