@@ -2,6 +2,7 @@
 
 namespace App\Modules\Authentication\Requests;
 
+use App\Http\Requests\Public\Concerns\RequiresRecaptcha;
 use App\Enums\UserStatus;
 use App\Services\AuthConfigService;
 use App\Services\LoginHistoryService;
@@ -14,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
+    use RequiresRecaptcha;
+
     public function authorize(): bool
     {
         return true;
@@ -24,6 +27,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+            ...$this->recaptchaRules('admin_login'),
         ];
     }
 

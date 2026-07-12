@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\UserStatus;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Recaptcha\RecaptchaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -203,5 +204,95 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->get('/admin');
 
         $response->assertRedirect(route('admin.verification.notice'));
+    }
+
+    public function test_login_requires_recaptcha_when_enabled(): void
+    {
+        config([
+            'recaptcha.site_key' => 'test-site-key',
+            'recaptcha.secret_key' => 'test-secret-key',
+            'recaptcha.enabled' => true,
+        ]);
+
+        $user = User::factory()->create(['status' => UserStatus::Active]);
+
+        $response = $this->post('/admin/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('recaptcha_token');
+        $this->assertGuest();
+    }
+
+    public function test_login_accepts_valid_recaptcha_token_when_enabled(): void
+    {
+        config([
+            'recaptcha.site_key' => 'test-site-key',
+            'recaptcha.secret_key' => 'test-secret-key',
+            'recaptcha.enabled' => true,
+        ]);
+
+        $this->mock(RecaptchaService::class, function ($mock): void {
+            $mock->shouldReceive('enabled')->andReturn(true);
+            $mock->shouldReceive('verify')
+                ->once()
+                ->with('valid-token', 'admin_login', \Mockery::any())
+                ->andReturn(true);
+        });
+
+        $this->seed();
+        $user = User::factory()->create(['status' => UserStatus::Active]);
+        $viewerRole = Role::where('name', 'viewer')->first();
+        $user->syncRoles([$viewerRole->id]);
+
+        $response = $this->post('/admin/login', [
+            'email' => $user->email,
+            'password' => 'password',
+            'recaptcha_token' => 'valid-token',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect('/admin');
+    }
+
+    public function test_register_requires_recaptcha_when_enabled(): void
+    {
+        config([
+            'recaptcha.site_key' => 'test-site-key',
+            'recaptcha.secret_key' => 'test-secret-key',
+            'recaptcha.enabled' => true,
+        ]);
+
+        $response = $this->post('/admin/register', [
+            'name' => 'Test User',
+            'email' => 'newuser@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('recaptcha_token');
+    }
+
+    public function test_forgot_password_requires_recaptcha_when_enabled(): void
+    {
+        config([
+            'recaptcha.site_key' => 'test-site-key',
+            'recaptcha.secret_key' => 'test-secret-key',
+            'recaptcha.enabled' => true,
+        ]);
+
+        $response = $this->post('/admin/forgot-password', [
+            'email' => 'user@example.com',
+        ]);
+
+        $response->assertSessionHasErrors('recaptcha_token');
+    }
+
+    protected function disableRecaptcha(): void
+    {
+        $this->mock(RecaptchaService::class, function ($mock): void {
+            $mock->shouldReceive('enabled')->andReturn(false);
+        });
     }
 }

@@ -11,6 +11,7 @@ import './listing-asset-sequential-upload.js';
 import './listing-published-toggle.js';
 import './rich-text-editor.js';
 import './password-toggle.js';
+import './admin-recaptcha.js';
 import { initAdminSidebarPanelToggle, initAdminSidebarSections } from './admin-sidebar.js';
 
 window.showToast = function (message, type = 'success') {

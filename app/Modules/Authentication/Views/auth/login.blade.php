@@ -5,7 +5,9 @@
 @section('content')
     <h2 class="h5 text-center mb-4">Sign In</h2>
 
-    <form method="POST" action="{{ route('admin.login', absolute: false) }}">
+    <form method="POST"
+          action="{{ route('admin.login', absolute: false) }}"
+          @include('partials.recaptcha-form-attributes', ['action' => 'admin_login'])>
         @csrf
 
         <div class="mb-3">
@@ -32,6 +34,8 @@
             </div>
             <a href="{{ route('admin.password.request') }}" class="small text-decoration-none">Forgot password?</a>
         </div>
+
+        @include('partials.recaptcha-error')
 
         <button type="submit" class="btn btn-primary w-100 mb-3">Sign In</button>
 

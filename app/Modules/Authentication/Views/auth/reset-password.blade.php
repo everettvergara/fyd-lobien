@@ -5,7 +5,9 @@
 @section('content')
     <h2 class="h5 text-center mb-4">Reset Password</h2>
 
-    <form method="POST" action="{{ route('admin.password.update', absolute: false) }}">
+    <form method="POST"
+          action="{{ route('admin.password.update', absolute: false) }}"
+          @include('partials.recaptcha-form-attributes', ['action' => 'admin_password_reset'])>
         @csrf
 
         <input type="hidden" name="token" value="{{ $token }}">
@@ -28,6 +30,8 @@
         <x-admin.form.password label="New Password" name="password" required autocomplete="new-password" />
 
         <x-admin.form.password label="Confirm New Password" name="password_confirmation" class="mb-4" required autocomplete="new-password" />
+
+        @include('partials.recaptcha-error')
 
         <button type="submit" class="btn btn-primary w-100 mb-3">Reset Password</button>
 
