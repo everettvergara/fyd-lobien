@@ -18,7 +18,7 @@ defineProps({
             </div>
 
             <div v-else class="row g-4 mb-4 justify-content-center">
-                <div v-for="city in cities" :key="city.slug" class="col-6 col-md-4 col-lg-2">
+                <div v-for="city in cities" :key="city.slug" class="col-6 col-md-6 col-lg-3">
                     <article class="card h-100 border-0 shadow-sm">
                         <a :href="city.url" class="text-decoration-none text-reset d-flex flex-column h-100">
                             <img v-if="city.image_url"
