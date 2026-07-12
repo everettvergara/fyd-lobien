@@ -32,6 +32,21 @@ return new class extends Migration
             });
 
             Schema::rename('pages', 'contents');
+
+            // Schema::rename keeps old FK constraint names; rename them so
+            // PageManager's new `pages` table can reuse Laravel's pages_* defaults.
+            Schema::table('contents', function (Blueprint $table) {
+                $table->dropForeign('pages_author_id_foreign');
+                $table->dropForeign('pages_featured_image_id_foreign');
+
+                $table->foreign('author_id', 'contents_author_id_foreign')
+                    ->references('id')
+                    ->on('users');
+                $table->foreign('featured_image_id', 'contents_featured_image_id_foreign')
+                    ->references('id')
+                    ->on('media')
+                    ->nullOnDelete();
+            });
         }
 
         if (Schema::hasTable('contents')) {
