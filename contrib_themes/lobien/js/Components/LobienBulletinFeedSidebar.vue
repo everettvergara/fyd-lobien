@@ -5,7 +5,6 @@ const links = [
     { title: 'Articles', url: '/articles' },
     { title: 'Videos', url: '/videos' },
     { title: 'Property tours', url: '/property-tours' },
-    { title: 'Social Media', url: '/social-media' },
     { title: 'Downloadables', url: '/downloadable' },
 ];
 </script>

@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import { resolveYoutubeEmbedUrl } from '../utils/youtube.js';
+import { resolveYoutubeEmbedUrl, resolveYoutubeThumbnailUrl } from '../utils/youtube.js';
 
 const props = defineProps({
     content: { type: Object, required: true },
@@ -22,14 +22,20 @@ const metaLine = computed(() => {
     return parts.join(' | ');
 });
 
-const youtubeSrc = computed(() => resolveYoutubeEmbedUrl(
+const youtubeSources = computed(() => [
     props.content.urlLink,
     props.content.titleHref,
     props.content.imageHref,
     props.content.summary,
-));
+]);
 
-const hasMedia = computed(() => Boolean(youtubeSrc.value || props.content.featuredImage));
+const youtubeThumbnail = computed(() => resolveYoutubeThumbnailUrl(...youtubeSources.value));
+
+const youtubeSrc = computed(() => resolveYoutubeEmbedUrl(...youtubeSources.value));
+
+const hasMedia = computed(() => Boolean(
+    youtubeThumbnail.value || youtubeSrc.value || props.content.featuredImage,
+));
 
 const readMoreHref = computed(() => (
     props.content.titleHref
@@ -47,14 +53,43 @@ function isExternalHref(href) {
 <template>
     <article class="lobien-article-card">
         <div v-if="hasMedia" class="lobien-article-image">
+            <Link
+                v-if="youtubeThumbnail && readMoreHref && !isExternalHref(readMoreHref)"
+                :href="readMoreHref"
+                class="lobien-article-image-link"
+            >
+                <img
+                    :src="youtubeThumbnail"
+                    :alt="content.title || 'YouTube video'"
+                    loading="lazy"
+                >
+            </Link>
+            <a
+                v-else-if="youtubeThumbnail && readMoreHref && isExternalHref(readMoreHref)"
+                :href="readMoreHref"
+                class="lobien-article-image-link"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <img
+                    :src="youtubeThumbnail"
+                    :alt="content.title || 'YouTube video'"
+                    loading="lazy"
+                >
+            </a>
+            <img
+                v-else-if="youtubeThumbnail"
+                :src="youtubeThumbnail"
+                :alt="content.title || 'YouTube video'"
+                loading="lazy"
+            >
             <div
-                v-if="youtubeSrc"
+                v-else-if="youtubeSrc"
                 class="lobien-article-video"
             >
                 <iframe
                     :src="youtubeSrc"
                     :title="content.title || 'YouTube video'"
-                    loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowfullscreen
                     referrerpolicy="strict-origin-when-cross-origin"

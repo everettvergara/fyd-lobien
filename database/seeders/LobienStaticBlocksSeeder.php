@@ -39,7 +39,6 @@ class LobienStaticBlocksSeeder extends Seeder
   <li><a href="/articles">Articles</a></li>
   <li><a href="/videos">Videos</a></li>
   <li><a href="/property-tours">Property tours</a></li>
-  <li><a href="/social-media">Social Media</a></li>
   <li><a href="/downloadable">Downloadables</a></li>
 </ul>
 HTML,

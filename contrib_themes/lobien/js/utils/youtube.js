@@ -75,7 +75,8 @@ export function youtubeThumbnailUrl(url) {
         return null;
     }
 
-    return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+    // mqdefault is true 16:9; hqdefault is 4:3 with letterboxing and looks tiny in listings
+    return `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
 }
 
 /**
@@ -116,6 +117,32 @@ export function resolveYoutubeEmbedUrl(...sources) {
 
         if (extracted) {
             return extracted;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * @param {...(string|null|undefined)} sources
+ * @returns {string|null}
+ */
+export function resolveYoutubeThumbnailUrl(...sources) {
+    for (const source of sources) {
+        const direct = youtubeThumbnailUrl(source);
+
+        if (direct) {
+            return direct;
+        }
+
+        const extracted = extractYoutubeUrlFromText(source);
+
+        if (extracted) {
+            const thumbnail = youtubeThumbnailUrl(extracted);
+
+            if (thumbnail) {
+                return thumbnail;
+            }
         }
     }
 
