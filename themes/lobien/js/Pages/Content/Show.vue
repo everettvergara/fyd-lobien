@@ -7,7 +7,7 @@ import BannerRenderer from '../../Components/BannerRenderer.vue';
 import WebformRenderer from '../../Components/WebformRenderer.vue';
 import NewsletterRenderer from '../../Components/NewsletterRenderer.vue';
 import CareersListingRenderer from '../../Components/CareersListingRenderer.vue';
-import { youtubeEmbedUrl } from '../../utils/youtube.js';
+import { resolveYoutubeEmbedUrl } from '../../utils/youtube.js';
 
 const props = defineProps({
     content: { type: Object, required: true },
@@ -17,7 +17,11 @@ const props = defineProps({
     careersListing: { type: Boolean, default: false },
 });
 
-const youtubeSrc = computed(() => youtubeEmbedUrl(props.content?.urlLink));
+const youtubeSrc = computed(() => resolveYoutubeEmbedUrl(
+    props.content?.urlLink,
+    props.content?.summary,
+    props.content?.body,
+));
 </script>
 
 <template>

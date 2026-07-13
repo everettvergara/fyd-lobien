@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import { youtubeEmbedUrl } from '../utils/youtube.js';
+import { resolveYoutubeEmbedUrl } from '../utils/youtube.js';
 
 const props = defineProps({
     content: { type: Object, required: true },
@@ -22,10 +22,11 @@ const metaLine = computed(() => {
     return parts.join(' | ');
 });
 
-const youtubeSrc = computed(() => (
-    youtubeEmbedUrl(props.content.urlLink)
-    ?? youtubeEmbedUrl(props.content.titleHref)
-    ?? youtubeEmbedUrl(props.content.imageHref)
+const youtubeSrc = computed(() => resolveYoutubeEmbedUrl(
+    props.content.urlLink,
+    props.content.titleHref,
+    props.content.imageHref,
+    props.content.summary,
 ));
 
 const hasMedia = computed(() => Boolean(youtubeSrc.value || props.content.featuredImage));
