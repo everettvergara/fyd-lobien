@@ -1,16 +1,42 @@
 @php
+    use App\Models\Media;
     use App\Modules\PropertyListings\Support\ListingLookupGroups;
 
-    $assets = old('assets', ($listing ?? null)?->assets?->loadMissing('media')->map(fn ($asset) => [
-        'id' => $asset->id,
-        'asset_type' => $asset->asset_type,
-        'media_id' => $asset->media_id,
-        'sort_order' => $asset->sort_order,
-        'filename' => $asset->media?->filename ?? $asset->media?->original_filename ?? '',
-        'preview_url' => $asset->media?->variantUrl('thumbnail') ?? $asset->media?->url(),
-        'full_url' => $asset->media?->url(),
-        'is_pdf' => $asset->media?->isPdf() ?? false,
-    ])->values()->all() ?? []);
+    $mapAssetRow = function (array $fields, ?Media $media = null): array {
+        return [
+            'id' => $fields['id'] ?? null,
+            'asset_type' => $fields['asset_type'] ?? '',
+            'media_id' => $fields['media_id'] ?? null,
+            'sort_order' => (int) ($fields['sort_order'] ?? 0),
+            'filename' => $media?->filename ?? $media?->original_filename ?? '',
+            'preview_url' => $media?->variantUrl('thumbnail') ?? $media?->url(),
+            'full_url' => $media?->url(),
+            'is_pdf' => $media?->isPdf() ?? false,
+        ];
+    };
+
+    $oldAssets = old('assets');
+
+    if ($oldAssets !== null) {
+        $mediaById = Media::query()
+            ->whereIn('id', collect($oldAssets)->pluck('media_id')->filter()->unique())
+            ->get()
+            ->keyBy('id');
+
+        $assets = collect($oldAssets)
+            ->map(fn ($row) => $mapAssetRow((array) $row, $mediaById->get($row['media_id'] ?? null)))
+            ->all();
+    } else {
+        $assets = ($listing ?? null)?->assets?->loadMissing('media')
+            ->map(fn ($asset) => $mapAssetRow([
+                'id' => $asset->id,
+                'asset_type' => $asset->asset_type,
+                'media_id' => $asset->media_id,
+                'sort_order' => $asset->sort_order,
+            ], $asset->media))
+            ->values()
+            ->all() ?? [];
+    }
 @endphp
 
 <div class="listing-assets-list">
@@ -44,7 +70,7 @@
                                    class="d-inline-flex align-items-center justify-content-center rounded border text-danger text-decoration-none"
                                    style="width:40px;height:40px;"
                                    title="Open PDF"
-                                   aria-label="Open {{ $asset['filename'] ?: 'PDF' }}">
+                                   aria-label="Open {{ ($asset['filename'] ?? '') ?: 'PDF' }}">
                                     <i class="{{ admin_icon('bi-file-earmark-pdf') }} fs-4" aria-hidden="true"></i>
                                 </a>
                             @elseif (! empty($asset['preview_url']) && ! empty($asset['full_url']))
@@ -52,8 +78,8 @@
                                         class="btn p-0 border-0 d-block"
                                         data-listing-compare-preview
                                         data-preview-url="{{ $asset['full_url'] }}"
-                                        data-preview-title="{{ $asset['filename'] ?: 'Asset preview' }}"
-                                        aria-label="Preview {{ $asset['filename'] ?: 'asset' }}">
+                                        data-preview-title="{{ ($asset['filename'] ?? '') ?: 'Asset preview' }}"
+                                        aria-label="Preview {{ ($asset['filename'] ?? '') ?: 'asset' }}">
                                     <img src="{{ $asset['preview_url'] }}" alt="" class="rounded border" style="width:40px;height:40px;object-fit:cover;">
                                 </button>
                             @else
@@ -61,7 +87,7 @@
                             @endif
                         </td>
                         <td class="small">{{ $lookups[ListingLookupGroups::IMAGE_TYPE][$asset['asset_type'] ?? ''] ?? ($asset['asset_type'] ?? '—') }}</td>
-                        <td class="small"><code>{{ $asset['filename'] ?: '—' }}</code></td>
+                        <td class="small"><code>{{ ($asset['filename'] ?? '') ?: '—' }}</code></td>
                         <td class="text-end">
                             @if (! empty($asset['id']))
                                 <input type="hidden" form="listing-edit-form" name="assets[{{ $index }}][id]" value="{{ $asset['id'] }}">

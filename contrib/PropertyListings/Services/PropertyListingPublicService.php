@@ -324,7 +324,7 @@ class PropertyListingPublicService
     /**
      * @return Collection<string, City>
      */
-    protected function citiesBySlug(): Collection
+    protected function citiesByProvinceAndSlug(): Collection
     {
         if ($this->citiesBySlugCache !== null) {
             return $this->citiesBySlugCache;
@@ -335,9 +335,21 @@ class PropertyListingPublicService
         }
 
         return $this->citiesBySlugCache = City::query()
-            ->with('image')
+            ->with(['image', 'province'])
             ->get()
-            ->keyBy(fn (City $city) => Str::slug($city->name));
+            ->keyBy(fn (City $city) => $this->cityCacheKey(
+                $city->province?->name,
+                Str::slug($city->name),
+            ));
+    }
+
+    protected function cityCacheKey(?string $provinceName, string $citySlug): string
+    {
+        $provinceSlug = $provinceName !== null && trim($provinceName) !== ''
+            ? Str::slug($provinceName)
+            : '_';
+
+        return $provinceSlug.'/'.$citySlug;
     }
 
     /**
@@ -483,13 +495,17 @@ class PropertyListingPublicService
     /**
      * Address module City record matching a listing city slug, if any.
      */
-    public function cityModelForSlug(string $citySlug): ?City
+    public function cityModelForSlug(string $citySlug, ?string $provinceName = null): ?City
     {
         if (! class_exists(City::class)) {
             return null;
         }
 
-        $city = $this->citiesBySlug()->get($citySlug);
+        if ($provinceName === null || trim($provinceName) === '') {
+            return null;
+        }
+
+        $city = $this->citiesByProvinceAndSlug()->get($this->cityCacheKey($provinceName, $citySlug));
 
         return $city instanceof City ? $city : null;
     }
@@ -502,7 +518,10 @@ class PropertyListingPublicService
     public function cityDto(string $citySlug, ?Collection $eligibleListings = null, ?Collection $listingCountsBySlug = null): array
     {
         $eligible = $eligibleListings ?? $this->eligibleListings();
-        $city = $this->cityModelForSlug($citySlug);
+        $cityListings = $eligible->filter(fn (Listing $listing) => $listing->citySlug() === $citySlug);
+        $provinces = $cityListings->pluck('province')->filter()->unique()->values();
+        $provinceForLookup = $provinces->count() === 1 ? $provinces->first() : null;
+        $city = $this->cityModelForSlug($citySlug, $provinceForLookup);
         $counts = $listingCountsBySlug ?? $this->listingCountsByCitySlug($eligible);
         $count = (int) $counts->get($citySlug, 0);
 
