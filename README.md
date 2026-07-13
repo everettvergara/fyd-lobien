@@ -56,7 +56,7 @@ Run tests:
 php artisan test
 ```
 
-Fresh install with sample content:
+Fresh install with sample content (set `DB_ALLOW_DESTRUCTIVE=true` in `.env` if using a non-test database):
 
 ```bash
 php artisan migrate:fresh --seed

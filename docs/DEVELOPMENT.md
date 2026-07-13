@@ -212,9 +212,21 @@ Seed order in `DatabaseSeeder`:
 
 ```bash
 php artisan db:seed                  # Seed without migrating
-php artisan migrate:fresh --seed     # Fresh database with all data
+php artisan migrate:fresh --seed     # Fresh database with all data (requires DB_ALLOW_DESTRUCTIVE=true on non-test DBs)
 php artisan db:seed --class=Database\\Seeders\\SampleContentSeeder  # Sample content only
 ```
+
+### Database safety
+
+Destructive commands (`migrate:fresh`, `migrate:refresh`, `migrate:reset`, `db:wipe`) are **always blocked** unless `DB_ALLOW_DESTRUCTIVE=true` is set in `.env`. The only exception is PHPUnit using SQLite `:memory:` during `php artisan test`.
+
+Copy `.env.testing.example` to `.env.testing` so `php artisan … --env=testing` never points at your dev database:
+
+```bash
+cp .env.testing.example .env.testing
+```
+
+Tests use `php artisan test` only (SQLite `:memory:` via `phpunit.xml`). See `AGENTS.md`.
 
 ## Testing
 
@@ -222,6 +234,8 @@ php artisan db:seed --class=Database\\Seeders\\SampleContentSeeder  # Sample con
 php artisan test                     # Run all tests
 php artisan test --filter=CmsTest    # Run specific test class
 ```
+
+`tests/TestCase.php` forces SQLite `:memory:` so tests **never** touch your `.env` database (e.g. MariaDB `fyd_web2_db`). Running tests before this fix could run `migrate:fresh` against your real local database via `RefreshDatabase`.
 
 Test suites:
 

@@ -18,6 +18,12 @@ use Illuminate\Support\Str;
 
 class PropertyListingPublicService
 {
+    /** @var Collection<int, Listing>|null */
+    protected ?Collection $eligibleListingsCache = null;
+
+    /** @var Collection<string, City>|null */
+    protected ?Collection $citiesBySlugCache = null;
+
     public function __construct(
         protected ListingLookupRegistry $lookups,
     ) {}
@@ -292,7 +298,7 @@ class PropertyListingPublicService
 
     public function cityLabelForSlug(string $citySlug, ?Collection $eligibleListings = null): string
     {
-        $listings = $eligibleListings ?? $this->publishedQuery()->get();
+        $listings = $eligibleListings ?? $this->eligibleListings();
 
         $match = $listings->first(fn (Listing $listing) => $listing->citySlug() === $citySlug);
 
@@ -301,7 +307,37 @@ class PropertyListingPublicService
 
     public function eligibleListings(): Collection
     {
-        return $this->publishedQuery()->get();
+        return $this->eligibleListingsCache ??= $this->publishedQuery()->get();
+    }
+
+    /**
+     * @return Collection<string, int>
+     */
+    protected function listingCountsByCitySlug(Collection $eligible): Collection
+    {
+        return $eligible
+            ->map(fn (Listing $listing) => $listing->citySlug())
+            ->filter()
+            ->countBy();
+    }
+
+    /**
+     * @return Collection<string, City>
+     */
+    protected function citiesBySlug(): Collection
+    {
+        if ($this->citiesBySlugCache !== null) {
+            return $this->citiesBySlugCache;
+        }
+
+        if (! class_exists(City::class)) {
+            return $this->citiesBySlugCache = collect();
+        }
+
+        return $this->citiesBySlugCache = City::query()
+            ->with('image')
+            ->get()
+            ->keyBy(fn (City $city) => Str::slug($city->name));
     }
 
     /**
@@ -453,10 +489,9 @@ class PropertyListingPublicService
             return null;
         }
 
-        return City::query()
-            ->with('image')
-            ->get()
-            ->first(fn (City $city) => Str::slug($city->name) === $citySlug);
+        $city = $this->citiesBySlug()->get($citySlug);
+
+        return $city instanceof City ? $city : null;
     }
 
     /**
@@ -464,11 +499,12 @@ class PropertyListingPublicService
      *
      * @return array<string, mixed>
      */
-    public function cityDto(string $citySlug, ?Collection $eligibleListings = null): array
+    public function cityDto(string $citySlug, ?Collection $eligibleListings = null, ?Collection $listingCountsBySlug = null): array
     {
         $eligible = $eligibleListings ?? $this->eligibleListings();
         $city = $this->cityModelForSlug($citySlug);
-        $count = $eligible->filter(fn (Listing $listing) => $listing->citySlug() === $citySlug)->count();
+        $counts = $listingCountsBySlug ?? $this->listingCountsByCitySlug($eligible);
+        $count = (int) $counts->get($citySlug, 0);
 
         return [
             'slug' => $citySlug,
@@ -490,12 +526,41 @@ class PropertyListingPublicService
     public function citiesWithListings(?Collection $eligibleListings = null): array
     {
         $eligible = $eligibleListings ?? $this->eligibleListings();
+        $counts = $this->listingCountsByCitySlug($eligible);
 
         return collect($this->distinctCitySlugs($eligible))
-            ->map(fn (string $slug) => $this->cityDto($slug, $eligible))
+            ->map(fn (string $slug) => $this->cityDto($slug, $eligible, $counts))
             ->sortBy('label')
             ->values()
             ->all();
+    }
+
+    /**
+     * Paginated city card DTOs — builds full DTOs only for the current page.
+     *
+     * @return array{items: array<int, array<string, mixed>>, pagination: array{current_page: int, last_page: int, per_page: int, total: int}}
+     */
+    public function paginatedCitiesWithListings(int $page, int $perPage, ?Collection $eligibleListings = null): array
+    {
+        $eligible = $eligibleListings ?? $this->eligibleListings();
+        $counts = $this->listingCountsByCitySlug($eligible);
+
+        $slugRows = collect($this->distinctCitySlugs($eligible))
+            ->map(fn (string $slug) => [
+                'slug' => $slug,
+                'label' => $this->cityLabelForSlug($slug, $eligible),
+            ])
+            ->sortBy('label')
+            ->values();
+
+        $paginated = $this->paginateCollection($slugRows, $page, $perPage);
+
+        return [
+            'items' => collect($paginated['items'])
+                ->map(fn (array $row) => $this->cityDto($row['slug'], $eligible, $counts))
+                ->all(),
+            'pagination' => $paginated['pagination'],
+        ];
     }
 
     /**

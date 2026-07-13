@@ -3,6 +3,7 @@
 namespace App\Modules\PropertyListings\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Cache\Services\PublicCacheService;
 use App\Modules\PropertyListings\Controllers\Concerns\ProvidesListingFormData;
 use App\Modules\PropertyListings\Models\Listing;
 use App\Modules\PropertyListings\Requests\StoreListingRequest;
@@ -92,6 +93,8 @@ class ListingController extends Controller
 
         ActivityLogger::log('listings', 'updated', $listing);
 
+        $this->clearPublicCache();
+
         return redirect()->route('admin.listings.edit', $listing)->with('success', 'Listing updated.');
     }
 
@@ -102,6 +105,8 @@ class ListingController extends Controller
         ]);
 
         ActivityLogger::log('listings', 'updated', $listing);
+
+        $this->clearPublicCache();
 
         return response()->json([
             'published_to_public' => $listing->published_to_public,
@@ -120,6 +125,8 @@ class ListingController extends Controller
 
         ActivityLogger::log('listings', 'publish_all', null, ['count' => $count]);
 
+        $this->clearPublicCache();
+
         return $this->redirectToIndex($request, "Published {$count} listing(s) to public.");
     }
 
@@ -134,6 +141,8 @@ class ListingController extends Controller
         $count = Listing::query()->update(['published_to_public' => false]);
 
         ActivityLogger::log('listings', 'unpublish_all', null, ['count' => $count]);
+
+        $this->clearPublicCache();
 
         return $this->redirectToIndex($request, "Unpublished {$count} listing(s) from public.");
     }
@@ -151,7 +160,14 @@ class ListingController extends Controller
 
         $listing->delete();
 
+        $this->clearPublicCache();
+
         return redirect()->route('admin.listings.index')->with('success', 'Listing deleted.');
+    }
+
+    protected function clearPublicCache(): void
+    {
+        app(PublicCacheService::class)->clearAll();
     }
 
     protected function redirectToIndex(Request $request, string $message): RedirectResponse
