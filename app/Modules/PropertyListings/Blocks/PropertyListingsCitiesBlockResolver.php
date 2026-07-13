@@ -18,8 +18,7 @@ class PropertyListingsCitiesBlockResolver implements BlockResolver
     {
         $perPage = max(1, (int) ($config['per_page'] ?? self::PER_PAGE));
 
-        $paginated = $this->publicService->paginateCollection(
-            collect($this->publicService->citiesWithListings()),
+        $paginated = $this->publicService->paginatedCitiesWithListings(
             (int) request()->query('page', 1),
             $perPage,
         );

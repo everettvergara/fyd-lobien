@@ -114,6 +114,7 @@ class Module extends \App\Framework\Module
                     '2026_07_07_600009_add_summary_and_description_to_listings',
                     '2026_07_07_600010_create_property_search_banners_table',
                     '2026_07_07_600011_add_summary_description_image_to_listing_lookups',
+                    '2026_07_13_600012_add_public_listings_index',
                 ])
                 ->delete();
         }

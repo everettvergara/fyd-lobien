@@ -6,7 +6,10 @@ use App\Framework\MenuRegistry;
 use App\Models\InstalledModule;
 use App\Models\Media;
 use App\Models\MediaVariant;
+use App\Models\Setting;
 use App\Models\User;
+use App\Modules\Cache\Services\PublicCacheService;
+use App\Modules\PropertyListings\Blocks\PropertyListingsCitiesBlockResolver;
 use App\Modules\PropertyListings\Blocks\PropertyListingsPropertyTypesBlockResolver;
 use App\Modules\PropertyListings\Blocks\PropertySearchBannerBlockResolver;
 use App\Modules\PropertyListings\Models\Listing;
@@ -20,9 +23,13 @@ use App\Modules\PropertyListings\Module as PropertyListingsModule;
 use App\Modules\PropertyListings\Services\ListingAssetImageProcessor;
 use App\Modules\PropertyListings\Support\PropertySearchBannerKeyOptionsProvider;
 use App\Modules\PageManager\Models\Page;
+use App\Enums\ContentStatus;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -1751,6 +1758,78 @@ class PropertyListingsModuleTest extends TestCase
         $this->assertSame('Number of types', $schema->firstWhere('key', 'per_page')['label'] ?? null);
     }
 
+    public function test_properties_hub_blocks_share_single_listings_query(): void
+    {
+        $this->installPropertyListings();
+
+        $this->createPublishedListing('Makati City', 'makati-tower-a');
+        $this->createPublishedListing('Pasig City', 'pasig-tower-b');
+        $this->createPublishedListing('Quezon City', 'quezon-tower-c');
+
+        $page = new Page(['path' => '/properties']);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        app(PropertySearchBannerBlockResolver::class)->resolve(['banner_key' => 'default'], $page);
+        app(PropertyListingsCitiesBlockResolver::class)->resolve(['per_page' => 36], $page);
+
+        $queries = collect(DB::getQueryLog())->pluck('query');
+        $listingQueries = $queries->filter(fn (string $sql) => preg_match('/\blistings\b/i', $sql) === 1);
+        $cityQueries = $queries->filter(fn (string $sql) => preg_match('/\bcities\b/i', $sql) === 1);
+
+        $this->assertSame(1, $listingQueries->count());
+        $this->assertLessThanOrEqual(1, $cityQueries->count());
+
+        DB::disableQueryLog();
+    }
+
+    public function test_cities_block_paginates_before_building_dtos(): void
+    {
+        $this->installPropertyListings();
+
+        $this->createPublishedListing('Makati City', 'makati-a');
+        $this->createPublishedListing('Pasig City', 'pasig-a');
+        $this->createPublishedListing('Quezon City', 'quezon-a');
+        $this->createPublishedListing('Taguig City', 'taguig-a');
+
+        $page = new Page(['path' => '/properties']);
+        $props = app(PropertyListingsCitiesBlockResolver::class)->resolve(['per_page' => 2], $page);
+
+        $this->assertCount(2, $props['cities']);
+        $this->assertSame(4, $props['pagination']['total']);
+        $this->assertSame(2, $props['pagination']['per_page']);
+        $this->assertSame(2, $props['pagination']['last_page']);
+    }
+
+    public function test_listing_publish_clears_public_page_cache(): void
+    {
+        $this->installPropertyListings();
+        $this->enablePublicCache();
+
+        Page::create([
+            'path' => '/properties',
+            'slug' => 'properties',
+            'title' => 'Properties',
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+        ]);
+
+        $this->get('/properties');
+        $this->assertNotEmpty(Cache::get(PublicCacheService::KEY_PREFIX.'_index', []));
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $listing = $this->createPublishedListing('Makati City', 'cache-test-tower');
+
+        $this->actingAs($admin)
+            ->patchJson('/admin/listings/'.$listing->id.'/published', [
+                'published_to_public' => false,
+            ])
+            ->assertOk();
+
+        $this->assertEmpty(Cache::get(PublicCacheService::KEY_PREFIX.'_index', []));
+    }
+
     protected function createSampleListingWithUnits(): Listing
     {
         $listing = $this->createSampleListing();
@@ -1778,6 +1857,19 @@ class PropertyListingsModuleTest extends TestCase
         ]);
 
         return $listing->fresh(['units']);
+    }
+
+    protected function createPublishedListing(string $city, string $slug): Listing
+    {
+        return Listing::create([
+            'code' => 'PUB-'.strtoupper(substr(md5($slug.uniqid()), 0, 8)),
+            'name' => ucwords(str_replace('-', ' ', $slug)),
+            'province' => 'Metro Manila',
+            'city' => $city,
+            'slug' => $slug,
+            'completion_status' => 'existing',
+            'published_to_public' => true,
+        ]);
     }
 
     protected function createSampleListing(): Listing
@@ -1827,6 +1919,7 @@ class PropertyListingsModuleTest extends TestCase
             '2026_07_07_600009_add_summary_and_description_to_listings',
             '2026_07_07_600010_create_property_search_banners_table',
             '2026_07_07_600011_add_summary_description_image_to_listing_lookups',
+            '2026_07_13_600012_add_public_listings_index',
         ];
     }
 
@@ -1888,6 +1981,10 @@ class PropertyListingsModuleTest extends TestCase
             Artisan::call('module:install', ['name' => 'PropertyListings', '--force' => true]);
         }
 
+        if (! $this->app->bound(\App\Modules\PropertyListings\Services\PropertyListingPublicService::class)) {
+            $this->app->singleton(\App\Modules\PropertyListings\Services\PropertyListingPublicService::class);
+        }
+
         $this->registerModuleRoutes();
         $this->registerModuleViews();
     }
@@ -1934,5 +2031,15 @@ class PropertyListingsModuleTest extends TestCase
         }
 
         File::copyDirectory($source, $target);
+    }
+
+    protected function enablePublicCache(): void
+    {
+        Setting::updateOrCreate(
+            ['group' => 'cache', 'key' => 'enabled'],
+            ['value' => 'true', 'type' => 'boolean'],
+        );
+
+        app(SettingsService::class)->forget('cache', 'enabled');
     }
 }
