@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Console\Events\CommandStarting;
+use App\Support\BlocksDestructiveDatabaseCommands;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -31,6 +33,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ])
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('site-reports:prune')->daily();
+    })
+    ->booting(function (Application $app): void {
+        $app->make('events')->listen(
+            CommandStarting::class,
+            fn (CommandStarting $event) => $app->make(BlocksDestructiveDatabaseCommands::class)->handle($event),
+        );
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [

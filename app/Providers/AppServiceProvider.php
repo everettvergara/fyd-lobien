@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\LogAuthenticationEvents;
+use App\Support\BlocksDestructiveDatabaseCommands;
 use App\Services\AuthConfigService;
 use App\Services\MailConfigService;
 use App\Services\PasswordPolicyService;
@@ -12,6 +13,7 @@ use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
@@ -55,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Failed::class, [LogAuthenticationEvents::class, 'handleFailed']);
         Event::listen(Logout::class, [LogAuthenticationEvents::class, 'handleLogout']);
         Event::listen(Registered::class, SendEmailVerificationNotification::class);
+        Event::listen(CommandStarting::class, [app(BlocksDestructiveDatabaseCommands::class), 'handle']);
 
         if (! app()->environment('local') && ($rootUrl = config('app.url'))) {
             URL::forceRootUrl($rootUrl);
