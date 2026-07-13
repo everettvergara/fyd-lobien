@@ -21,7 +21,10 @@ use App\Modules\PropertyListings\Models\ListingUnit;
 use App\Modules\PropertyListings\Models\PropertySearchBanner;
 use App\Modules\PropertyListings\Module as PropertyListingsModule;
 use App\Modules\PropertyListings\Services\ListingAssetImageProcessor;
+use App\Modules\PropertyListings\Services\PropertyListingPublicService;
 use App\Modules\PropertyListings\Support\PropertySearchBannerKeyOptionsProvider;
+use App\Modules\Address\Models\City;
+use App\Modules\Address\Models\Province;
 use App\Modules\PageManager\Models\Page;
 use App\Enums\ContentStatus;
 use App\Services\SettingsService;
@@ -1828,6 +1831,114 @@ class PropertyListingsModuleTest extends TestCase
             ->assertOk();
 
         $this->assertEmpty(Cache::get(PublicCacheService::KEY_PREFIX.'_index', []));
+    }
+
+    public function test_listing_edit_assets_survives_validation_redirect(): void
+    {
+        Storage::fake('public');
+        $this->installPropertyListings();
+
+        $admin = User::where('email', 'admin@fyd.local')->first();
+        $listing = $this->createSampleListing();
+
+        $media = Media::create([
+            'filename' => 'flyer.pdf',
+            'original_filename' => 'flyer.pdf',
+            'mime_type' => 'application/pdf',
+            'extension' => 'pdf',
+            'size' => 16,
+            'disk' => 'public',
+            'path' => 'property-listings/flyer.pdf',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        $asset = ListingAsset::create([
+            'listing_id' => $listing->id,
+            'asset_type' => 'flyers',
+            'media_id' => $media->id,
+            'sort_order' => 0,
+        ]);
+
+        $this->actingAs($admin)
+            ->put('/admin/listings/'.$listing->id, [
+                'code' => $listing->code,
+                'name' => $listing->name,
+                'province' => $listing->province,
+                'city' => '',
+                'completion_status' => 'existing',
+                'published_to_public' => '1',
+                'assets' => [
+                    [
+                        'id' => $asset->id,
+                        'asset_type' => 'flyers',
+                        'media_id' => $media->id,
+                        'sort_order' => 0,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('admin.listings.edit', $listing))
+            ->assertSessionHasErrors('city');
+
+        $this->actingAs($admin)
+            ->get('/admin/listings/'.$listing->id.'/edit')
+            ->assertOk()
+            ->assertSee('flyer.pdf', false);
+    }
+
+    public function test_properties_city_dto_respects_province(): void
+    {
+        $this->installPropertyListings();
+
+        $provinceAlpha = Province::create(['name' => 'Province Alpha', 'code' => 'PA', 'is_active' => true]);
+        $provinceBeta = Province::create(['name' => 'Province Beta', 'code' => 'PB', 'is_active' => true]);
+        $cityName = 'Duplicate City Name';
+
+        City::create([
+            'province_id' => $provinceAlpha->id,
+            'name' => $cityName,
+            'summary' => 'Summary from Province Alpha',
+            'is_active' => true,
+        ]);
+        City::create([
+            'province_id' => $provinceBeta->id,
+            'name' => $cityName,
+            'summary' => 'Summary from Province Beta',
+            'is_active' => true,
+        ]);
+
+        Listing::create([
+            'code' => 'DUP-A',
+            'name' => 'Tower Alpha',
+            'province' => 'Province Alpha',
+            'city' => $cityName,
+            'slug' => 'tower-alpha',
+            'completion_status' => 'existing',
+            'published_to_public' => true,
+        ]);
+        Listing::create([
+            'code' => 'DUP-B',
+            'name' => 'Tower Beta',
+            'province' => 'Province Beta',
+            'city' => $cityName,
+            'slug' => 'tower-beta',
+            'completion_status' => 'existing',
+            'published_to_public' => true,
+        ]);
+
+        $service = app(PropertyListingPublicService::class);
+        $citySlug = 'duplicate-city-name';
+        $allEligible = $service->publishedQuery()->get();
+
+        $ambiguousDto = $service->cityDto($citySlug, $allEligible);
+        $this->assertNull($ambiguousDto['summary']);
+
+        $alphaEligible = $allEligible->where('code', 'DUP-A')->values();
+        $alphaDto = $service->cityDto($citySlug, $alphaEligible);
+        $this->assertSame('Summary from Province Alpha', $alphaDto['summary']);
+
+        $betaEligible = $allEligible->where('code', 'DUP-B')->values();
+        $betaDto = $service->cityDto($citySlug, $betaEligible);
+        $this->assertSame('Summary from Province Beta', $betaDto['summary']);
     }
 
     protected function createSampleListingWithUnits(): Listing
